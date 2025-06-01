@@ -73,18 +73,28 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
           onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="amount">Monto</Label>
-          <Input id="amount" type="number" step="0.01" value={formData.amount}
-            onChange={(e) => setFormData({ ...formData, amount: e.target.value })} />
+          <Input
+            id="amount"
+            type="number"
+            step="0.01"
+            value={formData.amount}
+            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="date">Fecha</Label>
-          <Input id="date" type="date" value={formData.date}
-            onChange={(e) => setFormData({ ...formData, date: e.target.value })} />
+          <Input
+            id="date"
+            type="date"
+            value={formData.date}
+            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+          />
         </div>
       </div>
+
 
       <div className="space-y-2">
         <Label htmlFor="category">Categoría</Label>
