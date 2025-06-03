@@ -20,7 +20,7 @@ export function ConfirmModal({
         <p>Esta acción eliminará el gasto permanentemente.</p>
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={onCancel}>Cancelar</Button>
-          <Button variant="destructive" onClick={onConfirm}>Eliminar</Button>
+          <Button className="sm: mb-4" variant="destructive" onClick={onConfirm}>Eliminar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

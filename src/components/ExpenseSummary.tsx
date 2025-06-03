@@ -49,19 +49,7 @@ export function ExpenseSummary({
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <label className="text-sm font-medium">Filtrar por fechas</label>
-                            <div className="flex items-center gap-2">
-                                <Label className="text-xs text-gray-500">Agrupar por</Label>
-                                <Select value={groupBy} onValueChange={(val) => handleGroupByChange(val as "dia" | "semana" | "mes")}>
-                                    <SelectTrigger className="w-[120px] h-8 text-sm">
-                                        <SelectValue placeholder="Agrupar por" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="dia">Día</SelectItem>
-                                        <SelectItem value="semana">Semana</SelectItem>
-                                        <SelectItem value="mes">Mes</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                            
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -82,6 +70,19 @@ export function ExpenseSummary({
                                 />
                             </div>
                         </div>
+                        <div className="flex items-center gap-2">
+                                <Label className="text-xs text-gray-500">Agrupar por</Label>
+                                <Select value={groupBy} onValueChange={(val) => handleGroupByChange(val as "dia" | "semana" | "mes")}>
+                                    <SelectTrigger className="w-[120px] h-8 text-sm">
+                                        <SelectValue placeholder="Agrupar por" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="dia">Día</SelectItem>
+                                        <SelectItem value="semana">Semana</SelectItem>
+                                        <SelectItem value="mes">Mes</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
 
                         {(dateRange.from || dateRange.to) && (

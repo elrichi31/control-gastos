@@ -57,13 +57,13 @@ export default function ExpenseTracker() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900">Control de Gastos Personales</h1>
         <p className="text-gray-600 mt-2">Registra y controla tus gastos diarios</p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 items-start">
+      <div className="grid lg:grid-cols-3 gap-6 items-start">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -83,22 +83,22 @@ export default function ExpenseTracker() {
             onDateRangeChange={handleFilterChange}
           />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Gastos Recientes</CardTitle>
-              <CardDescription>Últimos gastos agrupados por {groupBy}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ExpenseList
-                groupedExpenses={groupedExpenses}
-                isLoading={isLoading}
-                onDelete={deleteExpense}
-                groupBy={groupBy}
-              />
-
-            </CardContent>
-          </Card>
         </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Gastos Recientes</CardTitle>
+            <CardDescription>Últimos gastos agrupados por {groupBy}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ExpenseList
+              groupedExpenses={groupedExpenses}
+              isLoading={isLoading}
+              onDelete={deleteExpense}
+              groupBy={groupBy}
+            />
+
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
