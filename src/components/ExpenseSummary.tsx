@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -12,12 +12,32 @@ import type { Expense } from "../hooks/useExpenses"
 export function ExpenseSummary({
     expenses,
     onDateRangeChange,
+    groupBy,
+    setGroupBy
 }: {
     expenses: Expense[]
     onDateRangeChange: (range: { from: string; to: string }, groupBy: "dia" | "semana" | "mes") => void
+    groupBy: "dia" | "semana" | "mes"
+    setGroupBy: (value: "dia" | "semana" | "mes") => void
 }) {
-    const [dateRange, setDateRange] = useState({ from: "", to: "" })
-    const [groupBy, setGroupBy] = useState<"dia" | "semana" | "mes">("dia")
+
+    function getCurrentMonthRange() {
+        const now = new Date()
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+
+        return {
+            from: firstDay.toISOString().slice(0, 10), // "YYYY-MM-DD"
+            to: lastDay.toISOString().slice(0, 10)
+        }
+    }
+
+
+    const [dateRange, setDateRange] = useState(() => getCurrentMonthRange())
+    useEffect(() => {
+        onDateRangeChange(getCurrentMonthRange(), groupBy)
+    }, [])
+
 
     const handleRangeChange = (newRange: typeof dateRange) => {
         setDateRange(newRange)
@@ -49,7 +69,7 @@ export function ExpenseSummary({
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <label className="text-sm font-medium">Filtrar por fechas</label>
-                            
+
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -71,18 +91,18 @@ export function ExpenseSummary({
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                                <Label className="text-xs text-gray-500">Agrupar por</Label>
-                                <Select value={groupBy} onValueChange={(val) => handleGroupByChange(val as "dia" | "semana" | "mes")}>
-                                    <SelectTrigger className="w-[120px] h-8 text-sm">
-                                        <SelectValue placeholder="Agrupar por" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="dia">Día</SelectItem>
-                                        <SelectItem value="semana">Semana</SelectItem>
-                                        <SelectItem value="mes">Mes</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                            <Label className="text-xs text-gray-500">Agrupar por</Label>
+                            <Select value={groupBy} onValueChange={(val) => handleGroupByChange(val as "dia" | "semana" | "mes")}>
+                                <SelectTrigger className="w-[120px] h-8 text-sm">
+                                    <SelectValue placeholder="Agrupar por" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="dia">Día</SelectItem>
+                                    <SelectItem value="semana">Semana</SelectItem>
+                                    <SelectItem value="mes">Mes</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
 
 
                         {(dateRange.from || dateRange.to) && (

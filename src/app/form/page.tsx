@@ -35,7 +35,6 @@ export default function ExpenseTracker() {
     if (fromDate && toDate) return expenseDate >= fromDate && expenseDate <= toDate
     if (fromDate) return expenseDate >= fromDate
     if (toDate) return expenseDate <= toDate
-
     return true
   })
 
@@ -81,8 +80,9 @@ export default function ExpenseTracker() {
           <ExpenseSummary
             expenses={filteredExpenses}
             onDateRangeChange={handleFilterChange}
+            groupBy={groupBy}
+            setGroupBy={setGroupBy}
           />
-
         </div>
         <Card>
           <CardHeader>

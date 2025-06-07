@@ -22,12 +22,7 @@ export function useExpenses() {
       const last7days = new Date(today)
       last7days.setDate(today.getDate() - 7)
 
-      const recent = data.filter((item: any) => {
-        const date = new Date(item.date)
-        return date >= last7days && date <= today
-      })
-
-      const formatted = recent.map((e: any) => ({
+      const formatted = data.map((e: any) => ({
         id: e.id,
         description: e.description,
         amount: parseFloat(e.amount),
@@ -35,6 +30,8 @@ export function useExpenses() {
         date: e.date,
         paymentMethod: e.paymentMethod,
       }))
+
+      setExpenses(formatted)
 
       setExpenses(formatted)
     } catch (err) {
