@@ -1,12 +1,18 @@
 import { useState, useEffect } from "react"
 
 export interface Expense {
-  id: string
-  description: string
-  amount: number
-  category: string
-  date: string
-  paymentMethod: string
+  id: number
+  descripcion: string
+  monto: number
+  fecha: string
+  categoria: {
+    id: number
+    nombre: string
+  }
+  metodo_pago: {
+    id: number
+    nombre: string
+  }
 }
 
 export function useExpenses() {
@@ -18,20 +24,20 @@ export function useExpenses() {
       const res = await fetch("/api/gastos")
       const data = await res.json()
 
-      const today = new Date()
-      const last7days = new Date(today)
-      last7days.setDate(today.getDate() - 7)
-
       const formatted = data.map((e: any) => ({
         id: e.id,
-        description: e.description,
-        amount: parseFloat(e.amount),
-        category: e.category,
-        date: e.date,
-        paymentMethod: e.paymentMethod,
+        descripcion: e.descripcion,
+        monto: parseFloat(e.monto),
+        fecha: e.fecha,
+        categoria: {
+          id: e.categoria?.id,
+          nombre: e.categoria?.nombre || "Sin categoría",
+        },
+        metodo_pago: {
+          id: e.metodo_pago?.id,
+          nombre: e.metodo_pago?.nombre || "Sin método",
+        },
       }))
-
-      setExpenses(formatted)
 
       setExpenses(formatted)
     } catch (err) {

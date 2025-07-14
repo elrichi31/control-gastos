@@ -48,11 +48,13 @@ export function ExpenseList({ groupedExpenses, isLoading, onDelete, groupBy }: P
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
+  // Abre el modal con el ID seleccionado
   const handleRequestDelete = (id: string) => {
     setSelectedId(id)
     setConfirmOpen(true)
   }
 
+  // Confirma la eliminación
   const handleConfirmDelete = () => {
     if (selectedId) {
       onDelete(selectedId)
@@ -92,7 +94,7 @@ export function ExpenseList({ groupedExpenses, isLoading, onDelete, groupBy }: P
                 <ExpenseItem
                   key={expense.id}
                   expense={expense}
-                  onDelete={handleRequestDelete}
+                  onDelete={handleRequestDelete} // ahora solo abre el modal
                 />
               ))}
             </div>
@@ -111,3 +113,8 @@ export function ExpenseList({ groupedExpenses, isLoading, onDelete, groupBy }: P
     </>
   )
 }
+
+function setExpenses(arg0: (prev: any) => any) {
+  throw new Error("Function not implemented.")
+}
+

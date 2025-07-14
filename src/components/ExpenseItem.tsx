@@ -7,8 +7,10 @@ type Props = {
   onDelete: (id: string) => void
 }
 
+
+
 const categoryColors: { [key: string]: string } = {
-  Alimentación: "bg-green-100 text-green-800",
+  Alimentacion: "bg-green-100 text-green-800",
   Transporte: "bg-blue-100 text-blue-800",
   Entretenimiento: "bg-purple-100 text-purple-800",
   Salud: "bg-red-100 text-red-800",
@@ -19,22 +21,24 @@ const categoryColors: { [key: string]: string } = {
 }
 
 export function ExpenseItem({ expense, onDelete }: Props) {
+
+  console.log("Rendering ExpenseItem for:", expense)
   return (
     <div className="border rounded-lg p-3 space-y-2">
       <div className="flex justify-between items-start">
         <div className="flex-1">
-          <p className="font-medium text-sm">{expense.description}</p>
+          <p className="font-medium text-sm">{expense.descripcion}</p>
           <div className="flex items-center gap-2 mt-1">
-            <Badge className={categoryColors[expense.category] || "bg-gray-100 text-gray-800"}>
+            <Badge className={categoryColors[expense.categoria?.nombre] || "bg-gray-100 text-gray-800"}>
               <Tag className="h-3 w-3 mr-1" />
-              {expense.category}
+              {expense.categoria?.nombre}
             </Badge>
           </div>
         </div>
         <div className="text-right">
-          <p className="font-bold text-red-600">${expense.amount.toFixed(2)}</p>
+          <p className="font-bold text-red-600">${expense.monto.toFixed(2)}</p>
           <button
-            onClick={() => onDelete(expense.id)}
+            onClick={() => onDelete(expense.id.toString())}
             className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
             title="Eliminar"
           >
@@ -45,13 +49,14 @@ export function ExpenseItem({ expense, onDelete }: Props) {
       <div className="flex items-center justify-between text-xs text-gray-500">
         <div className="flex items-center gap-1">
           <Calendar className="h-3 w-3" />
-          {new Date(expense.date).toLocaleDateString("es-ES")}
+          {new Date(expense.fecha).toLocaleDateString("es-ES")}
         </div>
         <div className="flex items-center gap-1">
           <CreditCard className="h-3 w-3" />
-          {expense.paymentMethod}
+          {expense.metodo_pago?.nombre}
         </div>
       </div>
     </div>
   )
 }
+

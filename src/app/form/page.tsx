@@ -25,7 +25,7 @@ export default function ExpenseTracker() {
   const filteredExpenses = expenses.filter((expense) => {
     if (!dateRange.from && !dateRange.to) return true
 
-    const expenseDate = new Date(expense.date)
+    const expenseDate = new Date(expense.fecha)
     const fromDate = dateRange.from ? new Date(dateRange.from) : null
     const toDate = dateRange.to ? new Date(dateRange.to) : null
 
@@ -42,18 +42,17 @@ export default function ExpenseTracker() {
 
   const deleteExpense = async (id: string) => {
     try {
-      await fetch("/api/delete-gasto", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "delete", id }),
+      await fetch(`/api/gastos?id=${id}`, {
+        method: "DELETE",
       })
 
-      setExpenses((prev) => prev.filter((expense) => expense.id !== id))
+      setExpenses((prev) => prev.filter((expense) => String(expense.id) !== String(id)))
     } catch (error) {
       console.error("Error al eliminar gasto:", error)
       alert("Ocurrió un error al eliminar el gasto")
     }
   }
+
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">

@@ -56,7 +56,7 @@ export function ExpenseSummary({
         onDateRangeChange(clearedRange, groupBy)
     }
 
-    const total = expenses.reduce((sum, e) => sum + e.amount, 0)
+    const total = expenses.reduce((sum, e) => sum + e.monto, 0)
 
     return (
         <Card>

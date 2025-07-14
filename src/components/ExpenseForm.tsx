@@ -1,44 +1,68 @@
 "use client"
-import { useState } from "react"
+
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { v4 as uuidv4 } from "uuid"
-import type { Expense } from "./../hooks/useExpenses"
-
-const categories = [
-  "Alimentación", "Transporte", "Entretenimiento", "Salud", "Educación", "Compras", "Servicios", "Otros",
-]
-
-const paymentMethods = ["Efectivo", "Tarjeta de débito", "Tarjeta de crédito", "Transferencia", "Otro"]
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
   const [formData, setFormData] = useState({
     description: "",
     amount: "",
-    category: "",
-    date: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0],
-    paymentMethod: "",
+    categoryId: "",
+    date: new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+      .toISOString()
+      .split("T")[0],
+    paymentMethodId: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const [categories, setCategories] = useState<{ id: number; nombre: string }[]>([])
+  const [paymentMethods, setPaymentMethods] = useState<{ id: number; nombre: string }[]>([])
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const [catRes, payRes] = await Promise.all([
+          fetch("/api/categorias"),
+          fetch("/api/metodos_pago"),
+        ])
+
+        const [catData, payData] = await Promise.all([catRes.json(), payRes.json()])
+        setCategories(catData)
+        setPaymentMethods(payData)
+      } catch (err) {
+        console.error("Error al cargar categorías o métodos de pago", err)
+      }
+    }
+
+    fetchOptions()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.description || !formData.amount || !formData.category || !formData.paymentMethod) {
+    const { description, amount, categoryId, date, paymentMethodId } = formData
+
+    if (!description || !amount || !categoryId || !paymentMethodId) {
       alert("Por favor completa todos los campos")
       return
     }
 
-    const newExpense: Expense = {
-      id: uuidv4(),
-      description: formData.description,
-      amount: parseFloat(formData.amount),
-      category: formData.category,
-      date: formData.date,
-      paymentMethod: formData.paymentMethod,
+    const payload = {
+      descripcion: description,
+      monto: parseFloat(amount),
+      fecha: date,
+      categoria_id: parseInt(categoryId),
+      metodo_pago_id: parseInt(paymentMethodId),
     }
 
     try {
@@ -46,11 +70,11 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
       await fetch("/api/gastos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newExpense),
+        body: JSON.stringify(payload),
       })
       fetchExpenses()
     } catch (error) {
-      console.error("Error al enviar al Google Sheet:", error)
+      console.error("Error al guardar gasto:", error)
       alert("Error al guardar")
     } finally {
       setIsSubmitting(false)
@@ -59,9 +83,11 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
     setFormData({
       description: "",
       amount: "",
-      category: "",
-      date: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0],
-      paymentMethod: "",
+      categoryId: "",
+      date: new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+        .toISOString()
+        .split("T")[0],
+      paymentMethodId: "",
     })
   }
 
@@ -69,8 +95,12 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="description">Descripción</Label>
-        <Textarea id="description" placeholder="Ej: Almuerzo" value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+        <Textarea
+          id="description"
+          placeholder="Ej: Almuerzo"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -95,20 +125,41 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
         </div>
       </div>
 
-
       <div className="space-y-2">
         <Label htmlFor="category">Categoría</Label>
-        <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-          <SelectTrigger><SelectValue placeholder="Selecciona categoría" /></SelectTrigger>
-          <SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
+        <Select
+          value={formData.categoryId}
+          onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecciona categoría" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((cat) => (
+              <SelectItem key={cat.id} value={String(cat.id)}>
+                {cat.nombre}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="paymentMethod">Método de Pago</Label>
-        <Select value={formData.paymentMethod} onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}>
-          <SelectTrigger><SelectValue placeholder="Selecciona método" /></SelectTrigger>
-          <SelectContent>{paymentMethods.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+        <Select
+          value={formData.paymentMethodId}
+          onValueChange={(value) => setFormData({ ...formData, paymentMethodId: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecciona método" />
+          </SelectTrigger>
+          <SelectContent>
+            {paymentMethods.map((m) => (
+              <SelectItem key={m.id} value={String(m.id)}>
+                {m.nombre}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </div>
 
@@ -118,4 +169,3 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
     </form>
   )
 }
-export default ExpenseForm

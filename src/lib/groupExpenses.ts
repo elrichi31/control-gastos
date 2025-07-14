@@ -5,7 +5,7 @@ export function groupExpenses(expenses: Expense[], groupBy: "dia" | "semana" | "
   const grouped: Record<string, Expense[]> = {}
 
   for (const expense of expenses) {
-    const date = new Date(expense.date)
+    const date = new Date(expense.fecha)
     let key: string
 
     if (groupBy === "dia") {
