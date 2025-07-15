@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { ExpenseItem } from "./ExpenseItem"
 import { Expense } from "./../hooks/useExpenses"
-import { format, parse, parseISO } from "date-fns"
+import { format, parse, parseISO, addMinutes } from "date-fns"
 import { es } from "date-fns/locale"
 import { ConfirmModal } from "./ConfirmModal"
 
@@ -12,10 +12,15 @@ type Props = {
   groupBy: "dia" | "semana" | "mes"
 }
 
+function toLocalDate(date: Date) {
+  // Si la fecha tiene hora 00:00:00 y se interpreta en UTC, ajusta a local
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
 function formatGroupTitle(key: string, groupBy: "dia" | "semana" | "mes"): string {
   try {
     if (groupBy === "mes") {
-      const date = parse(key, "yyyy-MM", new Date())
+      const date = toLocalDate(parse(key, "yyyy-MM", new Date()))
       return format(date, "MMMM yyyy", { locale: es })
     }
 
@@ -23,8 +28,8 @@ function formatGroupTitle(key: string, groupBy: "dia" | "semana" | "mes"): strin
       const [from, to] = key.split("::")
       if (!from || !to) return key
 
-      const fromDate = parseISO(from)
-      const toDate = parseISO(to)
+      const fromDate = toLocalDate(parseISO(from))
+      const toDate = toLocalDate(parseISO(to))
 
       const desde = format(fromDate, "EEEE d 'de' MMMM", { locale: es })
       const hasta = format(toDate, "EEEE d 'de' MMMM yyyy", { locale: es })
@@ -33,7 +38,7 @@ function formatGroupTitle(key: string, groupBy: "dia" | "semana" | "mes"): strin
     }
 
     if (groupBy === "dia") {
-      const date = parseISO(key)
+      const date = toLocalDate(parseISO(key))
       return format(date, "EEEE d 'de' MMMM yyyy", { locale: es })
     }
   } catch (error) {
@@ -45,6 +50,7 @@ function formatGroupTitle(key: string, groupBy: "dia" | "semana" | "mes"): strin
 }
 
 export function ExpenseList({ groupedExpenses, isLoading, onDelete, groupBy }: Props) {
+  console.log(groupedExpenses)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 

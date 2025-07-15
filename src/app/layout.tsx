@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/Sidebar"
 import { MobileHeader } from "@/components/MobileHeader"
 import { useSidebar } from "@/hooks/useSidebar"
 import { cn } from "@/lib/utils"
+import { Toaster } from "react-hot-toast"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -40,6 +41,7 @@ export default function RootLayout({
             <main className="bg-gray-50 min-h-screen">{children}</main>
           </div>
         </div>
+        <Toaster position="top-right" />
       </body>
     </html>
   )

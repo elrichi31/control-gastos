@@ -1,11 +1,16 @@
 import { Expense } from "@/hooks/useExpenses"
 import { addDays, endOfWeek, format } from "date-fns"
 
+function toLocalDateFromString(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number)
+  return new Date(year, month - 1, day)
+}
+
 export function groupExpenses(expenses: Expense[], groupBy: "dia" | "semana" | "mes") {
   const grouped: Record<string, Expense[]> = {}
 
   for (const expense of expenses) {
-    const date = new Date(expense.fecha)
+    const date = toLocalDateFromString(expense.fecha.slice(0, 10))
     let key: string
 
     if (groupBy === "dia") {

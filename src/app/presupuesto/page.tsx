@@ -45,7 +45,8 @@ interface MonthlyDataGrid {
     expenses: number
     status: "completed" | "in-progress" | "pending"
     trend: "up" | "down" | "stable"
-    previousMonth: number
+    previousMonth: number,
+    id: number
   }
 }
 
@@ -86,6 +87,7 @@ export default function HomePage() {
             status: mapEstado(item.estado),
             trend: mapTendencia(item.tendencia),
             previousMonth: 0,
+            id: item.id
           }
         })
         setMonthsByYear((prev) => ({ ...prev, [selectedYear]: months }))
@@ -140,6 +142,7 @@ export default function HomePage() {
           status: "in-progress",
           trend: "stable",
           previousMonth: 0,
+          id: Date.now() // Usar un ID temporal, el backend asignará el real
         }
       }
     }))

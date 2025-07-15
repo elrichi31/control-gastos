@@ -15,7 +15,8 @@ interface MonthCardProps {
     expenses: number
     status: "completed" | "in-progress" | "pending"
     trend: "up" | "down" | "stable"
-    previousMonth: number
+    previousMonth: number,
+    id: number
   }
   isCurrentMonth: boolean
   onRemove: (monthValue: string) => void
@@ -137,7 +138,7 @@ export function MonthCard({ month, data, isCurrentMonth, onRemove }: MonthCardPr
           </div>
         </div>
 
-        <Link href={`/presupuesto/${month.value}`}>
+        <Link href={`/presupuesto/${data.id}?mes=${encodeURIComponent(month.name)}`}>
           <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full text-sm lg:text-base">
             Ver presupuesto
           </Button>

@@ -7,8 +7,6 @@ type Props = {
   onDelete: (id: string) => void
 }
 
-
-
 const categoryColors: { [key: string]: string } = {
   Alimentacion: "bg-green-100 text-green-800",
   Transporte: "bg-blue-100 text-blue-800",
@@ -18,6 +16,11 @@ const categoryColors: { [key: string]: string } = {
   Compras: "bg-pink-100 text-pink-800",
   Servicios: "bg-gray-100 text-gray-800",
   Otros: "bg-orange-100 text-orange-800",
+}
+
+function toLocalDateFromString(dateStr: string): Date {
+  const [year, month, day] = dateStr.slice(0, 10).split("-").map(Number)
+  return new Date(year, month - 1, day)
 }
 
 export function ExpenseItem({ expense, onDelete }: Props) {
@@ -49,7 +52,7 @@ export function ExpenseItem({ expense, onDelete }: Props) {
       <div className="flex items-center justify-between text-xs text-gray-500">
         <div className="flex items-center gap-1">
           <Calendar className="h-3 w-3" />
-          {new Date(expense.fecha).toLocaleDateString("es-ES")}
+          {toLocalDateFromString(expense.fecha).toLocaleDateString("es-ES")}
         </div>
         <div className="flex items-center gap-1">
           <CreditCard className="h-3 w-3" />

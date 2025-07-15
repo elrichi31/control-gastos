@@ -17,6 +17,7 @@ interface PresupuestoGridProps {
     status: "completed" | "in-progress" | "pending"
     trend: "up" | "down" | "stable"
     previousMonth: number
+    id: number
   }>
   currentMonth: number
   onRemoveMonth: (monthValue: string) => void
