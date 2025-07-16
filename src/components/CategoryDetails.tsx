@@ -1,13 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { Transaction } from '../app/page'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Calendar } from 'lucide-react'
 
 interface Props {
-  categoryData: Record<string, Transaction[]>
+  categoryData: Record<string, Array<{
+    TIPO_DE_GASTO: string
+    CREDITO: number
+    DEBITO: number
+    DESCRIPCION: string
+    FECHA: string
+  }>>
 }
 
 const CategoryDetails: React.FC<Props> = ({ categoryData }) => {
