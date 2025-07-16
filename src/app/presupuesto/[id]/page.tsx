@@ -20,6 +20,7 @@ import {
 } from "@/services/budget"
 import CategoriaCard from "@/components/presupuesto/CategoriaCard"
 import ExpenseModal from "@/components/presupuesto/ExpenseModal"
+import { useGastosPorCategoriaDelMes } from "@/hooks/useGastosPorCategoriaDelMes"
 
 interface PresupuestoCategoria {
   id: number
@@ -59,6 +60,13 @@ interface MetodoPagoDB {
 }
 
 export default function BudgetPage({ params }: { params: Promise<{ id: string }> }) {
+  // Devuelve el monto presupuestado para una categoría específica
+  // Suma los montos de los movimientos de una categoría específica
+  const getBudgetByCategory = (categoriaId: number) => {
+    const cat = presupuestoCategorias.find((c: PresupuestoCategoriaDetalle) => c.categoria_id === categoriaId)
+    if (!cat || !Array.isArray(cat.movimientos)) return 0
+    return cat.movimientos.reduce((sum, mov) => sum + (typeof mov.monto === "string" ? parseFloat(mov.monto) : mov.monto || 0), 0)
+  }
   // Next.js 13+ route params ahora son promesas, se debe usar el hook use
   const { id } = use(params)
   const searchParams = useSearchParams()
@@ -85,6 +93,11 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
   const [expenseToDelete, setExpenseToDelete] = useState<null | { id: number, descripcion: string }>(null)
 
   const monthName = mes.charAt(0).toUpperCase() + mes.slice(1)
+
+  // Obtener gastos por categoría del mes actual
+  const mesActual = new Date().getMonth() + 1
+  const anioActual = new Date().getFullYear()
+  const { gastosPorCategoria, loading: loadingGastos } = useGastosPorCategoriaDelMes(mesActual, anioActual)
 
   useEffect(() => {
     async function fetchData() {
@@ -155,17 +168,22 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
     }
   }
 
-  // Elimina el uso de cat.total_categoria y getTotalBudget basado en backend
-  // Calcula el total de cada categoría sumando sus gastos:
-  const getCategoryTotal = (cat: PresupuestoCategoriaDetalle) => {
-    if (!Array.isArray(cat.movimientos)) return 0
-    return cat.movimientos.reduce((sum, mov) => sum + (mov.monto || 0), 0)
-  }
 
-  // Calcula el total del presupuesto sumando los totales de cada categoría:
+  // Total presupuestado: suma de los montos asignados a cada categoría
+  // Suma todos los montos de los movimientos de cada categoría
   const getBudgetTotal = () => {
     if (!Array.isArray(presupuestoCategorias)) return 0
-    return presupuestoCategorias.reduce((sum, cat) => sum + getCategoryTotal(cat), 0)
+    return presupuestoCategorias.reduce((sum, cat) => {
+      if (!Array.isArray(cat.movimientos)) return sum
+      const movimientosTotal = cat.movimientos.reduce((movSum, mov) => movSum + (typeof mov.monto === "string" ? parseFloat(mov.monto) : mov.monto || 0), 0)
+      return sum + movimientosTotal
+    }, 0)
+  }
+
+  // Total gastado: suma de los gastos reales del mes actual (usando el hook)
+  const getSpentTotal = () => {
+    if (!gastosPorCategoria) return 0
+    return Object.values(gastosPorCategoria).reduce((sum, cat) => sum + (cat.total || 0), 0)
   }
 
   // Usar categoriasDB en vez de allCategories para el modal de agregar categoría
@@ -270,6 +288,8 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
           <div className="text-center sm:text-right">
             <p className="text-sm text-gray-600">Total presupuestado</p>
             <p className="text-xl lg:text-2xl font-bold text-green-600">${getBudgetTotal().toFixed(2)}</p>
+            <p className="text-sm text-gray-600 mt-2">Total gastado este mes</p>
+            <p className="text-xl lg:text-2xl font-bold text-red-600">${getSpentTotal().toFixed(2)}</p>
           </div>
         </div>
       </div>
@@ -284,7 +304,8 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
               onDeleteCategory={handleDeleteCategory}
               onEditExpense={handleEditExpense}
               onDeleteExpense={showDeleteExpenseModal}
-              getCategoryTotal={getCategoryTotal}
+              getCategoryTotal={() => gastosPorCategoria[cat.categoria_id]?.total || 0}
+              getBudgetByCategory={getBudgetByCategory}
               onAddExpenseClick={() => {
                 setFormData({ ...formData, category: cat.id.toString() })
                 setIsExpenseDialogOpen(true)

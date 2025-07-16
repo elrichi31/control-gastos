@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { X, Plus } from "lucide-react"
 import GastoItem from "./GastoItem"
 import { PresupuestoCategoriaDetalle, MovimientoPresupuesto } from "@/types/budget"
+import BudgetProgressBar from "@/components/BudgetProgressBar"
 
 interface CategoriaCardProps {
   categoria: PresupuestoCategoriaDetalle
@@ -13,6 +14,7 @@ interface CategoriaCardProps {
   onDeleteExpense: (expense: MovimientoPresupuesto) => void
   getCategoryTotal: (cat: PresupuestoCategoriaDetalle) => number
   onAddExpenseClick: () => void
+  getBudgetByCategory: (categoriaId: number) => number
 }
 
 const CategoriaCard: React.FC<CategoriaCardProps> = ({
@@ -21,7 +23,8 @@ const CategoriaCard: React.FC<CategoriaCardProps> = ({
   onEditExpense,
   onDeleteExpense,
   getCategoryTotal,
-  onAddExpenseClick
+  onAddExpenseClick,
+  getBudgetByCategory
 }) => {
   const categoryExpenses = categoria.movimientos
   const hasExpenses = categoryExpenses.length > 0
@@ -53,6 +56,14 @@ const CategoriaCard: React.FC<CategoriaCardProps> = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        {/* Barra de progreso de presupuesto */}
+        <BudgetProgressBar
+          categoria={categoria.categoria.nombre}
+          presupuestoTotal={getBudgetByCategory(categoria.categoria_id)}
+          presupuestoConsumido={getCategoryTotal(categoria)} // Placeholder, replace with actual logic
+          mes={new Date().getMonth() + 1}
+          anio={new Date().getFullYear()}
+        />
         {categoryExpenses.length === 0 ? (
           <p className="text-gray-500 text-sm text-center py-4">No hay gastos en esta categoría</p>
         ) : (

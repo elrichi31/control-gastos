@@ -16,7 +16,15 @@ const GastoItem: React.FC<GastoItemProps> = ({ expense, categoryId, onEditExpens
       <div className="flex-1 min-w-0">
         <p className="font-medium text-gray-900 truncate">{expense.descripcion}</p>
         <p className="text-sm text-gray-600">
-          Pago: {new Date(expense.fecha).toLocaleDateString("es-ES")}
+          Pago: {(() => {
+            // Si la fecha viene en formato yyyy-MM-dd, parsear como local
+            const [year, month, day] = expense.fecha.split("-")
+            if (year && month && day) {
+              return `${day}/${month}/${year}`
+            }
+            // Si viene con hora, usar toLocaleDateString
+            return new Date(expense.fecha).toLocaleDateString("es-ES")
+          })()}
         </p>
       </div>
       <div className="flex items-center gap-1 lg:gap-2 ml-2">
