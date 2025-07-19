@@ -1,9 +1,9 @@
 import { Trash2, Tag, Calendar, CreditCard } from "lucide-react"
-import { Expense } from "../hooks/useExpenses"
+import { Gasto } from "@/hooks/useGastosFiltrados"
 import { Badge } from "@/components/ui/badge"
 
 type Props = {
-  expense: Expense
+  expense: Gasto
   onDelete: (id: string) => void
 }
 
@@ -56,7 +56,7 @@ export function ExpenseItem({ expense, onDelete }: Props) {
         </div>
         <div className="flex items-center gap-1">
           <CreditCard className="h-3 w-3" />
-          {expense.metodo_pago?.nombre}
+          {expense.metodo_pago?.nombre || "Sin método"}
         </div>
       </div>
     </div>

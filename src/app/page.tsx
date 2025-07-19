@@ -1,261 +1,326 @@
 "use client"
 
 import React, { useState, useMemo } from "react"
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, AreaChart, Area, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
-import { format } from "date-fns"
+import { format, startOfMonth, endOfMonth, isToday, isYesterday, subMonths } from "date-fns"
+import { es } from "date-fns/locale"
+import Link from "next/link"
+import { 
+  PlusCircle, 
+  Calendar, 
+  TrendingUp, 
+  TrendingDown, 
+  CreditCard, 
+  DollarSign,
+  ShoppingCart,
+  Coffee,
+  Car,
+  Home as HomeIcon,
+  AlertTriangle,
+  Clock
+} from "lucide-react"
 
-const currentYear = new Date().getFullYear()
-const currentMonth = new Date().getMonth() + 1
+const currentDate = new Date()
+const currentMonth = startOfMonth(currentDate)
+const currentMonthEnd = endOfMonth(currentDate)
+const lastMonth = startOfMonth(subMonths(currentDate, 1))
+const lastMonthEnd = endOfMonth(subMonths(currentDate, 1))
 
-const months = [
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-]
-
-const years = Array.from({ length: 10 }, (_, i) => currentYear - i)
-
-export default function EstadisticasPage() {
-    const [selectedYear, setSelectedYear] = useState(currentYear)
-    const [selectedMonth, setSelectedMonth] = useState(currentMonth)
-    const [startDate, setStartDate] = useState("")
-    const [endDate, setEndDate] = useState("")
-    const [allTime, setAllTime] = useState(false)
-
+export default function HomePage() {
     const { gastos, loading } = useGastosFiltrados()
 
-    // Filtrar gastos por año, mes y rango de fechas o todo el tiempo
-    const filteredGastos = useMemo(() => {
+    // Gastos del mes actual
+    const currentMonthExpenses = useMemo(() => {
         return gastos.filter(g => {
-            const fecha = /^\d{4}-\d{2}-\d{2}$/.test(g.fecha)
-                ? new Date(g.fecha + "T00:00:00")
-                : new Date(g.fecha)
-            const matchesYear = allTime ? true : (selectedYear ? fecha.getFullYear() === selectedYear : true)
-            const matchesMonth = allTime ? true : (selectedMonth ? fecha.getMonth() + 1 === selectedMonth : true)
-            const matchesStart = startDate ? fecha >= new Date(startDate) : true
-            const matchesEnd = endDate ? fecha <= new Date(endDate) : true
-            return matchesYear && matchesMonth && matchesStart && matchesEnd
+            // Parsear fecha correctamente evitando problemas de zona horaria
+            const fecha = new Date(g.fecha + "T00:00:00")
+            return fecha >= currentMonth && fecha <= currentMonthEnd
         })
-    }, [gastos, selectedYear, selectedMonth, startDate, endDate, allTime])
-
-    // Agrupar por categoría para el gráfico
-    const pieData = useMemo(() => {
-        const result: Record<string, { nombre: string; total: number }> = {}
-        filteredGastos.forEach(g => {
-            if (!result[g.categoria_id]) {
-                result[g.categoria_id] = { nombre: g.categoria.nombre, total: 0 }
-            }
-            result[g.categoria_id].total += g.monto
-        })
-        return result
-    }, [filteredGastos])
-
-    // Agrupar por mes para el AreaChart (toda la data, sin filtros)
-    const monthlyData = useMemo(() => {
-        const result: { name: string; value: number }[] = []
-        for (let i = 0; i < 12; i++) {
-            const monthGastos = gastos.filter(g => {
-                const fecha = /^\d{4}-\d{2}-\d{2}$/.test(g.fecha)
-                    ? new Date(g.fecha + "T00:00:00")
-                    : new Date(g.fecha)
-                return fecha.getMonth() === i
-            })
-            result.push({
-                name: months[i],
-                value: monthGastos.reduce((sum, g) => sum + (typeof g.monto === "string" ? parseFloat(g.monto) : g.monto || 0), 0)
-            })
-        }
-        return result
     }, [gastos])
 
-    // Datos para RadarChart por categoría
-    const radarData = useMemo(() => {
-        return Object.entries(pieData).map(([id, d]) => ({ category: d.nombre, value: d.total }))
-    }, [pieData])
+    // Gastos del mes pasado
+    const lastMonthExpenses = useMemo(() => {
+        return gastos.filter(g => {
+            const fecha = new Date(g.fecha + "T00:00:00")
+            return fecha >= lastMonth && fecha <= lastMonthEnd
+        })
+    }, [gastos])
+
+    // Gastos de hoy
+    const todayExpenses = useMemo(() => {
+        return gastos.filter(g => {
+            const fecha = new Date(g.fecha + "T00:00:00")
+            return isToday(fecha)
+        })
+    }, [gastos])
+
+    // Gastos de ayer
+    const yesterdayExpenses = useMemo(() => {
+        return gastos.filter(g => {
+            const fecha = new Date(g.fecha + "T00:00:00")
+            return isYesterday(fecha)
+        })
+    }, [gastos])
+
+    // Últimos 5 gastos
+    const recentExpenses = useMemo(() => {
+        return gastos
+            .sort((a, b) => {
+                const fechaA = new Date(a.fecha + "T00:00:00")
+                const fechaB = new Date(b.fecha + "T00:00:00")
+                return fechaB.getTime() - fechaA.getTime()
+            })
+            .slice(0, 5)
+    }, [gastos])
+
+    // Totales
+    const currentMonthTotal = currentMonthExpenses.reduce((sum, g) => sum + g.monto, 0)
+    const lastMonthTotal = lastMonthExpenses.reduce((sum, g) => sum + g.monto, 0)
+    const todayTotal = todayExpenses.reduce((sum, g) => sum + g.monto, 0)
+    const monthlyChange = currentMonthTotal - lastMonthTotal
+    const monthlyChangePercentage = lastMonthTotal > 0 ? ((monthlyChange / lastMonthTotal) * 100) : 0
+
+    // Categoría con más gasto este mes
+    const topCategory = useMemo(() => {
+        const categoryTotals: Record<string, { name: string; total: number }> = {}
+        currentMonthExpenses.forEach(g => {
+            if (!categoryTotals[g.categoria_id]) {
+                categoryTotals[g.categoria_id] = { name: g.categoria.nombre, total: 0 }
+            }
+            categoryTotals[g.categoria_id].total += g.monto
+        })
+        
+        const topCat = Object.values(categoryTotals).sort((a, b) => b.total - a.total)[0]
+        return topCat || { name: "N/A", total: 0 }
+    }, [currentMonthExpenses])
+
+    if (loading) {
+        return (
+            <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
+                <div className="flex items-center justify-center h-64">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+            </div>
+        )
+    }
 
     return (
-        <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-gray-50 min-h-screen">
+            {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold mb-2">Estadísticas</h1>
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 w-full">
-                    {/* Widgets - ocupan 3 columnas en desktop */}
-                    <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-1 gap-4">
-                        {/* Widget de total gastado */}
-                        <Card className="h-[110px] bg-green-50 border-green-200 shadow">
-                            <CardContent className="py-5 text-center flex flex-col justify-center h-full">
-                                <span className="block text-sm text-green-700 mb-1">Total gastado</span>
-                                <span className="text-lg font-bold text-green-700">
-                                    ${filteredGastos.reduce((sum, g) => sum + (typeof g.monto === "string" ? parseFloat(g.monto) : g.monto || 0), 0).toFixed(2)}
-                                </span>
-                            </CardContent>
-                        </Card>
-                        {/* Widget de promedio por categoría */}
-                        <Card className="h-[110px] bg-yellow-50 border-yellow-200 shadow-sm">
-                            <CardContent className="py-4 text-center flex flex-col justify-center h-full">
-                                <span className="block text-sm text-yellow-700 mb-1">Promedio por categoría</span>
-                                <span className="text-lg font-bold text-yellow-700">
-                                    ${Object.values(pieData).length > 0 ? (Object.values(pieData).reduce((sum, d) => sum + d.total, 0) / Object.values(pieData).length).toFixed(2) : "0.00"}
-                                </span>
-                            </CardContent>
-                        </Card>
-                        <Card className="h-[110px] bg-purple-50 border-purple-200 shadow-sm">
-                            <CardContent className="py-2 text-center flex flex-col justify-center h-full">
-                                <span className="block text-sm text-purple-700 mb-1">Total de transacciones</span>
-                                <span className="text-lg font-bold text-purple-700">
-                                    {gastos.length}
-                                </span>
-                            </CardContent>
-                        </Card>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                            ¡Hola! 👋
+                        </h1>
+                        <p className="text-gray-600 mt-1">
+                            {format(currentDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
+                        </p>
                     </div>
-                    {/* Filtros - ocupan 4 columnas en desktop */}
-                    <div className="md:col-span-4">
-                        <Card className="h-full bg-white shadow-sm">
-                            <CardContent className="py-4">
-                                <div className="flex flex-col gap-2">
-                                    <label className="block text-sm font-medium">Filtrar por</label>
-                                    <select
-                                        className="border rounded px-2 py-1 w-full"
-                                        value={allTime ? "all" : "periodo"}
-                                        onChange={e => setAllTime(e.target.value === "all")}
-                                    >
-                                        <option value="periodo">Año y mes</option>
-                                        <option value="all">Todo el tiempo</option>
-                                    </select>
-                                    {!allTime && (
-                                        <>
-                                            <label className="block text-sm font-medium">Año</label>
-                                            <select
-                                                className="border rounded px-2 py-1 w-full"
-                                                value={selectedYear}
-                                                onChange={e => setSelectedYear(Number(e.target.value))}
-                                            >
-                                                {years.map(y => (
-                                                    <option key={y} value={y}>{y}</option>
-                                                ))}
-                                            </select>
-                                            <label className="block text-sm font-medium">Mes</label>
-                                            <select
-                                                className="border rounded px-2 py-1 w-full"
-                                                value={selectedMonth}
-                                                onChange={e => setSelectedMonth(Number(e.target.value))}
-                                            >
-                                                {months.map((m, i) => (
-                                                    <option key={m} value={i + 1}>{m}</option>
-                                                ))}
-                                            </select>
-                                        </>
+                    <Link href="/form">
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                            <PlusCircle className="w-4 h-4 mr-2" />
+                            Agregar Gasto
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+
+            {/* Cards de resumen */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                {/* Gasto del mes */}
+                <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                    <CardContent className="p-4 sm:p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-blue-600 text-sm font-medium">Este mes</p>
+                                <p className="text-2xl font-bold text-blue-900">
+                                    ${currentMonthTotal.toLocaleString()}
+                                </p>
+                                <div className="flex items-center mt-2">
+                                    {monthlyChange >= 0 ? (
+                                        <TrendingUp className="w-4 h-4 text-red-500 mr-1" />
+                                    ) : (
+                                        <TrendingDown className="w-4 h-4 text-green-500 mr-1" />
                                     )}
-                                    <label className="block text-sm font-medium">Desde</label>
-                                    <input
-                                        type="date"
-                                        className="border rounded px-2 py-1 w-full"
-                                        value={startDate}
-                                        onChange={e => setStartDate(e.target.value)}
-                                    />
-                                    <label className="block text-sm font-medium">Hasta</label>
-                                    <input
-                                        type="date"
-                                        className="border rounded px-2 py-1 w-full"
-                                        value={endDate}
-                                        onChange={e => setEndDate(e.target.value)}
-                                    />
+                                    <span className={`text-sm ${monthlyChange >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                        {Math.abs(monthlyChangePercentage).toFixed(1)}% vs mes anterior
+                                    </span>
+                                </div>
+                            </div>
+                            <DollarSign className="w-8 h-8 text-blue-600" />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Gasto de hoy */}
+                <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                    <CardContent className="p-4 sm:p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-green-600 text-sm font-medium">Hoy</p>
+                                <p className="text-2xl font-bold text-green-900">
+                                    ${todayTotal.toLocaleString()}
+                                </p>
+                                <p className="text-sm text-green-600 mt-2">
+                                    {todayExpenses.length} transacción{todayExpenses.length !== 1 ? 'es' : ''}
+                                </p>
+                            </div>
+                            <Calendar className="w-8 h-8 text-green-600" />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Categoría principal */}
+                <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                    <CardContent className="p-4 sm:p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-purple-600 text-sm font-medium">Categoría principal</p>
+                                <p className="text-lg font-bold text-purple-900 truncate">
+                                    {topCategory.name}
+                                </p>
+                                <p className="text-sm text-purple-600 mt-2">
+                                    ${topCategory.total.toLocaleString()}
+                                </p>
+                            </div>
+                            <ShoppingCart className="w-8 h-8 text-purple-600" />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Total de gastos */}
+                <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+                    <CardContent className="p-4 sm:p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-orange-600 text-sm font-medium">Total de gastos</p>
+                                <p className="text-2xl font-bold text-orange-900">
+                                    {gastos.length}
+                                </p>
+                                <p className="text-sm text-orange-600 mt-2">
+                                    {currentMonthExpenses.length} este mes
+                                </p>
+                            </div>
+                            <CreditCard className="w-8 h-8 text-orange-600" />
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Gastos recientes */}
+                <div className="lg:col-span-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Clock className="w-5 h-5" />
+                                Gastos Recientes
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {recentExpenses.length === 0 ? (
+                                <div className="text-center py-8 text-gray-500">
+                                    <p>No hay gastos registrados</p>
+                                    <Link href="/form">
+                                        <Button variant="outline" className="mt-4">
+                                            Agregar tu primer gasto
+                                        </Button>
+                                    </Link>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {recentExpenses.map((gasto) => (
+                                        <div key={gasto.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-blue-100 rounded-full">
+                                                    <DollarSign className="w-4 h-4 text-blue-600" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-gray-900 truncate max-w-[200px]">
+                                                        {gasto.descripcion}
+                                                    </p>
+                                                    <p className="text-sm text-gray-500">
+                                                        {gasto.categoria.nombre} • {format(new Date(gasto.fecha + "T00:00:00"), "d MMM", { locale: es })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span className="font-bold text-gray-900">
+                                                ${gasto.monto.toLocaleString()}
+                                            </span>
+                                        </div>
+                                    ))}
+                                    {gastos.length > 5 && (
+                                        <div className="text-center pt-4">
+                                            <Link href="/estadisticas">
+                                                <Button variant="outline">
+                                                    Ver todos los gastos
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Acciones rápidas */}
+                <div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Acciones Rápidas</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <Link href="/form" className="block">
+                                <Button variant="outline" className="w-full justify-start">
+                                    <PlusCircle className="w-4 h-4 mr-2" />
+                                    Nuevo Gasto
+                                </Button>
+                            </Link>
+                            <Link href="/estadisticas" className="block">
+                                <Button variant="outline" className="w-full justify-start">
+                                    <TrendingUp className="w-4 h-4 mr-2" />
+                                    Ver Estadísticas
+                                </Button>
+                            </Link>
+                            <Link href="/presupuesto" className="block">
+                                <Button variant="outline" className="w-full justify-start">
+                                    <AlertTriangle className="w-4 h-4 mr-2" />
+                                    Gestionar Presupuesto
+                                </Button>
+                            </Link>
+                        </CardContent>
+                    </Card>
+
+                    {/* Comparación mensual */}
+                    {lastMonthTotal > 0 && (
+                        <Card className="mt-6">
+                            <CardHeader>
+                                <CardTitle className="text-base">Comparación Mensual</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-gray-600">Mes anterior</span>
+                                        <span className="font-medium">${lastMonthTotal.toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-gray-600">Este mes</span>
+                                        <span className="font-medium">${currentMonthTotal.toLocaleString()}</span>
+                                    </div>
+                                    <hr />
+                                    <div className="flex justify-between">
+                                        <span className="text-sm font-medium">Diferencia</span>
+                                        <span className={`font-bold ${monthlyChange >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                            {monthlyChange >= 0 ? '+' : ''}${monthlyChange.toLocaleString()}
+                                        </span>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
-                    </div>
-                    {/* Radar Chart - ocupan 5 columnas en desktop */}
-                    <div className="md:col-span-5">
-                        <Card className="h-full bg-white rounded-lg shadow-sm">
-                            <CardContent className="p-4 flex flex-col items-center h-full">
-                                <h2 className="text-lg font-semibold mb-4">Radar de categorías</h2>
-                                {loading ? (
-                                    <div className="text-center py-8">Cargando datos...</div>
-                                ) : radarData.length === 0 ? (
-                                    <div className="text-center py-8">No hay datos para mostrar.</div>
-                                ) : (
-                                    <ResponsiveContainer width="100%" height={300}>
-                                        <RadarChart cx="50%" cy="50%" outerRadius={100} data={radarData}>
-                                            <PolarGrid />
-                                            <PolarAngleAxis dataKey="category" fontSize={12} />
-                                            <PolarRadiusAxis fontSize={10} />
-                                            <Radar name="Gasto" dataKey="value" stroke="#fbbf24" fill="#fbbf24" fillOpacity={0.6} />
-                                            <Tooltip />
-                                        </RadarChart>
-                                    </ResponsiveContainer>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* PieChart */}
-                <div className="bg-white rounded-lg shadow-sm p-6 flex flex-col items-center">
-                    <h2 className="text-lg font-semibold mb-4">Distribución por categoría</h2>
-                    {loading ? (
-                        <div className="text-center py-8">Cargando datos...</div>
-                    ) : (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie
-                                    data={Object.entries(pieData).map(([id, d]) => ({ name: d.nombre, value: d.total }))}
-                                    dataKey="value"
-                                    nameKey="name"
-                                    cx="50%"
-                                    cy="50%"
-                                    outerRadius={100}
-                                    label
-                                >
-                                    {Object.entries(pieData).map(([id], idx) => (
-                                        <Cell key={id} fill={["#38bdf8", "#34d399", "#fbbf24", "#f87171", "#a78bfa", "#f472b6"][idx % 6]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    )}
-                </div>
-                {/* BarChart */}
-                <div className="bg-white rounded-lg shadow-sm p-6 flex flex-col items-center">
-                    <h2 className="text-lg font-semibold mb-4">Gasto por categoría</h2>
-                    {loading ? (
-                        <div className="text-center py-8">Cargando datos...</div>
-                    ) : (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart
-                                data={Object.entries(pieData).map(([id, d]) => ({ name: d.nombre, value: d.total }))}
-                            >
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Bar dataKey="value" fill="#38bdf8" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    )}
-                </div>
-                {/* AreaChart: Gasto mensual */}
-                <div className="bg-white rounded-lg shadow-sm p-6 flex flex-col items-center md:col-span-2">
-                    <h2 className="text-lg font-semibold mb-4">Gasto mensual</h2>
-                    {loading ? (
-                        <div className="text-center py-8">Cargando datos...</div>
-                    ) : (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <AreaChart data={monthlyData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorGasto" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip />
-                                <Area type="monotone" dataKey="value" stroke="#38bdf8" fillOpacity={1} fill="url(#colorGasto)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
                     )}
                 </div>
             </div>

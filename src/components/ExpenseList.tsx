@@ -1,16 +1,17 @@
 import { useState } from "react"
 import { ExpenseItem } from "./ExpenseItem"
-import { Expense } from "./../hooks/useExpenses"
+// import { Expense } from "./../hooks/useExpenses"
+import { Gasto } from "./../hooks/useGastosFiltrados"
 import { format, parse, parseISO, addMinutes } from "date-fns"
 import { es } from "date-fns/locale"
 import { ConfirmModal } from "./ConfirmModal"
-
 type Props = {
-  groupedExpenses: Record<string, Expense[]>
+  groupedExpenses: Record<string, Gasto[]>
   isLoading: boolean
   onDelete: (id: string) => void
   groupBy: "dia" | "semana" | "mes"
 }
+
 
 function toLocalDate(date: Date) {
   // Si la fecha tiene hora 00:00:00 y se interpreta en UTC, ajusta a local

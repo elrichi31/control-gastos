@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, FileText, Calculator, X, ChevronLeft } from "lucide-react"
+import { Home, FileText, Calculator, X, ChevronLeft, BarChart3, Receipt } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -22,6 +22,11 @@ const menuItems = [
 		href: "/presupuesto",
 		icon: Calculator,
 	},
+	{
+		name: "Estadísticas",
+		href: "/estadisticas",
+		icon: BarChart3,
+	},
 ]
 
 interface SidebarProps {
@@ -30,6 +35,7 @@ interface SidebarProps {
 	isMobile: boolean
 	isCollapsed: boolean
 	onToggleCollapse: () => void
+	onOpenExpenseDetails?: () => void
 }
 
 export function Sidebar({
@@ -38,6 +44,7 @@ export function Sidebar({
 	isMobile,
 	isCollapsed,
 	onToggleCollapse,
+	onOpenExpenseDetails,
 }: SidebarProps) {
 	const pathname = usePathname()
 
@@ -95,6 +102,24 @@ export function Sidebar({
 							)
 						})}
 					</nav>
+
+					{/* Sección adicional para herramientas en móvil */}
+					<div className="px-6 pt-6 pb-4">
+						<p className="text-sm font-medium text-gray-600">Herramientas</p>
+					</div>
+
+					<div className="px-3">
+						<button
+							onClick={() => {
+								onOpenExpenseDetails?.()
+								onClose()
+							}}
+							className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1 text-gray-600 hover:bg-gray-50 hover:text-gray-900 border border-gray-200 hover:border-gray-300"
+						>
+							<Receipt className="w-5 h-5" />
+							Detalle de Gastos
+						</button>
+					</div>
 				</div>
 			</>
 		)
@@ -164,6 +189,28 @@ export function Sidebar({
 					)
 				})}
 			</nav>
+
+			{/* Sección adicional para detalles de gastos */}
+			{!isCollapsed && (
+				<div className="px-6 pt-6 pb-4">
+					<p className="text-sm font-medium text-gray-600">Herramientas</p>
+				</div>
+			)}
+
+			<div className="px-3">
+				<button
+					onClick={onOpenExpenseDetails}
+					className={cn(
+						"w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1 group",
+						"text-gray-600 hover:bg-gray-50 hover:text-gray-900 border border-gray-200 hover:border-gray-300",
+						isCollapsed && "justify-center"
+					)}
+					title={isCollapsed ? "Detalle de Gastos" : undefined}
+				>
+					<Receipt className="w-5 h-5 flex-shrink-0" />
+					{!isCollapsed && <span>Detalle de Gastos</span>}
+				</button>
+			</div>
 		</div>
 	)
 }

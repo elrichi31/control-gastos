@@ -1,10 +1,12 @@
 "use client"
 
 import type React from "react"
+import { useState } from "react"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { Sidebar } from "@/components/Sidebar"
 import { MobileHeader } from "@/components/MobileHeader"
+import { ExpenseDetailsPanel } from "@/components/expense-details/ExpenseDetailsPanel"
 import { useSidebar } from "@/hooks/useSidebar"
 import { cn } from "@/lib/utils"
 import { Toaster } from "react-hot-toast"
@@ -17,6 +19,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const { isOpen, toggle, close, isMobile, isCollapsed, toggleCollapse } = useSidebar()
+  const [isExpenseDetailsOpen, setIsExpenseDetailsOpen] = useState(false)
 
   const getMainMargin = () => {
     if (isMobile) return "ml-0"
@@ -34,12 +37,19 @@ export default function RootLayout({
             isMobile={isMobile}
             isCollapsed={isCollapsed}
             onToggleCollapse={toggleCollapse}
+            onOpenExpenseDetails={() => setIsExpenseDetailsOpen(true)}
           />
 
           <div className={cn("flex-1 transition-all duration-300 ease-in-out", getMainMargin())}>
             <MobileHeader onMenuClick={toggle} isMobile={isMobile} />
             <main className="bg-gray-50 min-h-screen">{children}</main>
           </div>
+
+          {/* Panel de detalles de gastos */}
+          <ExpenseDetailsPanel
+            isOpen={isExpenseDetailsOpen}
+            onClose={() => setIsExpenseDetailsOpen(false)}
+          />
         </div>
         <Toaster position="top-right" />
       </body>
