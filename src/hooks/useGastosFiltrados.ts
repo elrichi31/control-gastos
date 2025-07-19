@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { DEFAULT_METODO_PAGO, API_ENDPOINTS } from "@/lib/constants"
 
 export interface Gasto {
   id: number
@@ -20,14 +21,14 @@ export function useGastosFiltrados() {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch("/api/gastos")
+        const res = await fetch(API_ENDPOINTS.GASTOS)
         if (!res.ok) throw new Error("Error al obtener gastos")
         const data = await res.json()
         
         // Formatear los datos para incluir metodo_pago si no existe
         const formattedData = data.map((gasto: any) => ({
           ...gasto,
-          metodo_pago: gasto.metodo_pago || { id: 1, nombre: "Efectivo" }
+          metodo_pago: gasto.metodo_pago || DEFAULT_METODO_PAGO
         }))
         
         setGastos(formattedData)

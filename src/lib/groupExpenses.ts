@@ -1,27 +1,22 @@
-import { Expense } from "@/hooks/useExpenses"
-import { addDays, endOfWeek, format } from "date-fns"
-
-function toLocalDateFromString(dateStr: string): Date {
-  const [year, month, day] = dateStr.split("-").map(Number)
-  return new Date(year, month - 1, day)
-}
+import { Expense } from "@/types"
+import { endOfWeek, format } from "date-fns"
+import { toLocalDateFromString } from "./dateUtils"
 
 export function groupExpenses(expenses: Expense[], groupBy: "dia" | "semana" | "mes") {
   const grouped: Record<string, Expense[]> = {}
 
   for (const expense of expenses) {
-    const date = toLocalDateFromString(expense.fecha.slice(0, 10))
+    const date = toLocalDateFromString(expense.fecha)
     let key: string
 
     if (groupBy === "dia") {
-      key = format(date, "yyyy-MM-dd") // para formato: lunes 2 de junio 2025
+      key = format(date, "yyyy-MM-dd")
     } else if (groupBy === "semana") {
       const monday = getStartOfWeek(date)
-      const sunday = endOfWeek(monday, { weekStartsOn: 1 }) // semana inicia en lunes
+      const sunday = endOfWeek(monday, { weekStartsOn: 1 })
       key = `${format(monday, "yyyy-MM-dd")}::${format(sunday, "yyyy-MM-dd")}`
-      // ejemplo: 2025-06-02::2025-06-08
     } else if (groupBy === "mes") {
-      key = format(date, "yyyy-MM") // para formato: mayo 2025
+      key = format(date, "yyyy-MM")
     } else {
       key = format(date, "yyyy-MM-dd")
     }

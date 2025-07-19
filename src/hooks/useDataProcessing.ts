@@ -1,4 +1,6 @@
 import { useMemo } from "react"
+import { toDateWithTime } from "@/lib/dateUtils"
+import { MESES_NOMBRES, MESES_NOMBRES_LOWERCASE } from "@/lib/constants"
 
 interface FilterOptions {
   filterType: "year-month" | "year" | "month" | "custom"
@@ -17,14 +19,12 @@ export function useDataProcessing({ gastos, currentFilters }: DataProcessingHook
   // Filtrar gastos según los filtros actuales
   const filteredGastos = useMemo(() => {
     return gastos.filter(gasto => {
-      const fecha = new Date(gasto.fecha + "T00:00:00")
+      const fecha = toDateWithTime(gasto.fecha)
       
       switch (currentFilters.filterType) {
         case "year-month":
           const targetYear = parseInt(currentFilters.year)
-          const targetMonth = ["enero", "febrero", "marzo", "abril", "mayo", "junio", 
-                              "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
-                              .indexOf(currentFilters.month.toLowerCase())
+          const targetMonth = MESES_NOMBRES_LOWERCASE.indexOf(currentFilters.month.toLowerCase() as any)
           return fecha.getFullYear() === targetYear && fecha.getMonth() === targetMonth
         
         case "year":
@@ -72,12 +72,10 @@ export function useDataProcessing({ gastos, currentFilters }: DataProcessingHook
   // Datos agregados para gráfico mensual (todo el año actual)
   const monthlyData = useMemo(() => {
     const currentYear = new Date().getFullYear()
-    const months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
     
-    return months.map((month, index) => {
+    return MESES_NOMBRES.map((month, index) => {
       const monthGastos = gastos.filter(gasto => {
-        const fecha = new Date(gasto.fecha + "T00:00:00")
+        const fecha = toDateWithTime(gasto.fecha)
         return fecha.getFullYear() === currentYear && fecha.getMonth() === index
       })
       

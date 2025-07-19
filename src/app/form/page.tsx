@@ -2,14 +2,31 @@
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DollarSign } from "lucide-react"
-import { useExpenses } from "./../../hooks/useExpenses"
+import { useGastosFiltrados, Gasto } from "@/hooks/useGastosFiltrados"
 import { ExpenseForm } from "./../../components/ExpenseForm"
 import { ExpenseSummary } from "./../../components/ExpenseSummary"
 import { ExpenseList } from "./../../components/ExpenseList"
 import { groupExpenses } from "@/lib/groupExpenses"
+import { Expense } from "@/types"
+import { toDateWithTime } from "@/lib/dateUtils"
+import { DEFAULT_METODO_PAGO } from "@/lib/constants"
+
+// Helper function to convert Gasto to Expense
+function gastoToExpense(gasto: Gasto): Expense {
+  return {
+    id: gasto.id,
+    descripcion: gasto.descripcion,
+    monto: gasto.monto,
+    fecha: gasto.fecha,
+    categoria_id: gasto.categoria_id,
+    metodo_pago_id: gasto.metodo_pago?.id || 1,
+    categoria: gasto.categoria,
+    metodo_pago: gasto.metodo_pago || DEFAULT_METODO_PAGO
+  }
+}
 
 export default function ExpenseTracker() {
-  const { expenses, isLoading, setExpenses, fetchExpenses } = useExpenses()
+  const { gastos, loading, deleteGasto } = useGastosFiltrados()
 
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: "", to: "" })
   const [groupBy, setGroupBy] = useState<"dia" | "semana" | "mes">("dia")
@@ -22,15 +39,12 @@ export default function ExpenseTracker() {
     setGroupBy(group)
   }
 
-  const filteredExpenses = expenses.filter((expense) => {
+  const filteredExpenses = gastos.filter((expense) => {
     if (!dateRange.from && !dateRange.to) return true
 
-    const expenseDate = new Date(expense.fecha)
-    const fromDate = dateRange.from ? new Date(dateRange.from) : null
-    const toDate = dateRange.to ? new Date(dateRange.to) : null
-
-    if (fromDate) fromDate.setUTCHours(0, 0, 0, 0)
-    if (toDate) toDate.setUTCHours(23, 59, 59, 999)
+    const expenseDate = toDateWithTime(expense.fecha)
+    const fromDate = dateRange.from ? toDateWithTime(dateRange.from) : null
+    const toDate = dateRange.to ? toDateWithTime(dateRange.to, 'end') : null
 
     if (fromDate && toDate) return expenseDate >= fromDate && expenseDate <= toDate
     if (fromDate) return expenseDate >= fromDate
@@ -38,19 +52,23 @@ export default function ExpenseTracker() {
     return true
   })
 
-  const groupedExpenses = groupExpenses(filteredExpenses, groupBy)
+  // Convert Gasto to Expense for compatibility with groupExpenses
+  const filteredExpensesAsExpense = filteredExpenses.map(gastoToExpense)
+  const groupedExpenses = groupExpenses(filteredExpensesAsExpense, groupBy)
 
-  const deleteExpense = async (id: string) => {
+  const handleDeleteExpense = async (id: string) => {
     try {
-      await fetch(`/api/gastos?id=${id}`, {
-        method: "DELETE",
-      })
-
-      setExpenses((prev) => prev.filter((expense) => String(expense.id) !== String(id)))
+      await deleteGasto(id)
     } catch (error) {
       console.error("Error al eliminar gasto:", error)
       alert("Ocurrió un error al eliminar el gasto")
     }
+  }
+
+  // Función para refrescar los datos (compatible con ExpenseForm)
+  const fetchExpenses = () => {
+    // Los datos se actualizan automáticamente con useGastosFiltrados
+    window.location.reload()
   }
 
 
@@ -77,7 +95,7 @@ export default function ExpenseTracker() {
 
         <div className="space-y-6">
           <ExpenseSummary
-            expenses={filteredExpenses}
+            expenses={filteredExpensesAsExpense}
             onDateRangeChange={handleFilterChange}
             groupBy={groupBy}
             setGroupBy={setGroupBy}
@@ -91,8 +109,8 @@ export default function ExpenseTracker() {
           <CardContent>
             <ExpenseList
               groupedExpenses={groupedExpenses}
-              isLoading={isLoading}
-              onDelete={deleteExpense}
+              isLoading={loading}
+              onDelete={handleDeleteExpense}
               groupBy={groupBy}
             />
 

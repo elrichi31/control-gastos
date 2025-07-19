@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
 import { format, startOfMonth, endOfMonth, isToday, isYesterday, subMonths } from "date-fns"
 import { es } from "date-fns/locale"
+import { toDateWithTime, formatDateWithLocale } from "@/lib/dateUtils"
 import Link from "next/link"
 import { 
   PlusCircle, 
@@ -35,7 +36,7 @@ export default function HomePage() {
     const currentMonthExpenses = useMemo(() => {
         return gastos.filter(g => {
             // Parsear fecha correctamente evitando problemas de zona horaria
-            const fecha = new Date(g.fecha + "T00:00:00")
+            const fecha = toDateWithTime(g.fecha)
             return fecha >= currentMonth && fecha <= currentMonthEnd
         })
     }, [gastos])
@@ -43,7 +44,7 @@ export default function HomePage() {
     // Gastos del mes pasado
     const lastMonthExpenses = useMemo(() => {
         return gastos.filter(g => {
-            const fecha = new Date(g.fecha + "T00:00:00")
+            const fecha = toDateWithTime(g.fecha)
             return fecha >= lastMonth && fecha <= lastMonthEnd
         })
     }, [gastos])
@@ -51,7 +52,7 @@ export default function HomePage() {
     // Gastos de hoy
     const todayExpenses = useMemo(() => {
         return gastos.filter(g => {
-            const fecha = new Date(g.fecha + "T00:00:00")
+            const fecha = toDateWithTime(g.fecha)
             return isToday(fecha)
         })
     }, [gastos])
@@ -59,7 +60,7 @@ export default function HomePage() {
     // Gastos de ayer
     const yesterdayExpenses = useMemo(() => {
         return gastos.filter(g => {
-            const fecha = new Date(g.fecha + "T00:00:00")
+            const fecha = toDateWithTime(g.fecha)
             return isYesterday(fecha)
         })
     }, [gastos])
@@ -68,8 +69,8 @@ export default function HomePage() {
     const recentExpenses = useMemo(() => {
         return gastos
             .sort((a, b) => {
-                const fechaA = new Date(a.fecha + "T00:00:00")
-                const fechaB = new Date(b.fecha + "T00:00:00")
+                const fechaA = toDateWithTime(a.fecha)
+                const fechaB = toDateWithTime(b.fecha)
                 return fechaB.getTime() - fechaA.getTime()
             })
             .slice(0, 5)
@@ -243,7 +244,7 @@ export default function HomePage() {
                                                         {gasto.descripcion}
                                                     </p>
                                                     <p className="text-sm text-gray-500">
-                                                        {gasto.categoria.nombre} • {format(new Date(gasto.fecha + "T00:00:00"), "d MMM", { locale: es })}
+                                                        {gasto.categoria.nombre} • {formatDateWithLocale(gasto.fecha, "d MMM")}
                                                     </p>
                                                 </div>
                                             </div>
