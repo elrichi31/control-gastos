@@ -28,10 +28,8 @@ export function StatsCard({ title, value, subtitle, icon: Icon, trend, color = "
         {trend && (
           <div className="flex items-center mt-2">
             <span className={`text-xs font-medium ${trend.isPositive ? "text-green-600" : "text-red-600"}`}>
-              {trend.isPositive ? "" : "+"}
-              {trend.isPositive ? "-" : ""}{trend.value}%
+              {trend.value > 0 ? "+" : ""}{Math.round(trend.value)}% vs mes anterior
             </span>
-            <span className="text-xs text-gray-500 ml-1">vs mes anterior</span>
           </div>
         )}
       </CardContent>

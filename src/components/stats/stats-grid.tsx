@@ -26,8 +26,8 @@ export function StatsGrid({ totalExpenses, monthlyAverage, totalTransactions, av
         subtitle={`Mes anterior: $${previous.total.toLocaleString()}`}
         icon={DollarSign}
         trend={{ 
-          value: Math.abs(changes.totalChange), 
-          isPositive: changes.totalChange <= 0 // Menos gasto es positivo
+          value: changes.totalChange, 
+          isPositive: changes.totalChange < 0 // Menos gasto es positivo
         }}
         color="text-green-600"
       />
@@ -37,8 +37,8 @@ export function StatsGrid({ totalExpenses, monthlyAverage, totalTransactions, av
         subtitle={`Mes anterior: ${previous.transactions}`}
         icon={Calendar}
         trend={{ 
-          value: Math.abs(changes.transactionChange), 
-          isPositive: changes.transactionChange >= 0 
+          value: changes.transactionChange, 
+          isPositive: changes.transactionChange < 0 // Menos transacciones como positivo
         }}
         color="text-purple-600"
       />
@@ -48,8 +48,8 @@ export function StatsGrid({ totalExpenses, monthlyAverage, totalTransactions, av
         subtitle={`Anterior: $${Math.round(previous.avgPerTransaction).toLocaleString()}`}
         icon={TrendingUp}
         trend={{ 
-          value: Math.abs(changes.avgPerTransactionChange), 
-          isPositive: changes.avgPerTransactionChange <= 0 // Menor promedio es mejor
+          value: changes.avgPerTransactionChange, 
+          isPositive: changes.avgPerTransactionChange < 0 // Menor promedio es mejor
         }}
         color="text-blue-600"
       />
