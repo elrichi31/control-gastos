@@ -27,9 +27,9 @@ export function StatsCard({ title, value, subtitle, icon: Icon, trend, color = "
         {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
         {trend && (
           <div className="flex items-center mt-2">
-            <span className={`text-xs font-medium ${trend.isPositive ? "text-red-600" : "text-green-600"}`}>
-              {trend.isPositive ? "+" : ""}
-              {trend.value}%
+            <span className={`text-xs font-medium ${trend.isPositive ? "text-green-600" : "text-red-600"}`}>
+              {trend.isPositive ? "" : "+"}
+              {trend.isPositive ? "-" : ""}{trend.value}%
             </span>
             <span className="text-xs text-gray-500 ml-1">vs mes anterior</span>
           </div>

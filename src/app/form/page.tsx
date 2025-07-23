@@ -10,6 +10,7 @@ import { groupExpenses } from "@/lib/groupExpenses"
 import { Expense } from "@/types"
 import { toDateWithTime } from "@/lib/dateUtils"
 import { DEFAULT_METODO_PAGO } from "@/lib/constants"
+import { PageTitle } from "@/components/PageTitle"
 
 // Helper function to convert Gasto to Expense
 function gastoToExpense(gasto: Gasto): Expense {
@@ -74,6 +75,7 @@ export default function ExpenseTracker() {
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <PageTitle customTitle="Nuevo Gasto - Control de Gastos" />
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900">Control de Gastos Personales</h1>
         <p className="text-gray-600 mt-2">Registra y controla tus gastos diarios</p>

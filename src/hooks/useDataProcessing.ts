@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import { toDateWithTime } from "@/lib/dateUtils"
 import { MESES_NOMBRES, MESES_NOMBRES_LOWERCASE } from "@/lib/constants"
+import { startOfMonth, endOfMonth, subMonths } from "date-fns"
 
 interface FilterOptions {
   filterType: "year-month" | "year" | "month" | "custom"
@@ -110,6 +111,145 @@ export function useDataProcessing({ gastos, currentFilters }: DataProcessingHook
     ? Math.round(totalExpenses / categoryData.length)
     : 0
 
+  // Comparaciones con mes anterior
+  const currentMonthStats = useMemo(() => {
+    // Si el filtro es por año-mes específico, usamos ese mes
+    // Si no, usamos el mes actual
+    let targetDate: Date
+    
+    if (currentFilters.filterType === "year-month") {
+      const monthNames = [
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+      ]
+      const monthIndex = monthNames.indexOf(currentFilters.month.toLowerCase())
+      const year = parseInt(currentFilters.year)
+      targetDate = new Date(year, monthIndex, 1)
+    } else {
+      targetDate = new Date()
+    }
+
+    const currentMonthStart = startOfMonth(targetDate)
+    const currentMonthEnd = endOfMonth(targetDate)
+    
+    const previousMonthStart = startOfMonth(subMonths(targetDate, 1))
+    const previousMonthEnd = endOfMonth(subMonths(targetDate, 1))
+
+    const currentMonthGastos = gastos.filter(gasto => {
+      const fecha = toDateWithTime(gasto.fecha)
+      return fecha >= currentMonthStart && fecha <= currentMonthEnd
+    })
+
+    const previousMonthGastos = gastos.filter(gasto => {
+      const fecha = toDateWithTime(gasto.fecha)
+      return fecha >= previousMonthStart && fecha <= previousMonthEnd
+    })
+
+    const currentTotal = currentMonthGastos.reduce((sum, g) => sum + g.monto, 0)
+    const previousTotal = previousMonthGastos.reduce((sum, g) => sum + g.monto, 0)
+    const currentTransactions = currentMonthGastos.length
+    const previousTransactions = previousMonthGastos.length
+
+    // Calcular porcentajes de cambio
+    const totalChange = previousTotal > 0 
+      ? ((currentTotal - previousTotal) / previousTotal) * 100
+      : currentTotal > 0 ? 100 : 0
+
+    const transactionChange = previousTransactions > 0
+      ? ((currentTransactions - previousTransactions) / previousTransactions) * 100
+      : currentTransactions > 0 ? 100 : 0
+
+    const avgPerTransactionCurrent = currentTransactions > 0 ? currentTotal / currentTransactions : 0
+    const avgPerTransactionPrevious = previousTransactions > 0 ? previousTotal / previousTransactions : 0
+    const avgPerTransactionChange = avgPerTransactionPrevious > 0
+      ? ((avgPerTransactionCurrent - avgPerTransactionPrevious) / avgPerTransactionPrevious) * 100
+      : avgPerTransactionCurrent > 0 ? 100 : 0
+
+    return {
+      current: {
+        total: currentTotal,
+        transactions: currentTransactions,
+        avgPerTransaction: avgPerTransactionCurrent
+      },
+      previous: {
+        total: previousTotal,
+        transactions: previousTransactions,
+        avgPerTransaction: avgPerTransactionPrevious
+      },
+      changes: {
+        totalChange: Math.round(totalChange),
+        transactionChange: Math.round(transactionChange),
+        avgPerTransactionChange: Math.round(avgPerTransactionChange)
+      }
+    }
+  }, [gastos, currentFilters])
+
+  // Comparación por categorías (mes actual vs anterior)
+  const categoryComparisonStats = useMemo(() => {
+    // Si el filtro es por año-mes específico, usamos ese mes
+    // Si no, usamos el mes actual
+    let targetDate: Date
+    
+    if (currentFilters.filterType === "year-month") {
+      const monthNames = [
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+      ]
+      const monthIndex = monthNames.indexOf(currentFilters.month.toLowerCase())
+      const year = parseInt(currentFilters.year)
+      targetDate = new Date(year, monthIndex, 1)
+    } else {
+      targetDate = new Date()
+    }
+
+    const currentMonthStart = startOfMonth(targetDate)
+    const currentMonthEnd = endOfMonth(targetDate)
+    const previousMonthStart = startOfMonth(subMonths(targetDate, 1))
+    const previousMonthEnd = endOfMonth(subMonths(targetDate, 1))
+
+    const currentMonthGastos = gastos.filter(gasto => {
+      const fecha = toDateWithTime(gasto.fecha)
+      return fecha >= currentMonthStart && fecha <= currentMonthEnd
+    })
+
+    const previousMonthGastos = gastos.filter(gasto => {
+      const fecha = toDateWithTime(gasto.fecha)
+      return fecha >= previousMonthStart && fecha <= previousMonthEnd
+    })
+
+    // Agrupar por categoría
+    const currentByCategory: Record<string, number> = {}
+    const previousByCategory: Record<string, number> = {}
+
+    currentMonthGastos.forEach(gasto => {
+      const cat = gasto.categoria.nombre
+      currentByCategory[cat] = (currentByCategory[cat] || 0) + gasto.monto
+    })
+
+    previousMonthGastos.forEach(gasto => {
+      const cat = gasto.categoria.nombre
+      previousByCategory[cat] = (previousByCategory[cat] || 0) + gasto.monto
+    })
+
+    // Calcular cambios por categoría
+    const allCategories = new Set([...Object.keys(currentByCategory), ...Object.keys(previousByCategory)])
+    const categoryChanges = Array.from(allCategories).map(categoria => {
+      const current = currentByCategory[categoria] || 0
+      const previous = previousByCategory[categoria] || 0
+      const change = previous > 0 ? ((current - previous) / previous) * 100 : current > 0 ? 100 : 0
+
+      return {
+        categoria,
+        current,
+        previous,
+        change: Math.round(change),
+        trend: change > 5 ? 'increase' as const : change < -5 ? 'decrease' as const : 'stable' as const
+      }
+    })
+
+    return categoryChanges.sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
+  }, [gastos, currentFilters])
+
   // Análisis adicional para insights
   const monthlyDataWithValues = monthlyData.filter(m => m.amount > 0)
   const maxMonth = monthlyDataWithValues.reduce((max, month) => 
@@ -137,6 +277,9 @@ export function useDataProcessing({ gastos, currentFilters }: DataProcessingHook
     maxMonth,
     minMonth,
     topCategory,
-    categoryPercentage
+    categoryPercentage,
+    // Nuevas estadísticas de comparación
+    currentMonthStats,
+    categoryComparisonStats
   }
 }

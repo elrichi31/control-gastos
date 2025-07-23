@@ -7,6 +7,7 @@ import "./globals.css"
 import { Sidebar } from "@/components/Sidebar"
 import { MobileHeader } from "@/components/MobileHeader"
 import { ExpenseDetailsPanel } from "@/components/expense-details/ExpenseDetailsPanel"
+import { PageTitle } from "@/components/PageTitle"
 import { useSidebar } from "@/hooks/useSidebar"
 import { cn } from "@/lib/utils"
 import { Toaster } from "react-hot-toast"
@@ -30,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={inter.className}>
+        <PageTitle />
         <div className="flex min-h-screen">
           <Sidebar
             isOpen={isOpen}

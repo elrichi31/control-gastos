@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Breadcrumb } from "@/components/Breadcrumb"
+import { PageTitle } from "@/components/PageTitle"
 import { PresupuestoGrid } from "@/components/presupuesto/PresupuestoGrid"
 import { YearSelector } from "@/components/presupuesto/YearSelector"
 import { EmptyMonths } from "@/components/presupuesto/EmptyMonths"
@@ -192,6 +193,7 @@ export default function HomePage() {
 
   return (
     <div className="p-4 lg:p-8">
+      <PageTitle customTitle={`Presupuestos ${selectedYear} - Control de Gastos`} />
       <Breadcrumb items={[{ label: "Presupuesto" }]} large />
       <div className="mb-8 mt-8">
         <YearSelector selectedYear={selectedYear} setSelectedYear={handleYearChange} />
