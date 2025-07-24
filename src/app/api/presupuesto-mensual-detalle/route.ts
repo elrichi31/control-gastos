@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import supabase from '@/lib/supabaseClient'
+import { getAuthenticatedSupabaseClient } from '@/lib/auth-supabase'
 
 // GET: Devuelve para un presupuesto mensual todas las categorías con su total, cantidad de gastos, nombre y movimientos
 // /api/presupuesto-mensual-detalle?presupuesto_mensual_id=123
 export async function GET(req: NextRequest) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  if (authError) return authError
+
   const { searchParams } = new URL(req.url)
   const presupuestoMensualId = searchParams.get('presupuesto_mensual_id')
 

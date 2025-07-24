@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import supabase from '@/lib/supabaseClient'
+import { getAuthenticatedSupabaseClient } from '@/lib/auth-supabase'
 
 // GET: Obtener los movimientos (gastos) de todas las categorías de un presupuesto mensual
 // /api/movimientos-categoria?presupuesto_mensual_id=123
 export async function GET(req: NextRequest) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  if (authError) return authError
+
   const { searchParams } = new URL(req.url)
   const presupuestoMensualId = searchParams.get('presupuesto_mensual_id')
 
@@ -39,6 +42,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  if (authError) return authError
+
   const body = await req.json()
   const { presupuesto_categoria_id, descripcion, monto, fecha, metodo_pago_id } = body
 
@@ -49,7 +55,7 @@ export async function POST(req: NextRequest) {
   // Crear el movimiento
   const { data, error } = await supabase
     .from('movimiento_presupuesto')
-    .insert({ presupuesto_categoria_id, descripcion, monto, fecha, metodo_pago_id })
+    .insert({ presupuesto_categoria_id, descripcion, monto, fecha, metodo_pago_id, user_id: userId })
     .select()
     .single()
 
@@ -64,6 +70,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  if (authError) return authError
+
   const body = await req.json()
   const { id, descripcion, monto, fecha, metodo_pago_id } = body
 
@@ -75,6 +84,7 @@ export async function PUT(req: NextRequest) {
     .from('movimiento_presupuesto')
     .update({ descripcion, monto, fecha, metodo_pago_id })
     .eq('id', id)
+    .eq('user_id', userId)
     .select()
     .single()
 
@@ -86,6 +96,9 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  if (authError) return authError
+
   const body = await req.json()
   const { id } = body
 
@@ -97,6 +110,7 @@ export async function DELETE(req: NextRequest) {
     .from('movimiento_presupuesto')
     .delete()
     .eq('id', id)
+    .eq('user_id', userId)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

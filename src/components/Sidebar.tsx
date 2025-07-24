@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Home, FileText, Calculator, X, ChevronLeft, BarChart3, Receipt } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { useSession, signOut } from "next-auth/react"
+import { Home, FileText, Calculator, X, ChevronLeft, BarChart3, Receipt, LogOut, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -47,6 +48,15 @@ export function Sidebar({
 	onOpenExpenseDetails,
 }: SidebarProps) {
 	const pathname = usePathname()
+	const router = useRouter()
+	const { data: session } = useSession()
+
+	const handleLogout = async () => {
+		await signOut({ 
+			callbackUrl: '/auth/login',
+			redirect: true 
+		})
+	}
 
 	if (isMobile) {
 		return (
@@ -209,6 +219,29 @@ export function Sidebar({
 				>
 					<Receipt className="w-5 h-5 flex-shrink-0" />
 					{!isCollapsed && <span>Detalle de Gastos</span>}
+				</button>
+			</div>
+
+			{/* Sección de usuario en la parte inferior */}
+			<div className="mt-auto border-t border-gray-200 p-3">
+				{session?.user && !isCollapsed && (
+					<div className="px-3 py-2 mb-2">
+						<p className="text-sm font-medium text-gray-900">{session.user.name}</p>
+						<p className="text-xs text-gray-500">{session.user.email}</p>
+					</div>
+				)}
+				
+				<button
+					onClick={handleLogout}
+					className={cn(
+						"w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+						"text-red-600 hover:bg-red-50 hover:text-red-700",
+						isCollapsed && "justify-center"
+					)}
+					title={isCollapsed ? "Cerrar Sesión" : undefined}
+				>
+					<LogOut className="w-5 h-5 flex-shrink-0" />
+					{!isCollapsed && <span>Cerrar Sesión</span>}
 				</button>
 			</div>
 		</div>

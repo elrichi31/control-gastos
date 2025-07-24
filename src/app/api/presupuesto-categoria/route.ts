@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import supabase from '@/lib/supabaseClient'
+import { getAuthenticatedSupabaseClient } from '@/lib/auth-supabase'
 
 // DELETE: Borra una categoría de presupuesto solo si no tiene movimientos
 // /api/presupuesto-categoria?id=123
 export async function GET(req: NextRequest) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  if (authError) return authError
+
   const { searchParams } = new URL(req.url)
   const presupuestoMensualId = searchParams.get('presupuesto_mensual_id')
 
@@ -15,6 +18,7 @@ export async function GET(req: NextRequest) {
     .from('presupuesto_categoria')
     .select('id, categoria_id, total_categoria, cantidad_gastos, categoria(nombre)')
     .eq('presupuesto_mensual_id', presupuestoMensualId)
+    .eq('user_id', userId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
@@ -22,6 +26,9 @@ export async function GET(req: NextRequest) {
 
 
 export async function DELETE(req: NextRequest) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  if (authError) return authError
+
   const { searchParams } = new URL(req.url)
   const id = searchParams.get('id')
 
@@ -34,6 +41,7 @@ export async function DELETE(req: NextRequest) {
     .from('movimiento_presupuesto')
     .select('id')
     .eq('presupuesto_categoria_id', id)
+    .eq('user_id', userId)
     .limit(1)
 
   if (errorMov) {
@@ -49,6 +57,7 @@ export async function DELETE(req: NextRequest) {
     .from('presupuesto_categoria')
     .delete()
     .eq('id', id)
+    .eq('user_id', userId)
 
   if (errorDelete) {
     return NextResponse.json({ error: errorDelete.message }, { status: 500 })
@@ -58,6 +67,9 @@ export async function DELETE(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  if (authError) return authError
+
   const body = await req.json()
   const { presupuesto_mensual_id, categoria_id } = body
 
@@ -68,7 +80,7 @@ export async function POST(req: NextRequest) {
   // Crear la categoría de presupuesto
   const { data, error } = await supabase
     .from('presupuesto_categoria')
-    .insert({ presupuesto_mensual_id, categoria_id, total_categoria: 0, cantidad_gastos: 0 })
+    .insert({ presupuesto_mensual_id, categoria_id, total_categoria: 0, cantidad_gastos: 0, user_id: userId })
     .select('id, categoria_id, total_categoria, cantidad_gastos, categoria(nombre)')
     .single()
 

@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import supabase from '@/lib/supabaseClient'
+import { getAuthenticatedSupabaseClient } from '@/lib/auth-supabase'
 
 // GET: Obtener todos los presupuestos mensuales, con filtro opcional por año
 export async function GET(req: NextRequest) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  if (authError) return authError
+
   const { searchParams } = new URL(req.url)
   const anioParam = searchParams.get('anio')
 
   let query = supabase
     .from('presupuesto_mensual')
     .select('*')
+    .eq('user_id', userId)
     .order('anio', { ascending: false })
     .order('mes', { ascending: false })
 
@@ -22,11 +26,15 @@ export async function GET(req: NextRequest) {
   const { data, error } = await query
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  
   return NextResponse.json(data)
 }
 
 // POST: Crear un nuevo presupuesto mensual
 export async function POST(req: NextRequest) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  if (authError) return authError
+
   const body = await req.json()
   const { anio, mes, total, gastos_registrados, tendencia, estado } = body
 
@@ -40,7 +48,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from('presupuesto_mensual')
-    .insert([{ anio, mes, total, gastos_registrados, tendencia, estado }])
+    .insert([{ anio, mes, total, gastos_registrados, tendencia, estado, user_id: userId }])
     .select()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -49,6 +57,9 @@ export async function POST(req: NextRequest) {
 
 // DELETE: Eliminar un presupuesto mensual por año y mes
 export async function DELETE(req: NextRequest) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  if (authError) return authError
+
   const { searchParams } = new URL(req.url)
   const anioParam = searchParams.get('anio')
   const mesParam = searchParams.get('mes')
@@ -68,6 +79,7 @@ export async function DELETE(req: NextRequest) {
     .delete()
     .eq('anio', anio)
     .eq('mes', mes)
+    .eq('user_id', userId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })

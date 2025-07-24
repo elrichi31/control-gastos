@@ -1,7 +1,10 @@
-import supabase from '@/lib/supabaseClient';
 import { NextResponse } from 'next/server';
+import { getAuthenticatedSupabaseClient } from '@/lib/auth-supabase';
 
 export async function GET() {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient();
+  if (authError) return authError;
+
   const { data, error } = await supabase
     .from('gasto')
     .select(`
@@ -11,9 +14,11 @@ export async function GET() {
       fecha,
       categoria_id,
       metodo_pago_id,
+      user_id,
       categoria (id, nombre),
       metodo_pago (id, nombre)
     `)
+    .eq('user_id', userId)
     .order('fecha', { ascending: false });
 
   if (error) {
@@ -25,6 +30,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient();
+  if (authError) return authError;
+
   const body = await request.json();
   const { descripcion, monto, fecha, categoria_id, metodo_pago_id } = body;
 
@@ -33,7 +41,14 @@ export async function POST(request: Request) {
   }
 
   const { data, error } = await supabase.from('gasto').insert([
-    { descripcion, monto, fecha, categoria_id, metodo_pago_id },
+    { 
+      descripcion, 
+      monto, 
+      fecha, 
+      categoria_id, 
+      metodo_pago_id,
+      user_id: userId 
+    },
   ]);
 
   if (error) {
@@ -45,6 +60,9 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient();
+  if (authError) return authError;
+
   const body = await request.json();
   const { id, descripcion, monto, fecha, categoria_id, metodo_pago_id } = body;
 
@@ -54,7 +72,8 @@ export async function PUT(request: Request) {
 
   const { data, error } = await supabase.from('gasto')
     .update({ descripcion, monto, fecha, categoria_id, metodo_pago_id })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', userId);
 
   if (error) {
     console.error('Error al actualizar gasto:', error);
@@ -65,6 +84,9 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient();
+  if (authError) return authError;
+
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 
@@ -72,7 +94,10 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'ID de gasto requerido para eliminar.' }, { status: 400 });
   }
 
-  const { error } = await supabase.from('gasto').delete().eq('id', id);
+  const { error } = await supabase.from('gasto')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userId);
 
   if (error) {
     console.error('Error al eliminar gasto:', error);

@@ -42,12 +42,11 @@ export function useGastosFiltrados() {
 
   const deleteGasto = async (id: string) => {
     try {
-      const res = await fetch(`/api/delete-gasto`, {
-        method: "POST",
+      const res = await fetch(`/api/gastos?id=${id}`, {
+        method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id: parseInt(id) }),
       })
 
       if (!res.ok) throw new Error("Error al eliminar gasto")
