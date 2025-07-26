@@ -6,6 +6,13 @@ export async function fetchPresupuestoCategorias(id: string): Promise<Presupuest
   return await res.json()
 }
 
+export async function fetchPresupuestoMensual(id: string): Promise<{ mes: number, anio: number } | null> {
+  const res = await fetch(`/api/presupuestos/${id}`)
+  if (!res.ok) return null
+  const data = await res.json()
+  return { mes: data.mes, anio: data.anio }
+}
+
 export async function fetchCategoriasDB(): Promise<CategoriaDB[]> {
   const res = await fetch("/api/categorias")
   return res.ok ? await res.json() : []
@@ -72,4 +79,14 @@ export async function deleteExpense(id: number) {
   })
   if (!res.ok) throw new Error((await res.json()).error || "Error al eliminar el gasto")
   return true
+}
+
+export async function updatePresupuestoTotal(presupuesto_mensual_id: string, total: number, gastos_registrados: number) {
+  const res = await fetch("/api/presupuestos", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ presupuesto_mensual_id, total, gastos_registrados })
+  })
+  if (!res.ok) throw new Error((await res.json()).error || "Error al actualizar el presupuesto")
+  return await res.json()
 }

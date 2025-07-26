@@ -16,7 +16,9 @@ import {
   deleteCategory,
   addExpense,
   updateExpense,
-  deleteExpense
+  deleteExpense,
+  updatePresupuestoTotal,
+  fetchPresupuestoMensual
 } from "@/services/budget"
 import CategoriaCard from "@/components/presupuesto/CategoriaCard"
 import ExpenseModal from "@/components/presupuesto/ExpenseModal"
@@ -72,6 +74,7 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
   const searchParams = useSearchParams()
   const mes = searchParams.get("mes") || ""
   const [presupuestoCategorias, setPresupuestoCategorias] = useState<PresupuestoCategoriaDetalle[]>([])
+  const [presupuestoInfo, setPresupuestoInfo] = useState<{ mes: number, anio: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeCategories, setActiveCategories] = useState<string[]>(["suscripciones", "alimentacion", "transporte"])
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false)
@@ -94,23 +97,29 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
 
   const monthName = mes.charAt(0).toUpperCase() + mes.slice(1)
 
-  // Obtener gastos por categoría del mes actual
-  const mesActual = new Date().getMonth() + 1
-  const anioActual = new Date().getFullYear()
-  const { gastosPorCategoria, loading: loadingGastos } = useGastosPorCategoriaDelMes(mesActual, anioActual)
+  // Obtener gastos por categoría del mes del presupuesto (no del mes actual)
+  const mesPresupuesto = presupuestoInfo?.mes || new Date().getMonth() + 1
+  const anioPresupuesto = presupuestoInfo?.anio || new Date().getFullYear()
+  const { gastosPorCategoria, loading: loadingGastos } = useGastosPorCategoriaDelMes(mesPresupuesto, anioPresupuesto)
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true)
       if (!id) {
         setPresupuestoCategorias([])
+        setPresupuestoInfo(null)
         setLoading(false)
         console.warn("No se proporcionó un ID de presupuesto mensual")
         return
       }
       try {
-        const cats = await fetchPresupuestoCategorias(id)
+        // Cargar categorías y información del presupuesto en paralelo
+        const [cats, info] = await Promise.all([
+          fetchPresupuestoCategorias(id),
+          fetchPresupuestoMensual(id)
+        ])
         setPresupuestoCategorias(cats)
+        setPresupuestoInfo(info)
       } catch (e) {
         toast.error("Error al cargar categorías y gastos")
       }
@@ -192,6 +201,31 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
     return categoriasDB.filter((category) => !presupuestoCategorias.some(c => c.categoria_id === category.id))
   }
 
+  // Función auxiliar para actualizar el total del presupuesto
+  const updateBudgetTotal = async (categorias?: PresupuestoCategoriaDetalle[]) => {
+    try {
+      // Usar las categorías pasadas como parámetro o las del estado actual
+      const categoriasToUse = categorias || presupuestoCategorias
+      if (!Array.isArray(categoriasToUse)) return
+      
+      const totalPresupuestado = categoriasToUse.reduce((sum, cat) => {
+        if (!Array.isArray(cat.movimientos)) return sum
+        const movimientosTotal = cat.movimientos.reduce((movSum, mov) => movSum + (typeof mov.monto === "string" ? parseFloat(mov.monto) : mov.monto || 0), 0)
+        return sum + movimientosTotal
+      }, 0)
+      
+      // Calcular el número total de gastos registrados
+      const gastosRegistrados = categoriasToUse.reduce((count, cat) => {
+        if (!Array.isArray(cat.movimientos)) return count
+        return count + cat.movimientos.length
+      }, 0)
+      
+      await updatePresupuestoTotal(id, totalPresupuestado, gastosRegistrados)
+    } catch (error) {
+      console.error('Error al actualizar total del presupuesto:', error)
+    }
+  }
+
   // Crear nuevo movimiento (gasto)
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -213,6 +247,8 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
       // Refetch de datos
       const cats = await fetchPresupuestoCategorias(id)
       setPresupuestoCategorias(cats)
+      // Actualizar total del presupuesto con los datos actualizados
+      await updateBudgetTotal(cats)
     } catch (e: any) {
       toast.error(e.message || "Error al agregar el gasto")
     }
@@ -253,6 +289,8 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
       // Refetch de datos
       const cats = await fetchPresupuestoCategorias(id)
       setPresupuestoCategorias(cats)
+      // Actualizar total del presupuesto con los datos actualizados
+      await updateBudgetTotal(cats)
     } catch (e: any) {
       toast.error(e.message || "Error al editar el gasto")
     }
@@ -273,6 +311,8 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
       // Refetch de datos
       const cats = await fetchPresupuestoCategorias(id)
       setPresupuestoCategorias(cats)
+      // Actualizar total del presupuesto con los datos actualizados
+      await updateBudgetTotal(cats)
     } catch (e: any) {
       toast.error(e.message || "Error al eliminar el gasto")
       setExpenseToDelete(null)
@@ -306,6 +346,8 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
               onDeleteExpense={showDeleteExpenseModal}
               getCategoryTotal={() => gastosPorCategoria[cat.categoria_id]?.total || 0}
               getBudgetByCategory={getBudgetByCategory}
+              mes={mesPresupuesto}
+              anio={anioPresupuesto}
               onAddExpenseClick={() => {
                 setFormData({ ...formData, category: cat.id.toString() })
                 setIsExpenseDialogOpen(true)

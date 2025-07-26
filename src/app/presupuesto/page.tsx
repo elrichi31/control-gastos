@@ -69,7 +69,11 @@ export default function HomePage() {
   const [dataByYear, setDataByYear] = useState<{ [year: string]: MonthlyDataGrid }>({})
   const [isMonthDialogOpen, setIsMonthDialogOpen] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string>("")
-  const currentMonth = new Date().getMonth() + 1
+  
+  // Solo marcar mes como actual si estamos viendo el año actual
+  const now = new Date()
+  const currentYearString = now.getFullYear().toString()
+  const currentMonth = selectedYear === currentYearString ? now.getMonth() + 1 : -1
 
   useEffect(() => {
     async function fetchPresupuestos() {

@@ -15,6 +15,8 @@ interface CategoriaCardProps {
   getCategoryTotal: (cat: PresupuestoCategoriaDetalle) => number
   onAddExpenseClick: () => void
   getBudgetByCategory: (categoriaId: number) => number
+  mes: number
+  anio: number
 }
 
 const CategoriaCard: React.FC<CategoriaCardProps> = ({
@@ -24,7 +26,9 @@ const CategoriaCard: React.FC<CategoriaCardProps> = ({
   onDeleteExpense,
   getCategoryTotal,
   onAddExpenseClick,
-  getBudgetByCategory
+  getBudgetByCategory,
+  mes,
+  anio
 }) => {
   const categoryExpenses = categoria.movimientos
   const hasExpenses = categoryExpenses.length > 0
@@ -61,8 +65,8 @@ const CategoriaCard: React.FC<CategoriaCardProps> = ({
           categoria={categoria.categoria.nombre}
           presupuestoTotal={getBudgetByCategory(categoria.categoria_id)}
           presupuestoConsumido={getCategoryTotal(categoria)} // Placeholder, replace with actual logic
-          mes={new Date().getMonth() + 1}
-          anio={new Date().getFullYear()}
+          mes={mes}
+          anio={anio}
         />
         {categoryExpenses.length === 0 ? (
           <p className="text-gray-500 text-sm text-center py-4">No hay gastos en esta categoría</p>
