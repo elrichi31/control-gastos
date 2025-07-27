@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
-import { format, startOfMonth, endOfMonth, isToday, isYesterday, subMonths } from "date-fns"
+import { format, startOfMonth, endOfMonth, isToday, isYesterday, subMonths, eachDayOfInterval, isSameDay, getDay } from "date-fns"
 import { es } from "date-fns/locale"
 import { toDateWithTime, formatDateWithLocale } from "@/lib/dateUtils"
 import { PageTitle } from "@/components/PageTitle"
@@ -17,8 +17,6 @@ import {
   CreditCard, 
   DollarSign,
   ShoppingCart,
-  Coffee,
-  Car,
   Home as HomeIcon,
   AlertTriangle,
   Clock
@@ -76,6 +74,23 @@ export default function HomePage() {
             })
             .slice(0, 5)
     }, [gastos])
+
+    // Gastos por día del mes actual
+    const dailyExpenses = useMemo(() => {
+        const daysInMonth = eachDayOfInterval({ start: currentMonth, end: currentMonthEnd })
+        return daysInMonth.map(day => {
+            const dayExpenses = currentMonthExpenses.filter(g => {
+                const fecha = toDateWithTime(g.fecha)
+                return isSameDay(fecha, day)
+            })
+            const totalDay = dayExpenses.reduce((sum, g) => sum + g.monto, 0)
+            return {
+                date: day,
+                total: totalDay,
+                count: dayExpenses.length
+            }
+        })
+    }, [currentMonthExpenses, currentMonth, currentMonthEnd])
 
     // Totales
     const currentMonthTotal = currentMonthExpenses.reduce((sum, g) => sum + g.monto, 0)
@@ -213,9 +228,82 @@ export default function HomePage() {
                 </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Calendario mensual */}
+                <div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Calendar className="w-5 h-5" />
+                                Calendario de Gastos - {format(currentDate, "MMMM yyyy", { locale: es })}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {/* Días de la semana */}
+                            <div className="grid grid-cols-7 gap-2 mb-3">
+                                {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
+                                    <div key={day} className="text-center text-sm font-medium text-gray-500 p-2">
+                                        {day}
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            {/* Grid del calendario */}
+                            <div className="grid grid-cols-7 gap-2">
+                                {/* Espacios vacíos para los días anteriores al inicio del mes */}
+                                {Array.from({ length: getDay(currentMonth) }).map((_, index) => (
+                                    <div key={`empty-${index}`} className="h-16"></div>
+                                ))}
+                                
+                                {/* Días del mes */}
+                                {dailyExpenses.map(({ date, total, count }) => {
+                                    const dayNumber = format(date, 'd')
+                                    const isCurrentDay = isToday(date)
+                                    const hasExpenses = total > 0
+                                    
+                                    return (
+                                        <div
+                                            key={date.toISOString()}
+                                            className={`
+                                                h-16 p-2 rounded-lg text-center text-sm cursor-pointer transition-colors flex flex-col justify-center
+                                                ${isCurrentDay 
+                                                    ? 'bg-blue-100 border-2 border-blue-500' 
+                                                    : hasExpenses 
+                                                        ? 'bg-red-50 hover:bg-red-100 border border-red-200' 
+                                                        : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                                                }
+                                            `}
+                                        >
+                                            <div className={`font-medium ${isCurrentDay ? 'text-blue-700' : 'text-gray-900'}`}>
+                                                {dayNumber}
+                                            </div>
+                                            {hasExpenses && (
+                                                <div className="text-xs text-red-600 font-medium leading-tight mt-1">
+                                                    ${total > 999 ? Math.round(total/1000) + 'k' : total.toLocaleString()}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                            
+                            {/* Leyenda */}
+                            <div className="mt-4 flex justify-center gap-6 text-sm text-gray-500">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 bg-blue-100 border border-blue-500 rounded"></div>
+                                    <span>Hoy</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 bg-red-50 border border-red-200 rounded"></div>
+                                    <span>Días con gastos</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
                 {/* Gastos recientes */}
-                <div className="lg:col-span-2">
+                <div>
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -255,7 +343,7 @@ export default function HomePage() {
                                             </span>
                                         </div>
                                     ))}
-                                    {gastos.length > 5 && (
+                                    {gastos.length > 6 && (
                                         <div className="text-center pt-4">
                                             <Link href="/estadisticas">
                                                 <Button variant="outline">
@@ -269,63 +357,94 @@ export default function HomePage() {
                         </CardContent>
                     </Card>
                 </div>
+            </div>
 
+            {/* Acciones rápidas y comparación mensual */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
                 {/* Acciones rápidas */}
-                <div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Acciones Rápidas</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <Link href="/form" className="block">
+                            <Button variant="outline" className="w-full justify-start">
+                                <PlusCircle className="w-4 h-4 mr-2" />
+                                Nuevo Gasto
+                            </Button>
+                        </Link>
+                        <Link href="/estadisticas" className="block">
+                            <Button variant="outline" className="w-full justify-start">
+                                <TrendingUp className="w-4 h-4 mr-2" />
+                                Ver Estadísticas
+                            </Button>
+                        </Link>
+                        <Link href="/presupuesto" className="block">
+                            <Button variant="outline" className="w-full justify-start">
+                                <AlertTriangle className="w-4 h-4 mr-2" />
+                                Gestionar Presupuesto
+                            </Button>
+                        </Link>
+                    </CardContent>
+                </Card>
+
+                {/* Comparación mensual */}
+                {lastMonthTotal > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Acciones Rápidas</CardTitle>
+                            <CardTitle className="text-base">Comparación Mensual</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-3">
-                            <Link href="/form" className="block">
-                                <Button variant="outline" className="w-full justify-start">
-                                    <PlusCircle className="w-4 h-4 mr-2" />
-                                    Nuevo Gasto
-                                </Button>
-                            </Link>
-                            <Link href="/estadisticas" className="block">
-                                <Button variant="outline" className="w-full justify-start">
-                                    <TrendingUp className="w-4 h-4 mr-2" />
-                                    Ver Estadísticas
-                                </Button>
-                            </Link>
-                            <Link href="/presupuesto" className="block">
-                                <Button variant="outline" className="w-full justify-start">
-                                    <AlertTriangle className="w-4 h-4 mr-2" />
-                                    Gestionar Presupuesto
-                                </Button>
-                            </Link>
+                        <CardContent>
+                            <div className="space-y-3">
+                                <div className="flex justify-between">
+                                    <span className="text-sm text-gray-600">Mes anterior</span>
+                                    <span className="font-medium">${lastMonthTotal.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-sm text-gray-600">Este mes</span>
+                                    <span className="font-medium">${currentMonthTotal.toLocaleString()}</span>
+                                </div>
+                                <hr />
+                                <div className="flex justify-between">
+                                    <span className="text-sm font-medium">Diferencia</span>
+                                    <span className={`font-bold ${monthlyChange >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                        {monthlyChange >= 0 ? '+' : ''}${monthlyChange.toLocaleString()}
+                                    </span>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
-
-                    {/* Comparación mensual */}
-                    {lastMonthTotal > 0 && (
-                        <Card className="mt-6">
-                            <CardHeader>
-                                <CardTitle className="text-base">Comparación Mensual</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-3">
+                )}
+                
+                {/* Widget de resumen del día */}
+                <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200">
+                    <CardHeader>
+                        <CardTitle className="text-base text-indigo-700">Resumen del Día</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-3">
+                            <div className="flex justify-between">
+                                <span className="text-sm text-indigo-600">Gastos hoy</span>
+                                <span className="font-bold text-indigo-900">${todayTotal.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-sm text-indigo-600">Transacciones</span>
+                                <span className="font-medium text-indigo-900">{todayExpenses.length}</span>
+                            </div>
+                            {yesterdayExpenses.length > 0 && (
+                                <>
+                                    <hr className="border-indigo-200" />
                                     <div className="flex justify-between">
-                                        <span className="text-sm text-gray-600">Mes anterior</span>
-                                        <span className="font-medium">${lastMonthTotal.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-gray-600">Este mes</span>
-                                        <span className="font-medium">${currentMonthTotal.toLocaleString()}</span>
-                                    </div>
-                                    <hr />
-                                    <div className="flex justify-between">
-                                        <span className="text-sm font-medium">Diferencia</span>
-                                        <span className={`font-bold ${monthlyChange >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                            {monthlyChange >= 0 ? '+' : ''}${monthlyChange.toLocaleString()}
+                                        <span className="text-sm text-indigo-600">Ayer gastaste</span>
+                                        <span className="font-medium text-indigo-900">
+                                            ${yesterdayExpenses.reduce((sum, g) => sum + g.monto, 0).toLocaleString()}
                                         </span>
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
+                                </>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     )

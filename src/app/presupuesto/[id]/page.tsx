@@ -3,7 +3,7 @@
 import React, { use, useState, useEffect } from "react"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Breadcrumb } from "@/components/Breadcrumb"
 import { useSearchParams } from "next/navigation"
@@ -18,19 +18,12 @@ import {
   updateExpense,
   deleteExpense,
   updatePresupuestoTotal,
-  fetchPresupuestoMensual
+  fetchPresupuestoMensual,
+  copyFromPreviousMonth
 } from "@/services/budget"
 import CategoriaCard from "@/components/presupuesto/CategoriaCard"
 import ExpenseModal from "@/components/presupuesto/ExpenseModal"
 import { useGastosPorCategoriaDelMes } from "@/hooks/useGastosPorCategoriaDelMes"
-
-interface PresupuestoCategoria {
-  id: number
-  categoria_id: number
-  total_categoria: number
-  cantidad_gastos: number
-  categoria: { nombre: string }
-}
 
 interface MovimientoPresupuesto {
   id: number
@@ -174,6 +167,19 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
       toast.success("Categoría eliminada correctamente")
     } catch (e: any) {
       toast.error(e.message || "Error al eliminar la categoría")
+    }
+  }
+
+  // Función para copiar del mes anterior
+  const handleCopyFromPreviousMonth = async () => {
+    try {
+      await copyFromPreviousMonth(id)
+      toast.success("Categorías copiadas del mes anterior correctamente")
+      // Refetch de datos para mostrar las nuevas categorías
+      const cats = await fetchPresupuestoCategorias(id)
+      setPresupuestoCategorias(cats)
+    } catch (e: any) {
+      toast.error(e.message || "Error al copiar del mes anterior")
     }
   }
 
@@ -355,7 +361,10 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
             />
           ))
         ) : (
-          <div className="text-center py-8 col-span-full">No hay categorías para este presupuesto</div>
+          <div className="text-center py-8 col-span-full">
+            <p className="text-gray-500 mb-4">No hay categorías para este presupuesto</p>
+            <p className="text-sm text-gray-400">Puedes agregar categorías manualmente o copiar del mes anterior</p>
+          </div>
         )}
 
         {/* Botón para agregar categoría */}
@@ -390,6 +399,20 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
               </div>
             </DialogContent>
           </Dialog>
+        )}
+
+        {/* Botón para copiar del mes anterior - solo mostrar si no hay categorías */}
+        {presupuestoCategorias.length === 0 && !loading && (
+          <Card 
+            className="bg-blue-50 border-2 border-dashed border-blue-300 hover:border-blue-400 transition-colors cursor-pointer"
+            onClick={handleCopyFromPreviousMonth}
+          >
+            <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+              <Plus className="w-8 h-8 text-blue-400 mb-3" />
+              <h3 className="text-lg font-medium text-blue-600 mb-1">Copiar mes anterior</h3>
+              <p className="text-sm text-blue-500">Copia las categorías y montos del mes anterior</p>
+            </CardContent>
+          </Card>
         )}
       </div>
 

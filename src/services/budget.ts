@@ -13,6 +13,16 @@ export async function fetchPresupuestoMensual(id: string): Promise<{ mes: number
   return { mes: data.mes, anio: data.anio }
 }
 
+export async function copyFromPreviousMonth(presupuestoMensualId: string): Promise<boolean> {
+  const res = await fetch("/api/presupuestos/copy-previous", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ presupuesto_mensual_id: presupuestoMensualId })
+  })
+  if (!res.ok) throw new Error((await res.json()).error || "Error al copiar del mes anterior")
+  return true
+}
+
 export async function fetchCategoriasDB(): Promise<CategoriaDB[]> {
   const res = await fetch("/api/categorias")
   return res.ok ? await res.json() : []
