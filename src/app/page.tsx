@@ -28,6 +28,15 @@ const currentMonthEnd = endOfMonth(currentDate)
 const lastMonth = startOfMonth(subMonths(currentDate, 1))
 const lastMonthEnd = endOfMonth(subMonths(currentDate, 1))
 
+const formatMoney = (amount: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount)
+}
+
 export default function HomePage() {
     const { gastos, loading } = useGastosFiltrados()
 
@@ -155,7 +164,7 @@ export default function HomePage() {
                             <div>
                                 <p className="text-blue-600 text-sm font-medium">Este mes</p>
                                 <p className="text-2xl font-bold text-blue-900">
-                                    ${currentMonthTotal.toLocaleString()}
+                                    {formatMoney(currentMonthTotal)}
                                 </p>
                                 <div className="flex items-center mt-2">
                                     {monthlyChange >= 0 ? (
@@ -180,7 +189,7 @@ export default function HomePage() {
                             <div>
                                 <p className="text-green-600 text-sm font-medium">Hoy</p>
                                 <p className="text-2xl font-bold text-green-900">
-                                    ${todayTotal.toLocaleString()}
+                                    {formatMoney(todayTotal)}
                                 </p>
                                 <p className="text-sm text-green-600 mt-2">
                                     {todayExpenses.length} transacción{todayExpenses.length !== 1 ? 'es' : ''}
@@ -201,7 +210,9 @@ export default function HomePage() {
                                     {topCategory.name}
                                 </p>
                                 <p className="text-sm text-purple-600 mt-2">
-                                    ${topCategory.total.toLocaleString()}
+                                                                    <p className="text-2xl font-bold text-purple-900">
+                                    {formatMoney(topCategory.total)}
+                                </p>
                                 </p>
                             </div>
                             <ShoppingCart className="w-8 h-8 text-purple-600" />
@@ -279,7 +290,7 @@ export default function HomePage() {
                                             </div>
                                             {hasExpenses && (
                                                 <div className="text-xs text-red-600 font-medium leading-tight mt-1">
-                                                    ${total > 999 ? Math.round(total/1000) + 'k' : total.toLocaleString()}
+                                                    {total > 999 ? formatMoney(Math.round(total/1000) * 1000).replace('.00', '') + 'k' : formatMoney(total)}
                                                 </div>
                                             )}
                                         </div>
@@ -339,7 +350,7 @@ export default function HomePage() {
                                                 </div>
                                             </div>
                                             <span className="font-bold text-gray-900">
-                                                ${gasto.monto.toLocaleString()}
+                                                {formatMoney(gasto.monto)}
                                             </span>
                                         </div>
                                     ))}
@@ -398,17 +409,17 @@ export default function HomePage() {
                             <div className="space-y-3">
                                 <div className="flex justify-between">
                                     <span className="text-sm text-gray-600">Mes anterior</span>
-                                    <span className="font-medium">${lastMonthTotal.toLocaleString()}</span>
+                                    <span className="font-medium">{formatMoney(lastMonthTotal)}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm text-gray-600">Este mes</span>
-                                    <span className="font-medium">${currentMonthTotal.toLocaleString()}</span>
+                                    <span className="font-medium">{formatMoney(currentMonthTotal)}</span>
                                 </div>
                                 <hr />
                                 <div className="flex justify-between">
                                     <span className="text-sm font-medium">Diferencia</span>
                                     <span className={`font-bold ${monthlyChange >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                        {monthlyChange >= 0 ? '+' : ''}${monthlyChange.toLocaleString()}
+                                        {monthlyChange >= 0 ? '+' : ''}{formatMoney(monthlyChange)}
                                     </span>
                                 </div>
                             </div>
@@ -425,7 +436,7 @@ export default function HomePage() {
                         <div className="space-y-3">
                             <div className="flex justify-between">
                                 <span className="text-sm text-indigo-600">Gastos hoy</span>
-                                <span className="font-bold text-indigo-900">${todayTotal.toLocaleString()}</span>
+                                <span className="font-bold text-indigo-900">{formatMoney(todayTotal)}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-sm text-indigo-600">Transacciones</span>
@@ -437,7 +448,7 @@ export default function HomePage() {
                                     <div className="flex justify-between">
                                         <span className="text-sm text-indigo-600">Ayer gastaste</span>
                                         <span className="font-medium text-indigo-900">
-                                            ${yesterdayExpenses.reduce((sum, g) => sum + g.monto, 0).toLocaleString()}
+                                            {formatMoney(yesterdayExpenses.reduce((sum, g) => sum + g.monto, 0))}
                                         </span>
                                     </div>
                                 </>

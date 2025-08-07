@@ -1,13 +1,11 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
 import { usePathname } from "next/navigation"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { Sidebar } from "@/components/Sidebar"
 import { MobileHeader } from "@/components/MobileHeader"
-import { ExpenseDetailsPanel } from "@/components/expense-details/ExpenseDetailsPanel"
 import { PageTitle } from "@/components/PageTitle"
 import { Providers } from "@/components/Providers"
 import { useSidebar } from "@/hooks/useSidebar"
@@ -23,7 +21,6 @@ export default function RootLayout({
 }) {
   const pathname = usePathname()
   const { isOpen, toggle, close, isMobile, isCollapsed, toggleCollapse } = useSidebar()
-  const [isExpenseDetailsOpen, setIsExpenseDetailsOpen] = useState(false)
 
   // Rutas que no necesitan el layout principal
   const isAuthRoute = pathname?.startsWith('/auth')
@@ -52,19 +49,12 @@ export default function RootLayout({
                 isMobile={isMobile}
                 isCollapsed={isCollapsed}
                 onToggleCollapse={toggleCollapse}
-                onOpenExpenseDetails={() => setIsExpenseDetailsOpen(true)}
               />
 
               <div className={cn("flex-1 transition-all duration-300 ease-in-out", getMainMargin())}>
                 <MobileHeader onMenuClick={toggle} isMobile={isMobile} />
                 <main className="bg-gray-50 min-h-screen">{children}</main>
               </div>
-
-              {/* Panel de detalles de gastos */}
-              <ExpenseDetailsPanel
-                isOpen={isExpenseDetailsOpen}
-                onClose={() => setIsExpenseDetailsOpen(false)}
-              />
             </div>
           )}
           

@@ -14,6 +14,15 @@ interface CategoryComparisonProps {
 }
 
 export function CategoryComparison({ categoryComparisonStats }: CategoryComparisonProps) {
+  const formatMoney = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount)
+  }
+
   if (!categoryComparisonStats || categoryComparisonStats.length === 0) {
     return (
       <Card>

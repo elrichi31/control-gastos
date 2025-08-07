@@ -25,7 +25,7 @@ export function PieChartWidget({ data, title }: PieChartWidgetProps) {
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-medium text-gray-900">{data.payload.name}</p>
           <p className="text-sm text-gray-600">
-            ${data.value.toLocaleString()} ({percentage}%)
+            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(data.value)} ({percentage}%)
           </p>
         </div>
       )

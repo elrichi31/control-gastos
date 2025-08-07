@@ -21,6 +21,15 @@ export function QuickAnalysisWidget({
   monthlyAverage, 
   categoryData 
 }: QuickAnalysisWidgetProps) {
+  const formatMoney = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount)
+  }
+
   const uniqueDays = useMemo(() => {
     return [...new Set(filteredGastos.map(g => g.fecha))].length
   }, [filteredGastos])
@@ -55,18 +64,18 @@ export function QuickAnalysisWidget({
           <div className="flex justify-between items-center mb-3">
             <span className="text-sm text-gray-600 font-medium">Gasto más alto</span>
             <span className="text-sm font-bold text-red-600">
-              ${filteredGastos.length > 0 
-                ? Math.max(...filteredGastos.map(g => g.monto)).toLocaleString()
-                : "0"
+              {filteredGastos.length > 0 
+                ? formatMoney(Math.max(...filteredGastos.map(g => g.monto)))
+                : "$0.00"
               }
             </span>
           </div>
           <div className="flex justify-between items-center mb-3">
             <span className="text-sm text-gray-600 font-medium">Gasto más bajo</span>
             <span className="text-sm font-bold text-green-600">
-              ${filteredGastos.length > 0 
-                ? Math.min(...filteredGastos.map(g => g.monto)).toLocaleString()
-                : "0"
+              {filteredGastos.length > 0 
+                ? formatMoney(Math.min(...filteredGastos.map(g => g.monto)))
+                : "$0.00"
               }
             </span>
           </div>
@@ -80,7 +89,7 @@ export function QuickAnalysisWidget({
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600 font-medium">Promedio por día</span>
               <span className="text-sm font-bold text-purple-600">
-                ${averagePerDay.toLocaleString()}
+                {formatMoney(averagePerDay)}
               </span>
             </div>
           </div>
@@ -100,7 +109,7 @@ export function QuickAnalysisWidget({
                   {category.name.length > 14 ? category.name.substring(0, 14) + '...' : category.name}
                 </span>
               </div>
-              <span className="text-sm font-bold">${category.value.toLocaleString()}</span>
+              <span className="text-sm font-bold">{formatMoney(category.value)}</span>
             </div>
           ))}
           {categoryData.length > 3 && (
@@ -114,7 +123,7 @@ export function QuickAnalysisWidget({
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600 font-medium">Total restante</span>
                 <span className="text-sm font-bold text-gray-500">
-                  ${categoryData.slice(3).reduce((sum, cat) => sum + cat.value, 0).toLocaleString()}
+                  {formatMoney(categoryData.slice(3).reduce((sum, cat) => sum + cat.value, 0))}
                 </span>
               </div>
             </div>
@@ -128,13 +137,13 @@ export function QuickAnalysisWidget({
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-700 font-medium">Este período</span>
               <span className="text-sm font-bold text-blue-600">
-                ${totalExpenses.toLocaleString()}
+                {formatMoney(totalExpenses)}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-700 font-medium">Promedio general</span>
               <span className="text-sm font-bold text-gray-600">
-                ${monthlyAverage.toLocaleString()}
+                {formatMoney(monthlyAverage)}
               </span>
             </div>
             {totalExpenses > 0 && monthlyAverage > 0 && (
