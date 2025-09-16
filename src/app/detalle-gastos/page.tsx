@@ -11,6 +11,7 @@ import { FiltrosGastos, FilterOptions } from "@/components/detalle-gastos/Filtro
 import { ListaGastosAgrupados } from "@/components/detalle-gastos/ListaGastosAgrupados"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { toLocalDateFromString, toDateWithTime } from "@/lib/dateUtils"
 
 export default function DetalleGastosPage() {
   const { gastos, loading, error, deleteGasto } = useGastosFiltrados()
@@ -69,31 +70,34 @@ export default function DetalleGastosPage() {
     }
 
     // Filtro de fechas
-    const now = new Date()
-    const currentYear = now.getFullYear()
-    const currentMonth = now.getMonth()
-
     switch (filters.dateRange) {
       case "current-month":
+        const now = new Date()
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+        const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
+        
         filtered = filtered.filter(gasto => {
-          const gastoDate = new Date(gasto.fecha)
-          return gastoDate.getFullYear() === currentYear && gastoDate.getMonth() === currentMonth
+          const expenseDate = toDateWithTime(gasto.fecha)
+          return expenseDate >= firstDayOfMonth && expenseDate <= lastDayOfMonth
         })
         break
       case "year":
-        const year = filters.year ? parseInt(filters.year) : currentYear
+        const year = filters.year ? parseInt(filters.year) : new Date().getFullYear()
+        const firstDayOfYear = new Date(year, 0, 1)
+        const lastDayOfYear = new Date(year, 11, 31, 23, 59, 59)
+        
         filtered = filtered.filter(gasto => {
-          const gastoDate = new Date(gasto.fecha)
-          return gastoDate.getFullYear() === year
+          const expenseDate = toDateWithTime(gasto.fecha)
+          return expenseDate >= firstDayOfYear && expenseDate <= lastDayOfYear
         })
         break
       case "custom":
         if (filters.dateFrom && filters.dateTo) {
-          const fromDate = new Date(filters.dateFrom)
-          const toDate = new Date(filters.dateTo)
+          const fromDate = toDateWithTime(filters.dateFrom)
+          const toDate = toDateWithTime(filters.dateTo, 'end')
           filtered = filtered.filter(gasto => {
-            const gastoDate = new Date(gasto.fecha)
-            return gastoDate >= fromDate && gastoDate <= toDate
+            const expenseDate = toDateWithTime(gasto.fecha)
+            return expenseDate >= fromDate && expenseDate <= toDate
           })
         }
         break

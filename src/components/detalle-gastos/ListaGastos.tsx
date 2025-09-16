@@ -48,43 +48,46 @@ export function ListaGastos({
             {gastos.map((gasto) => (
               <div
                 key={gasto.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border rounded-lg hover:shadow-md transition-shadow"
+                className="bg-white border rounded-lg p-2.5 hover:bg-gray-50"
               >
-                <div className="flex-1">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                    <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">{gasto.descripcion}</h3>
-                      <div className="flex flex-wrap items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          <Tag className="w-3 h-3 mr-1" />
-                          {gasto.categoria?.nombre || "Sin categoría"}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          <CreditCard className="w-3 h-3 mr-1" />
-                          {gasto.metodo_pago?.nombre || "Sin método"}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          <Calendar className="w-3 h-3 mr-1" />
-                          {formatDate(gasto.fecha)}
-                        </Badge>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-sm text-gray-900 truncate">
+                      {gasto.descripcion}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <Tag className="h-3 w-3" />
+                        {gasto.categoria?.nombre || "Sin categoría"}
+                      </div>
+                      <span>•</span>
+                      <div className="flex items-center gap-1">
+                        <CreditCard className="h-3 w-3" />
+                        {gasto.metodo_pago?.nombre || "Sin método"}
+                      </div>
+                      <span>•</span>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(gasto.fecha + 'T00:00:00').toLocaleDateString('es-ES', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-red-600">
-                        {formatMoney(gasto.monto)}
-                      </p>
-                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2 mt-3 sm:mt-0 sm:ml-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDeleteGasto(gasto.id.toString())}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-red-600 text-sm whitespace-nowrap">
+                      {formatMoney(gasto.monto)}
+                    </p>
+                    <button
+                      onClick={() => onDeleteGasto(gasto.id.toString())}
+                      className="h-7 w-7 rounded-full text-gray-400 hover:text-red-500 flex items-center justify-center"
+                      title="Eliminar"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

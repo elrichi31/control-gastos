@@ -47,14 +47,21 @@ export function ListaGastosAgrupados({
 
   const getGroupTitle = (date: Date, groupBy: "day" | "week" | "month"): string => {
     switch (groupBy) {
-      case "day":
-        return format(date, "EEEE d 'de' MMMM yyyy", { locale: es })
-      case "week":
-        const weekStart = startOfWeek(date, { weekStartsOn: 1 })
-        const weekEnd = endOfWeek(date, { weekStartsOn: 1 })
-        return `Semana del ${format(weekStart, "EEEE d 'de' MMMM", { locale: es })} al ${format(weekEnd, "EEEE d 'de' MMMM yyyy", { locale: es })}`
-      case "month":
-        return format(date, "MMMM yyyy", { locale: es })
+      case "day": {
+        // Convertimos a fecha local para evitar problemas de zona horaria
+        const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000)
+        return format(localDate, "EEEE d 'de' MMMM yyyy", { locale: es })
+      }
+      case "week": {
+        const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000)
+        const weekStart = startOfWeek(localDate, { weekStartsOn: 1 })
+        const weekEnd = endOfWeek(localDate, { weekStartsOn: 1 })
+        return `Semana del ${format(weekStart, "d MMM", { locale: es })} al ${format(weekEnd, "d MMM", { locale: es })}`
+      }
+      case "month": {
+        const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000)
+        return format(localDate, "MMMM yyyy", { locale: es })
+      }
       default:
         return ""
     }
@@ -142,8 +149,6 @@ export function ListaGastosAgrupados({
                 <GastoItem
                   key={gasto.id}
                   gasto={gasto}
-                  formatMoney={formatMoney}
-                  formatDate={formatDate}
                   onDeleteGasto={onDeleteGasto}
                 />
               ))}
@@ -211,8 +216,6 @@ export function ListaGastosAgrupados({
                         <GastoItem
                           key={gasto.id}
                           gasto={gasto}
-                          formatMoney={formatMoney}
-                          formatDate={formatDate}
                           onDeleteGasto={onDeleteGasto}
                         />
                       ))}
@@ -228,56 +231,20 @@ export function ListaGastosAgrupados({
   )
 }
 
+import { ExpenseItem } from '@/components/ExpenseItem'
+
 // Componente reutilizable para mostrar un gasto individual
 function GastoItem({ 
   gasto, 
-  formatMoney, 
-  formatDate, 
   onDeleteGasto 
 }: {
   gasto: Gasto
-  formatMoney: (amount: number) => string
-  formatDate: (dateString: string) => string
   onDeleteGasto: (id: string) => void
 }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border rounded-lg hover:shadow-md transition-shadow">
-      <div className="flex-1">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-          <div className="flex-1">
-            <h3 className="font-medium text-gray-900">{gasto.descripcion}</h3>
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-              <Badge variant="outline" className="text-xs">
-                <Tag className="w-3 h-3 mr-1" />
-                {gasto.categoria?.nombre || "Sin categoría"}
-              </Badge>
-              <Badge variant="outline" className="text-xs">
-                <CreditCard className="w-3 h-3 mr-1" />
-                {gasto.metodo_pago?.nombre || "Sin método"}
-              </Badge>
-              <Badge variant="outline" className="text-xs">
-                <Calendar className="w-3 h-3 mr-1" />
-                {formatDate(gasto.fecha)}
-              </Badge>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-lg font-bold text-red-600">
-              {formatMoney(gasto.monto)}
-            </p>
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center gap-2 mt-3 sm:mt-0 sm:ml-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onDeleteGasto(gasto.id.toString())}
-          className="text-red-600 hover:text-red-700"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
-    </div>
+    <ExpenseItem
+      expense={gasto}
+      onDelete={onDeleteGasto}
+    />
   )
 }

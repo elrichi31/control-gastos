@@ -205,15 +205,17 @@ export default function HomePage() {
                     <CardContent className="p-4 sm:p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-purple-600 text-sm font-medium">Categoría principal</p>
-                                <p className="text-lg font-bold text-purple-900 truncate">
-                                    {topCategory.name}
-                                </p>
-                                <p className="text-sm text-purple-600 mt-2">
-                                                                    <p className="text-2xl font-bold text-purple-900">
-                                    {formatMoney(topCategory.total)}
-                                </p>
-                                </p>
+                                <div className="space-y-1">
+                                    <p className="text-purple-600 text-sm font-medium">Categoría principal</p>
+                                    <p className="text-lg font-bold text-purple-900 truncate">
+                                        {topCategory.name}
+                                    </p>
+                                    <div className="mt-2">
+                                        <p className="text-2xl font-bold text-purple-900">
+                                            {formatMoney(topCategory.total)}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                             <ShoppingCart className="w-8 h-8 text-purple-600" />
                         </div>
@@ -251,19 +253,19 @@ export default function HomePage() {
                         </CardHeader>
                         <CardContent>
                             {/* Días de la semana */}
-                            <div className="grid grid-cols-7 gap-2 mb-3">
-                                {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
-                                    <div key={day} className="text-center text-sm font-medium text-gray-500 p-2">
+                            <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 sm:mb-3">
+                                {['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'].map(day => (
+                                    <div key={day} className="text-center text-xs sm:text-sm font-medium text-gray-500 p-1 sm:p-2">
                                         {day}
                                     </div>
                                 ))}
                             </div>
                             
                             {/* Grid del calendario */}
-                            <div className="grid grid-cols-7 gap-2">
+                            <div className="grid grid-cols-7 gap-1 sm:gap-2">
                                 {/* Espacios vacíos para los días anteriores al inicio del mes */}
                                 {Array.from({ length: getDay(currentMonth) }).map((_, index) => (
-                                    <div key={`empty-${index}`} className="h-16"></div>
+                                    <div key={`empty-${index}`} className="h-12 sm:h-16"></div>
                                 ))}
                                 
                                 {/* Días del mes */}
@@ -276,20 +278,20 @@ export default function HomePage() {
                                         <div
                                             key={date.toISOString()}
                                             className={`
-                                                h-16 p-2 rounded-lg text-center text-sm cursor-pointer transition-colors flex flex-col justify-center
+                                                h-12 sm:h-16 p-1 sm:p-2 rounded-lg text-center text-xs sm:text-sm cursor-pointer transition-colors flex flex-col justify-center
                                                 ${isCurrentDay 
-                                                    ? 'bg-blue-100 border-2 border-blue-500' 
+                                                    ? 'bg-blue-100 border border-blue-500 sm:border-2' 
                                                     : hasExpenses 
                                                         ? 'bg-red-50 hover:bg-red-100 border border-red-200' 
                                                         : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
                                                 }
                                             `}
                                         >
-                                            <div className={`font-medium ${isCurrentDay ? 'text-blue-700' : 'text-gray-900'}`}>
+                                            <div className={`font-medium leading-none ${isCurrentDay ? 'text-blue-700' : 'text-gray-900'}`}>
                                                 {dayNumber}
                                             </div>
                                             {hasExpenses && (
-                                                <div className="text-xs text-red-600 font-medium leading-tight mt-1">
+                                                <div className="text-[10px] sm:text-xs text-red-600 font-medium leading-tight mt-0.5 sm:mt-1">
                                                     {total > 999 ? formatMoney(Math.round(total/1000) * 1000).replace('.00', '') + 'k' : formatMoney(total)}
                                                 </div>
                                             )}

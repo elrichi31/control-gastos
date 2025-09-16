@@ -102,6 +102,7 @@ export function ExpenseList({ groupedExpenses, isLoading, onDelete, groupBy }: P
                   key={expense.id}
                   expense={expense}
                   onDelete={handleRequestDelete} // ahora solo abre el modal
+                  showDeleteIcon={true}
                 />
               ))}
             </div>
