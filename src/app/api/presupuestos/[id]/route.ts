@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedSupabaseClient } from '@/lib/auth-supabase'
+import { getAuthenticatedSupabaseClient } from '@/shared/lib/auth-supabase'
 
 // GET: Obtener un presupuesto mensual específico por ID
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

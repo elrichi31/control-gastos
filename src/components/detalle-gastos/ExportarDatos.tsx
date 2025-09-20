@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Download, FileText, Table, BarChart3 } from 'lucide-react'
-import { Gasto } from '@/hooks/useGastosFiltrados'
+import { Gasto } from '@/shared/hooks/useGastosFiltrados'
 
 interface ExportarDatosProps {
   gastos: Gasto[]

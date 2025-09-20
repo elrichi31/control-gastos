@@ -1,4 +1,4 @@
-import { Expense } from "@/types"
+import { Expense } from "@/shared/types"
 import { endOfWeek, format } from "date-fns"
 import { toLocalDateFromString } from "./dateUtils"
 

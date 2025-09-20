@@ -5,7 +5,7 @@ import { X, Receipt, TrendingDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ExpenseFilters } from "./ExpenseFilters"
 import { ExpenseList } from "./ExpenseList"
-import { useGastosFiltrados, Gasto } from "@/hooks/useGastosFiltrados"
+import { useGastosFiltrados, Gasto } from "@/shared/hooks/useGastosFiltrados"
 
 interface FilterOptions {
   search: string

@@ -8,8 +8,8 @@ import { Sidebar } from "@/components/Sidebar"
 import { MobileHeader } from "@/components/MobileHeader"
 import { PageTitle } from "@/components/PageTitle"
 import { Providers } from "@/components/Providers"
-import { useSidebar } from "@/hooks/useSidebar"
-import { cn } from "@/lib/utils"
+import { useSidebar } from "@/shared/hooks/useSidebar"
+import { cn } from "@/shared/lib/utils"
 import { Toaster } from "react-hot-toast"
 
 const inter = Inter({ subsets: ["latin"] })

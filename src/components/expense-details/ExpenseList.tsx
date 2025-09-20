@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { ExpenseItem } from "@/components/ExpenseItem"
-import { Gasto } from "@/hooks/useGastosFiltrados"
+import { Gasto } from "@/shared/hooks/useGastosFiltrados"
 
 interface FilterOptions {
   search: string

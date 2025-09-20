@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { Home, FileText, Calculator, X, ChevronLeft, BarChart3, Receipt, LogOut, User } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "@/shared/lib/utils"
 import { Button } from "@/components/ui/button"
 
 const menuItems = [

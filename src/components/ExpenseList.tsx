@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { ExpenseItem } from "./ExpenseItem"
 // import { Expense } from "./../hooks/useExpenses"
-import { Gasto } from "./../hooks/useGastosFiltrados"
+import { Gasto } from "../shared/hooks/useGastosFiltrados"
 import { format, parse, parseISO, addMinutes } from "date-fns"
 import { es } from "date-fns/locale"
 import { ConfirmModal } from "./ConfirmModal"

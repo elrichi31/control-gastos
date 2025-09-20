@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedSupabaseClient } from '@/lib/auth-supabase'
+import { getAuthenticatedSupabaseClient } from '@/shared/lib/auth-supabase'
 
 // GET: Devuelve para un presupuesto mensual todas las categorías con su total, cantidad de gastos, nombre y movimientos
 // /api/presupuesto-mensual-detalle?presupuesto_mensual_id=123

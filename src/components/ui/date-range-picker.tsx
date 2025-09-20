@@ -16,7 +16,7 @@ import {
 } from './select'
 import { Switch } from './switch'
 import { ChevronUpIcon, ChevronDownIcon, CheckIcon } from '@radix-ui/react-icons'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/lib/utils'
 
 export interface DateRangePickerProps {
   /** Click handler for applying the updates from DateRangePicker. */

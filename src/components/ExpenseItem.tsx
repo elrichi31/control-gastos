@@ -1,9 +1,9 @@
 import { useState } from "react"
 import { Tag, Calendar, CreditCard, Trash2 } from "lucide-react"
-import { Gasto } from "@/hooks/useGastosFiltrados"
+import { Gasto } from "@/shared/hooks/useGastosFiltrados"
 import { Badge } from "@/components/ui/badge"
-import { formatDisplayDate } from "@/lib/dateUtils"
-import { COLORES_CATEGORIA } from "@/lib/constants"
+import { formatDisplayDate } from "@/shared/lib/dateUtils"
+import { COLORES_CATEGORIA } from "@/shared/lib/constants"
 import { ConfirmModal } from "@/components/ConfirmModal"
 
 type Props = {

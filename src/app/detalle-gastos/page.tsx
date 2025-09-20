@@ -4,14 +4,14 @@ import React, { useState, useMemo } from "react"
 import { PageTitle } from "@/components/PageTitle"
 import { Card, CardContent } from "@/components/ui/card"
 import { Receipt } from "lucide-react"
-import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
+import { useGastosFiltrados } from "@/shared/hooks/useGastosFiltrados"
 import { ExportarDatos } from "@/components/detalle-gastos/ExportarDatos"
 import { EstadisticasResumen } from "@/components/detalle-gastos/EstadisticasResumen"
 import { FiltrosGastos, FilterOptions } from "@/components/detalle-gastos/FiltrosGastos"
 import { ListaGastosAgrupados } from "@/components/detalle-gastos/ListaGastosAgrupados"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { toLocalDateFromString, toDateWithTime } from "@/lib/dateUtils"
+import { toLocalDateFromString, toDateWithTime } from "@/shared/lib/dateUtils"
 
 export default function DetalleGastosPage() {
   const { gastos, loading, error, deleteGasto } = useGastosFiltrados()

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { DEFAULT_METODO_PAGO, API_ENDPOINTS } from "@/lib/constants"
+import { DEFAULT_METODO_PAGO, API_ENDPOINTS } from "@/shared/lib/constants"
 
 export interface Gasto {
   id: number

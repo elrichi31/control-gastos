@@ -23,7 +23,7 @@ import {
 } from "@/services/budget"
 import CategoriaCard from "@/components/presupuesto/CategoriaCard"
 import ExpenseModal from "@/components/presupuesto/ExpenseModal"
-import { useGastosPorCategoriaDelMes } from "@/hooks/useGastosPorCategoriaDelMes"
+import { useGastosPorCategoriaDelMes } from "@/shared/hooks/useGastosPorCategoriaDelMes"
 
 interface MovimientoPresupuesto {
   id: number

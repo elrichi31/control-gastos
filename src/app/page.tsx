@@ -3,10 +3,10 @@
 import React, { useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
+import { useGastosFiltrados } from "@/shared/hooks/useGastosFiltrados"
 import { format, startOfMonth, endOfMonth, isToday, isYesterday, subMonths, eachDayOfInterval, isSameDay, getDay } from "date-fns"
 import { es } from "date-fns/locale"
-import { toDateWithTime, formatDateWithLocale } from "@/lib/dateUtils"
+import { toDateWithTime, formatDateWithLocale } from "@/shared/lib/dateUtils"
 import { PageTitle } from "@/components/PageTitle"
 import Link from "next/link"
 import { 

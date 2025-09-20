@@ -1,7 +1,7 @@
 import React from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { MetodoPagoDB, MovimientoPresupuesto } from "@/types/budget"
+import { MetodoPagoDB, MovimientoPresupuesto } from "@/shared/types/budget"
 
 interface ExpenseModalProps {
   open: boolean

@@ -1,5 +1,5 @@
 // src/services/budget.ts
-import { PresupuestoCategoriaDetalle, CategoriaDB, MetodoPagoDB, MovimientoPresupuesto } from "@/types/budget"
+import { PresupuestoCategoriaDetalle, CategoriaDB, MetodoPagoDB, MovimientoPresupuesto } from "@/shared/types/budget"
 
 export async function fetchPresupuestoCategorias(id: string): Promise<PresupuestoCategoriaDetalle[]> {
   const res = await fetch(`/api/presupuesto-mensual-detalle?presupuesto_mensual_id=${id}`)

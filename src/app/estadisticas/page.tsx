@@ -12,8 +12,8 @@ import { PeriodSummaryWidget } from "@/components/stats/period-summary-widget"
 import { InsightsCards } from "@/components/stats/insights-cards"
 import { CategoryComparison } from "@/components/stats/category-comparison"
 import { PageTitle } from "@/components/PageTitle"
-import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
-import { useDataProcessing } from "@/hooks/useDataProcessing"
+import { useGastosFiltrados } from "@/shared/hooks/useGastosFiltrados"
+import { useDataProcessing } from "@/shared/hooks/useDataProcessing"
 
 interface FilterOptions {
   filterType: "year-month" | "year" | "month" | "custom"

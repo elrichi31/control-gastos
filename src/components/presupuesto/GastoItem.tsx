@@ -1,7 +1,7 @@
 import React from "react"
 import { Button } from "@/components/ui/button"
 import { Edit2, Trash2 } from "lucide-react"
-import { MovimientoPresupuesto } from "@/types/budget"
+import { MovimientoPresupuesto } from "@/shared/types/budget"
 
 interface GastoItemProps {
   expense: MovimientoPresupuesto

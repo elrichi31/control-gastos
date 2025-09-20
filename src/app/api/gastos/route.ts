@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthenticatedSupabaseClient } from '@/lib/auth-supabase';
+import { getAuthenticatedSupabaseClient } from '@/shared/lib/auth-supabase';
 
 export async function GET() {
   const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient();

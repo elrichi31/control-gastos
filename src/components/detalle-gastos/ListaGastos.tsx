@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Receipt, Trash2, Tag, CreditCard, Calendar } from 'lucide-react'
-import { Gasto } from '@/hooks/useGastosFiltrados'
+import { Gasto } from '@/shared/hooks/useGastosFiltrados'
 
 interface ListaGastosProps {
   gastos: Gasto[]

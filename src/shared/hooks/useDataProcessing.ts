@@ -1,6 +1,6 @@
 import { useMemo } from "react"
-import { toDateWithTime } from "@/lib/dateUtils"
-import { MESES_NOMBRES, MESES_NOMBRES_LOWERCASE } from "@/lib/constants"
+import { toDateWithTime } from "@/shared/lib/dateUtils"
+import { MESES_NOMBRES, MESES_NOMBRES_LOWERCASE } from "@/shared/lib/constants"
 import { startOfMonth, endOfMonth, subMonths } from "date-fns"
 
 interface FilterOptions {

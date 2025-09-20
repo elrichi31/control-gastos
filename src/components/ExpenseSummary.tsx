@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Expense } from "../hooks/useExpenses"
+import type { Expense } from "../shared/hooks/useExpenses"
 
 export function ExpenseSummary({
     expenses,

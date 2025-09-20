@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { X, Plus } from "lucide-react"
 import GastoItem from "./GastoItem"
-import { PresupuestoCategoriaDetalle, MovimientoPresupuesto } from "@/types/budget"
+import { PresupuestoCategoriaDetalle, MovimientoPresupuesto } from "@/shared/types/budget"
 import BudgetProgressBar from "@/components/BudgetProgressBar"
 
 interface CategoriaCardProps {
