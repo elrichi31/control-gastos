@@ -29,16 +29,15 @@ export function AddMonthCard({ availableMonths, isOpen, setIsOpen, onAdd }: AddM
         </DialogHeader>
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {availableMonths.map((month) => (
-            <Button
+            <button
               key={month.value}
-              variant="outline"
-              className="w-full justify-start bg-white hover:bg-gray-50"
+              className="w-full justify-start bg-white hover:bg-gray-50 border border-gray-200 rounded-md p-3 text-left flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => onAdd(month.value)}
               disabled={month.disabled}
             >
               <Calendar className="w-5 h-5 mr-3 text-gray-600" />
-              {month.name}
-            </Button>
+              <span className="text-gray-900">{month.name}</span>
+            </button>
           ))}
         </div>
       </DialogContent>

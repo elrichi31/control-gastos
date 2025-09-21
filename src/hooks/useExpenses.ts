@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { fetchExpenses as fetchExpensesService } from "@/services/expenses"
 
 export interface Expense {
   id: number
@@ -21,8 +22,7 @@ export function useExpenses() {
 
   const fetchExpenses = async () => {
     try {
-      const res = await fetch("/api/gastos")
-      const data = await res.json()
+      const data = await fetchExpensesService()
 
       const formatted = data.map((e: any) => ({
         id: e.id,

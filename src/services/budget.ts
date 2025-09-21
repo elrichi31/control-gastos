@@ -1,5 +1,7 @@
 // src/services/budget.ts
 import { PresupuestoCategoriaDetalle, CategoriaDB, MetodoPagoDB, MovimientoPresupuesto } from "@/types/budget"
+import { fetchCategories } from "./categories"
+import { fetchPaymentMethods } from "./paymentMethods"
 
 export async function fetchPresupuestoCategorias(id: string): Promise<PresupuestoCategoriaDetalle[]> {
   const res = await fetch(`/api/presupuesto-mensual-detalle?presupuesto_mensual_id=${id}`)
@@ -23,14 +25,23 @@ export async function copyFromPreviousMonth(presupuestoMensualId: string): Promi
   return true
 }
 
+// Usar los servicios específicos para categorías y métodos de pago
 export async function fetchCategoriasDB(): Promise<CategoriaDB[]> {
-  const res = await fetch("/api/categorias")
-  return res.ok ? await res.json() : []
+  try {
+    return await fetchCategories()
+  } catch (error) {
+    console.error('Error fetching categories for budget:', error)
+    return []
+  }
 }
 
 export async function fetchMetodosPago(): Promise<MetodoPagoDB[]> {
-  const res = await fetch("/api/metodos_pago")
-  return res.ok ? await res.json() : []
+  try {
+    return await fetchPaymentMethods()
+  } catch (error) {
+    console.error('Error fetching payment methods for budget:', error)
+    return []
+  }
 }
 
 export async function addCategory(id: string, categoryId: number) {
@@ -43,13 +54,13 @@ export async function addCategory(id: string, categoryId: number) {
   return await res.json()
 }
 
-export async function deleteCategory(catId: number) {
+export async function deleteBudgetCategory(catId: number) {
   const res = await fetch(`/api/presupuesto-categoria?id=${catId}`, { method: "DELETE" })
   if (!res.ok) throw new Error((await res.json()).error || "Error al eliminar la categoría")
   return true
 }
 
-export async function addExpense(data: {
+export async function addBudgetExpense(data: {
   presupuesto_categoria_id: number,
   descripcion: string,
   monto: number,
@@ -65,7 +76,7 @@ export async function addExpense(data: {
   return await res.json()
 }
 
-export async function updateExpense(data: {
+export async function updateBudgetExpense(data: {
   id: number,
   descripcion: string,
   monto: number,
@@ -81,7 +92,7 @@ export async function updateExpense(data: {
   return await res.json()
 }
 
-export async function deleteExpense(id: number) {
+export async function deleteBudgetExpense(id: number) {
   const res = await fetch("/api/movimientos-categoria", {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },

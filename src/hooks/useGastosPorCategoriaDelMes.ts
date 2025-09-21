@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { fetchExpenses } from "@/services/expenses"
 
 interface Gasto {
   id: number
@@ -19,9 +20,7 @@ export function useGastosPorCategoriaDelMes(mes: number, anio: number) {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch("/api/gastos")
-        if (!res.ok) throw new Error("Error al obtener gastos")
-        const data = await res.json()
+        const data = await fetchExpenses()
         setGastos(data)
       } catch (e: any) {
         setError(e.message || "Error de red")

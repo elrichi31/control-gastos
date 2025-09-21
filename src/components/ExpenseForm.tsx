@@ -12,6 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { createExpense } from "@/services/expenses"
+import { fetchCategories, type Category } from "@/services/categories"
+import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
 
 export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
   const [formData, setFormData] = useState({
@@ -26,8 +29,8 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
 
-  const [categories, setCategories] = useState<{ id: number; nombre: string }[]>([])
-  const [paymentMethods, setPaymentMethods] = useState<{ id: number; nombre: string }[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
 
   const resetForm = () => {
     setFormData({
@@ -44,14 +47,13 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const [catRes, payRes] = await Promise.all([
-          fetch("/api/categorias"),
-          fetch("/api/metodos_pago"),
+        const [categories, paymentMethods] = await Promise.all([
+          fetchCategories(),
+          fetchPaymentMethods(),
         ])
 
-        const [catData, payData] = await Promise.all([catRes.json(), payRes.json()])
-        setCategories(catData)
-        setPaymentMethods(payData)
+        setCategories(categories)
+        setPaymentMethods(paymentMethods)
       } catch (err) {
         console.error("Error al cargar categorías o métodos de pago", err)
       }
@@ -69,30 +71,21 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch("/api/gastos", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          descripcion: formData.description,
-          monto: parseFloat(formData.amount),
-          categoria_id: parseInt(formData.categoryId),
-          fecha: formData.date,
-          metodo_pago_id: parseInt(formData.paymentMethodId),
-        }),
+      await createExpense({
+        descripcion: formData.description,
+        monto: parseFloat(formData.amount),
+        categoria_id: parseInt(formData.categoryId),
+        fecha: formData.date,
+        metodo_pago_id: parseInt(formData.paymentMethodId),
       })
 
-      if (response.ok) {
-        setSubmitSuccess(true)
-        resetForm()
-        fetchExpenses()
-        setTimeout(() => setSubmitSuccess(false), 3000)
-      } else {
-        console.error("Error al agregar gasto")
-      }
+      setSubmitSuccess(true)
+      resetForm()
+      fetchExpenses()
+      setTimeout(() => setSubmitSuccess(false), 3000)
     } catch (error) {
-      console.error("Error:", error)
+      console.error("Error al agregar gasto:", error)
+      alert("Ocurrió un error al agregar el gasto")
     } finally {
       setIsSubmitting(false)
     }

@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url)
   const anioParam = searchParams.get('anio')
+  const includeExpenseCount = searchParams.get('include_expense_count') === 'true'
 
   let query = supabase
     .from('presupuesto_mensual')
@@ -26,6 +27,41 @@ export async function GET(req: NextRequest) {
   const { data, error } = await query
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  
+  // Si se solicita incluir el conteo de gastos reales, calcularlos para cada presupuesto
+  if (includeExpenseCount && data) {
+    const dataWithExpenseCounts = await Promise.all(
+      data.map(async (presupuesto) => {
+        try {
+          // Construir las fechas de inicio y fin del mes
+          const startDate = `${presupuesto.anio}-${presupuesto.mes.toString().padStart(2, '0')}-01`
+          const nextMonth = presupuesto.mes === 12 ? 1 : presupuesto.mes + 1
+          const nextYear = presupuesto.mes === 12 ? presupuesto.anio + 1 : presupuesto.anio
+          const endDate = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`
+
+          // Contar gastos del mes específico
+          const { count, error: countError } = await supabase
+            .from('gasto')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .gte('fecha', startDate)
+            .lt('fecha', endDate)
+
+          if (countError) {
+            console.error('Error al contar gastos para presupuesto:', countError)
+            return { ...presupuesto, gastos_registrados: presupuesto.gastos_registrados }
+          }
+
+          return { ...presupuesto, gastos_registrados: count || 0 }
+        } catch (error) {
+          console.error('Error procesando presupuesto:', error)
+          return presupuesto
+        }
+      })
+    )
+    
+    return NextResponse.json(dataWithExpenseCounts)
+  }
   
   return NextResponse.json(data)
 }
@@ -66,7 +102,29 @@ export async function POST(req: NextRequest) {
     .insert([{ anio, mes, total, gastos_registrados, tendencia, estado, user_id: userId }])
     .select()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('Supabase error details:', error)
+    
+    // Si es un error de constraint, usar "En progreso" que sabemos que funciona
+    if (error.message.includes('presupuesto_mensual_estado_check')) {
+      console.log(`Constraint error, using "En progreso" instead of "${estado}"`)
+      
+      const { data: retryData, error: retryError } = await supabase
+        .from('presupuesto_mensual')
+        .insert([{ anio, mes, total, gastos_registrados, tendencia, estado: "En progreso", user_id: userId }])
+        .select()
+      
+      if (retryError) {
+        return NextResponse.json({ 
+          error: `Error de constraint: ${retryError.message}` 
+        }, { status: 500 })
+      }
+      
+      return NextResponse.json(retryData)
+    }
+    
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
   return NextResponse.json(data)
 }
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { DEFAULT_METODO_PAGO, API_ENDPOINTS } from "@/lib/constants"
+import { DEFAULT_METODO_PAGO } from "@/lib/constants"
+import { fetchExpenses, deleteExpense } from "@/services/expenses"
 
 export interface Gasto {
   id: number
@@ -21,9 +22,7 @@ export function useGastosFiltrados() {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch(API_ENDPOINTS.GASTOS)
-        if (!res.ok) throw new Error("Error al obtener gastos")
-        const data = await res.json()
+        const data = await fetchExpenses()
         
         // Formatear los datos para incluir metodo_pago si no existe
         const formattedData = data.map((gasto: any) => ({
@@ -42,14 +41,7 @@ export function useGastosFiltrados() {
 
   const deleteGasto = async (id: string) => {
     try {
-      const res = await fetch(`/api/gastos?id=${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-
-      if (!res.ok) throw new Error("Error al eliminar gasto")
+      await deleteExpense(id)
 
       // Actualizar el estado local
       setGastos(prev => prev.filter(gasto => gasto.id.toString() !== id))

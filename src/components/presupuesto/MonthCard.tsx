@@ -36,7 +36,7 @@ const getStatusIcon = (status: string) => {
 const getStatusText = (status: string) => {
   switch (status) {
     case "completed":
-      return "Completado"
+      return "Finalizado"
     case "in-progress":
       return "En progreso"
     default:
@@ -81,14 +81,12 @@ export function MonthCard({ month, data, isCurrentMonth, onRemove }: MonthCardPr
           <div className="flex items-center gap-2">
             {isCurrentMonth && <Badge className="bg-blue-500 text-white text-xs">Actual</Badge>}
             {!hasData && (
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
+                className="bg-white hover:bg-gray-50 text-gray-400 hover:text-red-500 h-8 w-8 p-0 rounded-full border border-gray-200 flex items-center justify-center transition-colors"
                 onClick={() => onRemove(month.value)}
-                className="text-gray-400 hover:text-red-500"
               >
                 <X className="w-4 h-4" />
-              </Button>
+              </button>
             )}
           </div>
         </div>
