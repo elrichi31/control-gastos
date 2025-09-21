@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { toDateWithTime } from "@/lib/dateUtils"
+import { toDateWithTime } from "@/lib/utils"
 import { MESES_NOMBRES, MESES_NOMBRES_LOWERCASE } from "@/lib/constants"
 import { startOfMonth, endOfMonth, subMonths } from "date-fns"
 

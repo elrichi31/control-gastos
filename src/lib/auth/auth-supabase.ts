@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from './auth'
-import { createClient } from './supabase/server'
+import { createServerClient } from '../database'
 import { NextResponse } from 'next/server'
 
 export async function getAuthenticatedSupabaseClient() {
@@ -14,7 +14,7 @@ export async function getAuthenticatedSupabaseClient() {
     }
   }
 
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   
   return {
     error: null,

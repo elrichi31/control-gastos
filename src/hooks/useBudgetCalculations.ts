@@ -1,5 +1,5 @@
 // Hook para lógica de cálculos del presupuesto
-import { PresupuestoCategoriaDetalle, CategoriaDB } from "@/lib/budgetDetailsConstants"
+import { PresupuestoCategoriaDetalle, CategoriaDB } from "@/lib/constants"
 import { calculateBudgetByCategory, calculateBudgetTotal, getAvailableCategories } from "@/services/budget-details"
 
 interface GastosPorCategoria {

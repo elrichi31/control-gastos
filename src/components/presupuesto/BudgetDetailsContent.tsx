@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import CategoriaCard from "@/components/presupuesto/CategoriaCard"
-import { PresupuestoCategoriaDetalle, CategoriaDB } from "@/lib/budgetDetailsConstants"
+import { PresupuestoCategoriaDetalle, CategoriaDB } from "@/lib/constants"
 
 interface BudgetDetailsContentProps {
   // Datos

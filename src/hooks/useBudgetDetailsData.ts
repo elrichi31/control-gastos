@@ -9,7 +9,7 @@ import {
   ExpenseFormData,
   EditingExpense,
   ExpenseToDelete
-} from "@/lib/budgetDetailsConstants"
+} from "@/lib/constants"
 import {
   fetchPresupuestoCategorias,
   fetchCategoriasDB,

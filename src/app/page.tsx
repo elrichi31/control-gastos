@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
 import { format, startOfMonth, endOfMonth, isToday, isYesterday, subMonths, eachDayOfInterval, isSameDay, getDay } from "date-fns"
 import { es } from "date-fns/locale"
-import { toDateWithTime, formatDateWithLocale } from "@/lib/dateUtils"
+import { toDateWithTime, formatDateWithLocale } from "@/lib/utils"
 import { PageTitle } from "@/components/PageTitle"
 import Link from "next/link"
 import { 

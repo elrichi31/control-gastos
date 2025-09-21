@@ -11,7 +11,7 @@ import { FiltrosGastos, FilterOptions } from "@/components/detalle-gastos/Filtro
 import { ListaGastosAgrupados } from "@/components/detalle-gastos/ListaGastosAgrupados"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { toLocalDateFromString, toDateWithTime } from "@/lib/dateUtils"
+import { toLocalDateFromString, toDateWithTime } from "@/lib/utils"
 
 export default function DetalleGastosPage() {
   const { gastos, loading, error, deleteGasto } = useGastosFiltrados()

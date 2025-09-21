@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedSupabaseClient } from '@/lib/auth-supabase'
+import { getAuthenticatedSupabaseClient } from '@/lib/auth'
 
 // DELETE: Borra una categoría de presupuesto solo si no tiene movimientos
 // /api/presupuesto-categoria?id=123

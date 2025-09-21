@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedSupabaseClient } from '@/lib/auth-supabase'
+import { getAuthenticatedSupabaseClient } from '@/lib/auth'
 
 // GET: Obtener todos los presupuestos mensuales, con filtro opcional por año
 export async function GET(req: NextRequest) {

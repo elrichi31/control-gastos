@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedSupabaseClient } from '@/lib/auth-supabase'
+import { getAuthenticatedSupabaseClient } from '@/lib/auth'
 
 // POST: Copiar categorías del mes anterior al presupuesto actual
 export async function POST(req: NextRequest) {

@@ -2,7 +2,7 @@
 
 import { EmptyMonths } from "@/components/presupuesto/EmptyMonths"
 import { PresupuestoGrid } from "@/components/presupuesto/PresupuestoGrid"
-import { allMonths } from "@/lib/budgetConstants"
+import { allMonths } from "@/lib/constants"
 import type { MonthlyDataGrid } from "@/services/budget-general"
 
 interface BudgetContentProps {

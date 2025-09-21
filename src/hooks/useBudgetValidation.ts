@@ -1,4 +1,4 @@
-import { allMonths, type MonthData } from "@/lib/budgetConstants"
+import { allMonths, type MonthData } from "@/lib/constants"
 
 export function useBudgetValidation(selectedYear: string, monthsByYear: { [year: string]: string[] }) {
   // Validar si se puede agregar un mes

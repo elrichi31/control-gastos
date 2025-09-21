@@ -1,7 +1,7 @@
 import { Tag, Calendar, CreditCard, Trash2 } from "lucide-react"
 import { Gasto } from "@/hooks/useGastosFiltrados"
 import { Badge } from "@/components/ui/badge"
-import { formatDisplayDate } from "@/lib/dateUtils"
+import { formatDisplayDate } from "@/lib/utils"
 import { COLORES_CATEGORIA } from "@/lib/constants"
 
 type Props = {

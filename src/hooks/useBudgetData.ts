@@ -8,7 +8,7 @@ import {
   getBudgetStateString,
   type MonthlyDataGrid
 } from "@/services/budget-general"
-import { allMonths, type MonthData } from "@/lib/budgetConstants"
+import { allMonths, type MonthData } from "@/lib/constants"
 
 export function useBudgetData(selectedYear: string) {
   const [monthsByYear, setMonthsByYear] = useState<{ [year: string]: string[] }>({ "2025": [] })

@@ -5,7 +5,7 @@ import {
   MetodoPagoDB, 
   MovimientoPresupuesto,
   PresupuestoInfo 
-} from "@/lib/budgetDetailsConstants"
+} from "@/lib/constants"
 import { 
   fetchPresupuestoCategorias as fetchPresupuestoCategoriasBase,
   fetchCategoriasDB as fetchCategoriasDBBase,
