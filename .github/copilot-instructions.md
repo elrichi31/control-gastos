@@ -11,7 +11,7 @@ Las sugerencias nuevas deben alinearse con ellas.
 - TipoScript para seguridad de tipos.  
 - Tailwind CSS para los estilos.  
 - Components server/client según convenga (usar `use client` solo cuando se necesite).  
-- Seguir convenciones de rutas/layouts propias de Next.js. :contentReference[oaicite:0]{index=0}
+- Seguir convenciones de rutas/layouts propias de Next.js.
 
 ---
 
@@ -60,12 +60,35 @@ middleware.ts             # (si aplica)
 
 ---
 
+## Buenas prácticas de programación
+
+- **Simplicidad ante todo**: evitar clases Tailwind excesivamente largas, difíciles de leer o mantener.  
+- **DRY (Don’t Repeat Yourself)**: si algo se repite varias veces, abstraerlo a componente utilitario o usar variantes.  
+- **Keep It Simple, Stupid (KISS)**: que cada componente o sección haga lo que le corresponde, nada más.  
+- **Rule of Three**: a la tercera repetición de un patrón, considerar extraerlo.  
+- **Responsabilidad Única / Separation of Concerns**: separar UI / estado / lógica de negocio siempre que sea posible.
+
+---
+
+## Reglas específicas para Tailwind CSS
+
+- Mantener las clases Tailwind claras, organizadas y fáciles de entender:  
+• Evitar listas enormemente largas de utilidades en un solo elemento.  
+• Agrupar clases relacionadas (‘layout’, ‘spacing’, ‘typography’, ‘color’, ‘effects’) en un orden lógico. (Por ejemplo: layout → box model → color → tipografía → estados variantes como hover/focus).  
+• Usar clases personalizadas o componentes reutilizables si un estilo con muchas utilidades se repite.  
+• Evitar usar utilitarios “mágicos” con valores arbitrarios repetidos (“w-[123px]”, etc.) sin que existan alternativas semánticas o tokens definidos en `tailwind.config.js`.  
+• Usar linters/plugins/prettier para formatear y ordenar automáticamente las clases de Tailwind.  
+
+---
+
 ## Prácticas recomendadas
 
 - Mantener las páginas / rutas en `app/` finas: solo orquestación de features, UI, import de servicios.  
 - Componentes presentacionales, sin lógica de dominio.  
 - Hooks compartidos genéricos en `shared/hooks`; si son específicos de un feature, en ese feature.  
-- Usar la estructura de rutas/layouts de Next.js: colocar metadata, layouts, server/client components donde correspondan. :contentReference[oaicite:1]{index=1}  
+- Usar la estructura de rutas/layouts de Next.js: colocar metadata, layouts, server/client components donde correspondan.  
+- Revisar periódicamente duplicaciones: cuando veas lógica igual o muy parecida en varios lugares, evaluar refactorizar.  
+- Revisar listas de clases Tailwind y simplificarlas si están creciendo demasiado.  
 
 ---
 
@@ -74,5 +97,5 @@ middleware.ts             # (si aplica)
 Que todas las sugerencias de Copilot:
 
 1. Respeten esta arquitectura adaptada con Next.js y Tailwind.  
-2. Generen código consistente con reglas de dependencias, convenciones de nombres y estructura de rutas/layouts de Next.js.  
+2. Generen código consistente con reglas de dependencias, convenciones de nombres, buenas prácticas como DRY, KISS, Rule of Three, y simplicidad en Tailwind.  
 3. Faciliten mantenimiento y escalabilidad del proyecto sin confusión.

@@ -241,10 +241,14 @@ function GastoItem({
   gasto: Gasto
   onDeleteGasto: (id: string) => void
 }) {
+  const handleDelete = (id: string | number) => {
+    onDeleteGasto(id.toString())
+  }
+  
   return (
     <ExpenseItem
       expense={gasto}
-      onDelete={onDeleteGasto}
+      onDelete={handleDelete}
     />
   )
 }

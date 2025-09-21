@@ -1,8 +1,8 @@
-import { Expense } from "@/shared/types"
+import { Expense, GroupByPeriod } from "@entities/expense"
 import { endOfWeek, format } from "date-fns"
 import { toLocalDateFromString } from "./dateUtils"
 
-export function groupExpenses(expenses: Expense[], groupBy: "dia" | "semana" | "mes") {
+export function groupExpenses(expenses: Expense[], groupBy: GroupByPeriod) {
   const grouped: Record<string, Expense[]> = {}
 
   for (const expense of expenses) {

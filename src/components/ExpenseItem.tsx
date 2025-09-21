@@ -1,27 +1,24 @@
-import { useState } from "react"
 import { Tag, Calendar, CreditCard, Trash2 } from "lucide-react"
-import { Gasto } from "@/shared/hooks/useGastosFiltrados"
 import { Badge } from "@/components/ui/badge"
 import { formatDisplayDate } from "@/shared/lib/dateUtils"
 import { COLORES_CATEGORIA } from "@/shared/lib/constants"
-import { ConfirmModal } from "@/components/ConfirmModal"
 
 type Props = {
-  expense: Gasto
-  onDelete: (id: string) => void
-  showDeleteIcon?: boolean // Opcional, por defecto será false
+  expense: {
+    id: string | number
+    descripcion: string
+    monto: number
+    fecha: string
+    categoria?: { nombre: string }
+    metodo_pago?: { nombre: string }
+  }
+  onDelete: (id: string | number) => void
+  showDeleteIcon?: boolean
 }
 
 export function ExpenseItem({ expense, onDelete, showDeleteIcon = false }: Props) {
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
-
   const handleDelete = () => {
-    setShowConfirmModal(true)
-  }
-
-  const handleConfirmDelete = () => {
-    onDelete(expense.id.toString())
-    setShowConfirmModal(false)
+    onDelete(expense.id)
   }
 
   return (
@@ -61,12 +58,6 @@ export function ExpenseItem({ expense, onDelete, showDeleteIcon = false }: Props
           </div>
         </div>
       </div>
-
-      <ConfirmModal 
-        open={showConfirmModal}
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setShowConfirmModal(false)}
-      />
     </>
   )
 }
