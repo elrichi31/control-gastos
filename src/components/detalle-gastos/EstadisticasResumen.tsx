@@ -9,7 +9,12 @@ interface EstadisticasResumenProps {
     total: number
     count: number
     average: number
-    categoryStats: Record<string, number>
+    categoryStats: Array<{
+      categoria: string
+      total: number
+      count: number
+      percentage: number
+    }>
   }
   formatMoney: (amount: number) => string
 }
@@ -65,7 +70,7 @@ export function EstadisticasResumen({ statistics, formatMoney }: EstadisticasRes
             <div>
               <p className="text-sm text-gray-600">Categorías</p>
               <p className="text-2xl font-bold text-gray-900">
-                {Object.keys(statistics.categoryStats).length}
+                {statistics.categoryStats.length}
               </p>
             </div>
             <Tag className="w-8 h-8 text-purple-600" />

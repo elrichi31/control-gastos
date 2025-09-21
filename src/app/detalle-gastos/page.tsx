@@ -1,194 +1,51 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
-import { PageTitle } from "@/components/PageTitle"
+import React from 'react'
+import { Receipt } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
-import { Receipt } from "lucide-react"
-import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
+import { PageTitle } from "@/components/PageTitle"
 import { ExportarDatos } from "@/components/detalle-gastos/ExportarDatos"
 import { EstadisticasResumen } from "@/components/detalle-gastos/EstadisticasResumen"
-import { FiltrosGastos, FilterOptions } from "@/components/detalle-gastos/FiltrosGastos"
+import { FiltrosGastos } from "@/components/detalle-gastos/FiltrosGastos"
 import { ListaGastosAgrupados } from "@/components/detalle-gastos/ListaGastosAgrupados"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
-import { toLocalDateFromString, toDateWithTime } from "@/lib/utils"
+import { useExpenseDetailsData } from "@/hooks/useExpenseDetailsData"
+import { useExpenseFilters } from "@/hooks/useExpenseFilters"
+import { useExpenseStatistics } from "@/hooks/useExpenseStatistics"
+import { formatMoney, formatDate } from "@/lib/utils"
 
 export default function DetalleGastosPage() {
-  const { gastos, loading, error, deleteGasto } = useGastosFiltrados()
-  
-  const [filters, setFilters] = useState<FilterOptions>({
-    search: "",
-    category: "",
-    paymentMethod: "",
-    dateRange: "current-month",
-    year: "",
-    dateFrom: "",
-    dateTo: "",
-    minAmount: "",
-    maxAmount: "",
-    sortBy: "date",
-    sortOrder: "desc",
-    groupBy: "none"
-  })
+  // Data management
+  const { data, loading, error, deleteGasto } = useExpenseDetailsData()
 
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+  // Extract data for easier access
+  const gastos = data?.gastos || []
+  const categories = data?.categories || []
+  const paymentMethods = data?.paymentMethods || []
 
-  // Extraer categorías y métodos de pago únicos
-  const categories = useMemo(() => {
-    const uniqueCategories = Array.from(
-      new Set(gastos.map(gasto => gasto.categoria?.nombre).filter(Boolean))
-    ).map((nombre, index) => ({ id: index + 1, nombre: nombre! }))
-    return uniqueCategories
-  }, [gastos])
+  // Filter management
+  const {
+    filters,
+    filteredGastos,
+    showAdvancedFilters,
+    activeFiltersCount,
+    handleFilterChange,
+    clearFilters,
+    setShowAdvancedFilters
+  } = useExpenseFilters(gastos)
 
-  const paymentMethods = useMemo(() => {
-    const uniqueMethods = Array.from(
-      new Set(gastos.map(gasto => gasto.metodo_pago?.nombre).filter(Boolean))
-    ).map((nombre, index) => ({ id: index + 1, nombre: nombre! }))
-    return uniqueMethods
-  }, [gastos])
+  // Statistics calculation
+  const statistics = useExpenseStatistics(filteredGastos)
 
-  // Aplicar filtros
-  const filteredGastos = useMemo(() => {
-    let filtered = [...gastos]
-
-    // Filtro de búsqueda
-    if (filters.search) {
-      filtered = filtered.filter(gasto =>
-        gasto.descripcion.toLowerCase().includes(filters.search.toLowerCase())
-      )
+  // Adapter function for delete to handle string/number conversion
+  const handleDeleteGasto = async (id: string) => {
+    try {
+      await deleteGasto(Number(id))
+    } catch (error) {
+      console.error('Error deleting expense:', error)
     }
-
-    // Filtro de categoría
-    if (filters.category) {
-      filtered = filtered.filter(gasto => gasto.categoria?.nombre === filters.category)
-    }
-
-    // Filtro de método de pago
-    if (filters.paymentMethod) {
-      filtered = filtered.filter(gasto => gasto.metodo_pago?.nombre === filters.paymentMethod)
-    }
-
-    // Filtro de fechas
-    switch (filters.dateRange) {
-      case "current-month":
-        const now = new Date()
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-        const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
-        
-        filtered = filtered.filter(gasto => {
-          const expenseDate = toDateWithTime(gasto.fecha)
-          return expenseDate >= firstDayOfMonth && expenseDate <= lastDayOfMonth
-        })
-        break
-      case "year":
-        const year = filters.year ? parseInt(filters.year) : new Date().getFullYear()
-        const firstDayOfYear = new Date(year, 0, 1)
-        const lastDayOfYear = new Date(year, 11, 31, 23, 59, 59)
-        
-        filtered = filtered.filter(gasto => {
-          const expenseDate = toDateWithTime(gasto.fecha)
-          return expenseDate >= firstDayOfYear && expenseDate <= lastDayOfYear
-        })
-        break
-      case "custom":
-        if (filters.dateFrom && filters.dateTo) {
-          const fromDate = toDateWithTime(filters.dateFrom)
-          const toDate = toDateWithTime(filters.dateTo, 'end')
-          filtered = filtered.filter(gasto => {
-            const expenseDate = toDateWithTime(gasto.fecha)
-            return expenseDate >= fromDate && expenseDate <= toDate
-          })
-        }
-        break
-    }
-
-    // Filtro de montos
-    if (filters.minAmount) {
-      filtered = filtered.filter(gasto => gasto.monto >= parseFloat(filters.minAmount))
-    }
-    if (filters.maxAmount) {
-      filtered = filtered.filter(gasto => gasto.monto <= parseFloat(filters.maxAmount))
-    }
-
-    // Ordenamiento
-    filtered.sort((a, b) => {
-      let comparison = 0
-      
-      switch (filters.sortBy) {
-        case "date":
-          comparison = new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
-          break
-        case "amount":
-          comparison = a.monto - b.monto
-          break
-        case "category":
-          comparison = (a.categoria?.nombre || "").localeCompare(b.categoria?.nombre || "")
-          break
-        case "description":
-          comparison = a.descripcion.localeCompare(b.descripcion)
-          break
-      }
-
-      return filters.sortOrder === "desc" ? -comparison : comparison
-    })
-
-    return filtered
-  }, [gastos, filters])
-
-  // Estadísticas de los gastos filtrados
-  const statistics = useMemo(() => {
-    const total = filteredGastos.reduce((sum, gasto) => sum + gasto.monto, 0)
-    const count = filteredGastos.length
-    const average = count > 0 ? total / count : 0
-    
-    const categoryStats = filteredGastos.reduce((acc, gasto) => {
-      const category = gasto.categoria?.nombre || "Sin categoría"
-      acc[category] = (acc[category] || 0) + gasto.monto
-      return acc
-    }, {} as Record<string, number>)
-
-    return { total, count, average, categoryStats }
-  }, [filteredGastos])
-
-  const handleFilterChange = (key: keyof FilterOptions, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }))
   }
 
-  const clearFilters = () => {
-    setFilters({
-      search: "",
-      category: "",
-      paymentMethod: "",
-      dateRange: "current-month",
-      year: "",
-      dateFrom: "",
-      dateTo: "",
-      minAmount: "",
-      maxAmount: "",
-      sortBy: "date",
-      sortOrder: "desc",
-      groupBy: "none"
-    })
-  }
-
-  const activeFiltersCount = Object.entries(filters).filter(([key, value]) => 
-    key !== "sortBy" && key !== "sortOrder" && key !== "groupBy" && value !== "" && value !== "current-month"
-  ).length
-
-  const formatMoney = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount)
-  }
-
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd MMM yyyy", { locale: es })
-  }
-
+  // Loading state
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-white min-h-screen">
@@ -201,6 +58,7 @@ export default function DetalleGastosPage() {
     )
   }
 
+  // Error state
   if (error) {
     return (
       <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-white min-h-screen">
@@ -260,7 +118,7 @@ export default function DetalleGastosPage() {
         activeFiltersCount={activeFiltersCount}
         formatMoney={formatMoney}
         formatDate={formatDate}
-        onDeleteGasto={deleteGasto}
+        onDeleteGasto={handleDeleteGasto}
         groupBy={filters.groupBy}
       />
     </div>

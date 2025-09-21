@@ -1,5 +1,5 @@
 // Utils exports
-export { cn } from './common'
+export { cn, formatMoney, formatDate } from './common'
 export * from './date'
 export { groupExpenses } from './expenses'
 
