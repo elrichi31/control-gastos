@@ -4,13 +4,21 @@ import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Receipt, Trash2, Tag, CreditCard, Calendar, ChevronDown, ChevronRight } from 'lucide-react'
-import { Gasto } from '@/hooks/useGastosFiltrados'
+import { Expense } from '@/services/expenses'
 import { format, startOfWeek, endOfWeek } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 interface ListaGastosAgrupadosProps {
-  gastos: Gasto[]
+  gastos: Expense[]
   activeFiltersCount: number
   formatMoney: (amount: number) => string
   formatDate: (dateString: string) => string
@@ -20,7 +28,7 @@ interface ListaGastosAgrupadosProps {
 
 interface GastoGroup {
   title: string
-  gastos: Gasto[]
+  gastos: Expense[]
   total: number
 }
 
@@ -120,7 +128,7 @@ export function ListaGastosAgrupados({
     }
   }, [groupedGastos, expandedGroups.size, groupBy])
 
-  // Si no hay agrupación, mostrar lista normal
+  // Si no hay agrupación, mostrar tabla normal
   if (groupBy === "none" || !groupedGastos) {
     return (
       <Card>
@@ -129,9 +137,9 @@ export function ListaGastosAgrupados({
             <span>Resultados ({gastos.length} gastos)</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {gastos.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-12 px-6">
               <Receipt className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 No se encontraron gastos
@@ -144,14 +152,40 @@ export function ListaGastosAgrupados({
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {gastos.map((gasto) => (
-                <GastoItem
-                  key={gasto.id}
-                  gasto={gasto}
-                  onDeleteGasto={onDeleteGasto}
-                />
-              ))}
+            <div 
+              className="overflow-x-auto"
+              style={{ 
+                maxWidth: '100vw',
+                width: '100%',
+                WebkitOverflowScrolling: 'touch'
+              }}
+            >
+              <Table 
+                className="w-full table-fixed"
+                style={{ minWidth: '600px', tableLayout: 'fixed' }}
+              >
+                <TableHeader>
+                  <TableRow>
+                    <TableHead style={{ width: '120px', minWidth: '120px', whiteSpace: 'nowrap' }}>Descripción</TableHead>
+                    <TableHead style={{ width: '100px', minWidth: '100px', whiteSpace: 'nowrap' }}>Categoría</TableHead>
+                    <TableHead style={{ width: '120px', minWidth: '120px', whiteSpace: 'nowrap' }}>Método de Pago</TableHead>
+                    <TableHead style={{ width: '90px', minWidth: '90px', whiteSpace: 'nowrap' }}>Fecha</TableHead>
+                    <TableHead style={{ width: '10px', minWidth: '10px', whiteSpace: 'nowrap' }}>Monto</TableHead>
+                    <TableHead className="text-center" style={{ width: '80px', minWidth: '80px', whiteSpace: 'nowrap' }}>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {gastos.map((gasto) => (
+                    <GastoTableRow
+                      key={gasto.id}
+                      gasto={gasto}
+                      onDeleteGasto={onDeleteGasto}
+                      formatMoney={formatMoney}
+                      formatDate={formatDate}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>
@@ -166,9 +200,9 @@ export function ListaGastosAgrupados({
           <span>Resultados ({gastos.length} gastos en {groupedGastos.length} grupos)</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {groupedGastos.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-12 px-6">
             <Receipt className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               No se encontraron gastos
@@ -211,14 +245,42 @@ export function ListaGastosAgrupados({
                   </div>
                   
                   {isExpanded && (
-                    <div className="p-4 space-y-3 border-t">
-                      {group.gastos.map((gasto) => (
-                        <GastoItem
-                          key={gasto.id}
-                          gasto={gasto}
-                          onDeleteGasto={onDeleteGasto}
-                        />
-                      ))}
+                    <div className="border-t">
+                      <div 
+                        className="overflow-x-auto"
+                        style={{ 
+                          maxWidth: '100%',
+                          width: '100%',
+                          WebkitOverflowScrolling: 'touch'
+                        }}
+                      >
+                        <Table 
+                          className="w-full table-fixed"
+                          style={{ minWidth: '600px', tableLayout: 'fixed' }}
+                        >
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead style={{ width: '100px', minWidth: '100px', whiteSpace: 'nowrap' }}>Descripción</TableHead>
+                              <TableHead style={{ width: '100px', minWidth: '100px', whiteSpace: 'nowrap' }}>Categoría</TableHead>
+                              <TableHead style={{ width: '120px', minWidth: '120px', whiteSpace: 'nowrap' }}>Método de Pago</TableHead>
+                              <TableHead style={{ width: '90px', minWidth: '90px', whiteSpace: 'nowrap' }}>Fecha</TableHead>
+                              <TableHead className="text-right" style={{ width: '80px', minWidth: '80px', whiteSpace: 'nowrap' }}>Monto</TableHead>
+                              <TableHead className="text-center" style={{ width: '80px', minWidth: '80px', whiteSpace: 'nowrap' }}>Acciones</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {group.gastos.map((gasto) => (
+                              <GastoTableRow
+                                key={gasto.id}
+                                gasto={gasto}
+                                onDeleteGasto={onDeleteGasto}
+                                formatMoney={formatMoney}
+                                formatDate={formatDate}
+                              />
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -231,20 +293,118 @@ export function ListaGastosAgrupados({
   )
 }
 
-import { ExpenseItem } from '@/components/ExpenseItem'
-
-// Componente reutilizable para mostrar un gasto individual
-function GastoItem({ 
+// Componente para mostrar un gasto como fila de tabla
+function GastoTableRow({ 
   gasto, 
-  onDeleteGasto 
+  onDeleteGasto,
+  formatMoney,
+  formatDate
 }: {
-  gasto: Gasto
+  gasto: Expense
   onDeleteGasto: (id: string) => void
+  formatMoney: (amount: number) => string
+  formatDate: (dateString: string) => string
 }) {
+  const getCategoryColor = (categoria: string) => {
+    const colors = {
+      'Alimentación': 'bg-orange-100 text-orange-800',
+      'Transporte': 'bg-blue-100 text-blue-800', 
+      'Entretenimiento': 'bg-purple-100 text-purple-800',
+      'Salud': 'bg-red-100 text-red-800',
+      'Hogar': 'bg-green-100 text-green-800',
+      'Educación': 'bg-indigo-100 text-indigo-800',
+      'Trabajo': 'bg-gray-100 text-gray-800',
+      'Otros': 'bg-yellow-100 text-yellow-800',
+    }
+    return colors[categoria as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+  }
+
+  const getPaymentMethodIcon = (metodo: string) => {
+    switch (metodo?.toLowerCase()) {
+      case 'tarjeta de débito':
+      case 'tarjeta de crédito':
+        return <CreditCard className="h-4 w-4" />
+      case 'efectivo':
+        return <Receipt className="h-4 w-4" />
+      case 'transferencia':
+        return <Calendar className="h-4 w-4" />
+      default:
+        return <CreditCard className="h-4 w-4" />
+    }
+  }
+
   return (
-    <ExpenseItem
-      expense={gasto}
-      onDelete={onDeleteGasto}
-    />
+    <TableRow className="hover:bg-gray-50">
+      <TableCell 
+        className="font-medium px-4 py-3" 
+        style={{ width: '140px', maxWidth: '140px' }}
+      >
+        <div 
+          className="text-sm" 
+          title={gasto.descripcion}
+          style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+        >
+          {gasto.descripcion}
+        </div>
+      </TableCell>
+      <TableCell 
+        className="px-2 py-3"
+        style={{ width: '120px', maxWidth: '120px' }}
+      >
+        <Badge 
+          variant="secondary" 
+          className={`${getCategoryColor(gasto.categoria?.nombre || 'Otros')} text-xs px-1 py-0`}
+        >
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '10px' }}>
+            {(gasto.categoria?.nombre || 'Otros').substring(0, 50)}
+          </span>
+        </Badge>
+      </TableCell>
+      <TableCell 
+        className="px-2 py-3"
+        style={{ width: '120px', maxWidth: '120px' }}
+      >
+        <div className="flex items-center gap-1">
+          {getPaymentMethodIcon(gasto.metodo_pago?.nombre || '')}
+          <span 
+            className="text-xs" 
+            style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          >
+            {(gasto.metodo_pago?.nombre || 'Sin método').substring(0, 50)}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell 
+        className="px-2 py-3"
+        style={{ width: '90px', maxWidth: '90px' }}
+      >
+        <span className="text-xs" style={{ whiteSpace: 'nowrap' }}>
+          {formatDate(gasto.fecha).substring(0, 50)}
+        </span>
+      </TableCell>
+      <TableCell 
+        className="text-right font-semibold text-red-600 px-2 py-3" 
+        style={{ width: '80px', maxWidth: '80px' }}
+      >
+        <span className="text-sm" style={{ whiteSpace: 'nowrap' }}>
+          {formatMoney(gasto.monto)}
+        </span>
+      </TableCell>
+      <TableCell 
+        className="text-center px-3 py-3" 
+        style={{ width: '80px', maxWidth: '80px' }}
+      >
+        <div className="flex justify-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDeleteGasto(gasto.id.toString())}
+            className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 h-8 w-8 flex items-center justify-center"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
   )
 }

@@ -82,7 +82,7 @@ export function FiltrosGastos({
               <SelectContent>
                 <SelectItem value="all">Todas las categorías</SelectItem>
                 {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.nombre}>
+                  <SelectItem key={category.id} value={category.id.toString()}>
                     {category.nombre}
                   </SelectItem>
                 ))}
@@ -99,7 +99,7 @@ export function FiltrosGastos({
               <SelectContent>
                 <SelectItem value="all">Todos los métodos</SelectItem>
                 {paymentMethods.map((method) => (
-                  <SelectItem key={method.id} value={method.nombre}>
+                  <SelectItem key={method.id} value={method.id.toString()}>
                     {method.nombre}
                   </SelectItem>
                 ))}
