@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table"
 import { Receipt, Trash2, Tag, CreditCard, Calendar, ChevronDown, ChevronRight } from 'lucide-react'
 import { Expense } from '@/services/expenses'
+import { GastoCard } from './GastoCard'
 import { format, startOfWeek, endOfWeek } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -152,26 +153,18 @@ export function ListaGastosAgrupados({
               </p>
             </div>
           ) : (
-            <div 
-              className="overflow-x-auto"
-              style={{ 
-                maxWidth: '100vw',
-                width: '100%',
-                WebkitOverflowScrolling: 'touch'
-              }}
-            >
-              <Table 
-                className="w-full table-fixed"
-                style={{ minWidth: '600px', tableLayout: 'fixed' }}
-              >
+            <>
+              {/* Vista de tabla para desktop */}
+              <div className="hidden lg:block">
+              <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead style={{ width: '120px', minWidth: '120px', whiteSpace: 'nowrap' }}>Descripción</TableHead>
-                    <TableHead style={{ width: '100px', minWidth: '100px', whiteSpace: 'nowrap' }}>Categoría</TableHead>
-                    <TableHead style={{ width: '120px', minWidth: '120px', whiteSpace: 'nowrap' }}>Método de Pago</TableHead>
-                    <TableHead style={{ width: '90px', minWidth: '90px', whiteSpace: 'nowrap' }}>Fecha</TableHead>
-                    <TableHead style={{ width: '10px', minWidth: '10px', whiteSpace: 'nowrap' }}>Monto</TableHead>
-                    <TableHead className="text-center" style={{ width: '80px', minWidth: '80px', whiteSpace: 'nowrap' }}>Acciones</TableHead>
+                    <TableHead className="px-4 py-3">Descripción</TableHead>
+                    <TableHead className="px-3 py-3">Categoría</TableHead>
+                    <TableHead className="px-3 py-3">Método de Pago</TableHead>
+                    <TableHead className="px-3 py-3">Fecha</TableHead>
+                    <TableHead className="px-3 py-3 text-right">Monto</TableHead>
+                    <TableHead className="px-3 py-3 text-center">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -187,6 +180,20 @@ export function ListaGastosAgrupados({
                 </TableBody>
               </Table>
             </div>
+
+            {/* Vista de tarjetas para móvil y tablet */}
+            <div className="lg:hidden space-y-3">
+              {gastos.map((gasto) => (
+                <GastoCard
+                  key={gasto.id}
+                  gasto={gasto}
+                  onDeleteGasto={onDeleteGasto}
+                  formatMoney={formatMoney}
+                  formatDate={formatDate}
+                />
+              ))}
+            </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -246,26 +253,17 @@ export function ListaGastosAgrupados({
                   
                   {isExpanded && (
                     <div className="border-t">
-                      <div 
-                        className="overflow-x-auto"
-                        style={{ 
-                          maxWidth: '100%',
-                          width: '100%',
-                          WebkitOverflowScrolling: 'touch'
-                        }}
-                      >
-                        <Table 
-                          className="w-full table-fixed"
-                          style={{ minWidth: '600px', tableLayout: 'fixed' }}
-                        >
+                      {/* Vista de tabla para desktop */}
+                      <div className="hidden lg:block">
+                        <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead style={{ width: '100px', minWidth: '100px', whiteSpace: 'nowrap' }}>Descripción</TableHead>
-                              <TableHead style={{ width: '100px', minWidth: '100px', whiteSpace: 'nowrap' }}>Categoría</TableHead>
-                              <TableHead style={{ width: '120px', minWidth: '120px', whiteSpace: 'nowrap' }}>Método de Pago</TableHead>
-                              <TableHead style={{ width: '90px', minWidth: '90px', whiteSpace: 'nowrap' }}>Fecha</TableHead>
-                              <TableHead className="text-right" style={{ width: '80px', minWidth: '80px', whiteSpace: 'nowrap' }}>Monto</TableHead>
-                              <TableHead className="text-center" style={{ width: '80px', minWidth: '80px', whiteSpace: 'nowrap' }}>Acciones</TableHead>
+                              <TableHead className="px-4 py-3">Descripción</TableHead>
+                              <TableHead className="px-3 py-3">Categoría</TableHead>
+                              <TableHead className="px-3 py-3">Método de Pago</TableHead>
+                              <TableHead className="px-3 py-3">Fecha</TableHead>
+                              <TableHead className="px-3 py-3 text-right">Monto</TableHead>
+                              <TableHead className="px-3 py-3 text-center">Acciones</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -280,6 +278,19 @@ export function ListaGastosAgrupados({
                             ))}
                           </TableBody>
                         </Table>
+                      </div>
+
+                      {/* Vista de tarjetas para móvil y tablet */}
+                      <div className="lg:hidden space-y-3">
+                        {group.gastos.map((gasto) => (
+                          <GastoCard
+                            key={gasto.id}
+                            gasto={gasto}
+                            onDeleteGasto={onDeleteGasto}
+                            formatMoney={formatMoney}
+                            formatDate={formatDate}
+                          />
+                        ))}
                       </div>
                     </div>
                   )}
@@ -335,75 +346,50 @@ function GastoTableRow({
 
   return (
     <TableRow className="hover:bg-gray-50">
-      <TableCell 
-        className="font-medium px-4 py-3" 
-        style={{ width: '140px', maxWidth: '140px' }}
-      >
+      <TableCell className="font-medium px-4 py-4 w-[180px] min-w-[180px]">
         <div 
-          className="text-sm" 
+          className="text-sm truncate pr-2" 
           title={gasto.descripcion}
-          style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
         >
           {gasto.descripcion}
         </div>
       </TableCell>
-      <TableCell 
-        className="px-2 py-3"
-        style={{ width: '120px', maxWidth: '120px' }}
-      >
+      <TableCell className="px-3 py-4 w-[140px] min-w-[140px]">
         <Badge 
           variant="secondary" 
-          className={`${getCategoryColor(gasto.categoria?.nombre || 'Otros')} text-xs px-1 py-0`}
+          className={`${getCategoryColor(gasto.categoria?.nombre || 'Otros')} text-xs px-2 py-1 truncate block max-w-full`}
         >
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '10px' }}>
-            {(gasto.categoria?.nombre || 'Otros').substring(0, 50)}
-          </span>
+          {gasto.categoria?.nombre || 'Otros'}
         </Badge>
       </TableCell>
-      <TableCell 
-        className="px-2 py-3"
-        style={{ width: '120px', maxWidth: '120px' }}
-      >
-        <div className="flex items-center gap-1">
-          {getPaymentMethodIcon(gasto.metodo_pago?.nombre || '')}
-          <span 
-            className="text-xs" 
-            style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-          >
-            {(gasto.metodo_pago?.nombre || 'Sin método').substring(0, 50)}
+      <TableCell className="px-3 py-4 w-[150px] min-w-[150px]">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="flex-shrink-0">
+            {getPaymentMethodIcon(gasto.metodo_pago?.nombre || '')}
+          </div>
+          <span className="text-xs truncate">
+            {gasto.metodo_pago?.nombre || 'Sin método'}
           </span>
         </div>
       </TableCell>
-      <TableCell 
-        className="px-2 py-3"
-        style={{ width: '90px', maxWidth: '90px' }}
-      >
-        <span className="text-xs" style={{ whiteSpace: 'nowrap' }}>
-          {formatDate(gasto.fecha).substring(0, 50)}
+      <TableCell className="px-3 py-4 w-[100px] min-w-[100px]">
+        <span className="text-xs whitespace-nowrap">
+          {formatDate(gasto.fecha)}
         </span>
       </TableCell>
-      <TableCell 
-        className="text-right font-semibold text-red-600 px-2 py-3" 
-        style={{ width: '80px', maxWidth: '80px' }}
-      >
-        <span className="text-sm" style={{ whiteSpace: 'nowrap' }}>
+      <TableCell className="text-right font-semibold text-red-600 px-3 py-4 w-[100px] min-w-[100px]">
+        <span className="text-sm whitespace-nowrap">
           {formatMoney(gasto.monto)}
         </span>
       </TableCell>
-      <TableCell 
-        className="text-center px-3 py-3" 
-        style={{ width: '80px', maxWidth: '80px' }}
-      >
-        <div className="flex justify-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDeleteGasto(gasto.id.toString())}
-            className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 h-8 w-8 flex items-center justify-center"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+      <TableCell className="text-center px-3 py-4 w-[80px] min-w-[80px]">
+        <Button
+          size="sm"
+          onClick={() => onDeleteGasto(gasto.id.toString())}
+          className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 h-8 w-8 bg-transparent border-0 shadow-none"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </TableCell>
     </TableRow>
   )

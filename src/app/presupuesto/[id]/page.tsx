@@ -140,27 +140,29 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
 
       {/* Modal de confirmación de eliminación de gasto */}
       <Dialog open={!!budgetData.expenseToDelete} onOpenChange={(open) => !open && budgetData.setExpenseToDelete(null)}>
-        <DialogContent className="bg-white mx-4 max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>¿Eliminar gasto?</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-gray-900">
+              ¿Eliminar gasto?
+            </DialogTitle>
           </DialogHeader>
-          <div className="py-2">
-            <p className="text-gray-700">
-              ¿Seguro que quieres eliminar el gasto <span className="font-semibold">{budgetData.expenseToDelete?.descripcion}</span>? Esta acción no se puede deshacer.
+          <div className="py-4">
+            <p className="text-sm text-gray-600">
+              ¿Seguro que quieres eliminar el gasto <span className="font-semibold text-gray-900">{budgetData.expenseToDelete?.descripcion}</span>? Esta acción no se puede deshacer.
             </p>
           </div>
-          <div className="flex gap-2 pt-4">
+          <div className="flex gap-3 pt-2">
             <Button 
-              className="flex-1 bg-red-500 hover:bg-red-600 text-white" 
-              onClick={budgetData.handleDeleteExpense}
-            >
-              Eliminar
-            </Button>
-            <Button 
-              className="flex-1 bg-white border border-gray-200 hover:bg-gray-50" 
               onClick={() => budgetData.setExpenseToDelete(null)}
+              className="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               Cancelar
+            </Button>
+            <Button 
+              onClick={budgetData.handleDeleteExpense}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+            >
+              Eliminar
             </Button>
           </div>
         </DialogContent>
