@@ -75,7 +75,7 @@ export function Sidebar({
 				{/* Sidebar móvil */}
 				<div
 					className={cn(
-						"fixed left-0 top-0 h-screen bg-white border-r border-gray-200 z-50 transition-transform duration-300 ease-in-out w-64 lg:hidden",
+						"fixed left-0 top-0 h-screen bg-white border-r border-gray-200 z-50 transition-transform duration-300 ease-in-out w-64 lg:hidden flex flex-col",
 						isOpen ? "translate-x-0" : "-translate-x-full",
 					)}
 				>
@@ -90,7 +90,7 @@ export function Sidebar({
 						<p className="text-sm font-medium text-gray-600">Menu</p>
 					</div>
 
-					<nav className="px-3">
+					<nav className="px-3 flex-1">
 						{menuItems.map((item) => {
 							const Icon = item.icon
 							const isActive =
@@ -115,6 +115,27 @@ export function Sidebar({
 							)
 						})}
 					</nav>
+
+					{/* Sección de usuario en la parte inferior del móvil */}
+					<div className="mt-auto border-t border-gray-200 p-3">
+						{session?.user && (
+							<div className="px-3 py-2 mb-2">
+								<div className="flex items-center gap-2 mb-1">
+									<User className="w-4 h-4 text-gray-500" />
+									<p className="text-sm font-medium text-gray-900">{session.user.name}</p>
+								</div>
+								<p className="text-xs text-gray-500 ml-6">{session.user.email}</p>
+							</div>
+						)}
+						
+						<button
+							onClick={handleLogout}
+							className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-red-600 hover:bg-red-50 hover:text-red-700"
+						>
+							<LogOut className="w-5 h-5 flex-shrink-0" />
+							<span>Cerrar Sesión</span>
+						</button>
+					</div>
 				</div>
 			</>
 		)
