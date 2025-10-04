@@ -4,6 +4,9 @@
 // Servicios de gastos
 export * from './expenses'
 
+// Servicios de gastos recurrentes
+export * from './recurring-expenses'
+
 // Servicios de categorías
 export * from './categories'
 

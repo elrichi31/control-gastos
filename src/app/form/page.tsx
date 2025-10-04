@@ -1,9 +1,11 @@
 "use client"
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { DollarSign } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DollarSign, RepeatIcon } from "lucide-react"
 import { useGastosFiltrados, Gasto } from "@/hooks/useGastosFiltrados"
 import { ExpenseForm } from "./../../components/ExpenseForm"
+import { RecurringExpenseForm } from "./../../components/RecurringExpenseForm"
 import { ExpenseSummary } from "./../../components/ExpenseSummary"
 import { ExpenseList } from "./../../components/ExpenseList"
 import { groupExpenses } from "@/lib/utils"
@@ -97,7 +99,26 @@ export default function ExpenseTracker() {
                 <CardDescription className="text-sm">Completa la información del gasto</CardDescription>
               </CardHeader>
               <CardContent>
-                <ExpenseForm fetchExpenses={fetchExpenses} />
+                <Tabs defaultValue="normal" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                    <TabsTrigger value="normal" className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      Gasto Normal
+                    </TabsTrigger>
+                    <TabsTrigger value="recurrente" className="flex items-center gap-2">
+                      <RepeatIcon className="h-4 w-4" />
+                      Gasto Recurrente
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="normal">
+                    <ExpenseForm fetchExpenses={fetchExpenses} />
+                  </TabsContent>
+                  
+                  <TabsContent value="recurrente">
+                    <RecurringExpenseForm onSuccess={fetchExpenses} />
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </div>

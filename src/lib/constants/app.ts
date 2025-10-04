@@ -35,7 +35,8 @@ export const API_ENDPOINTS = {
   GASTOS: "/api/gastos",
   CATEGORIAS: "/api/categorias",
   METODOS_PAGO: "/api/metodos_pago",
-  PRESUPUESTOS: "/api/presupuestos"
+  PRESUPUESTOS: "/api/presupuestos",
+  GASTOS_RECURRENTES: "/api/gastos-recurrentes"
 } as const
 
 export const categories = [
