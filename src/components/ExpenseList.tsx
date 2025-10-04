@@ -4,7 +4,6 @@ import { ExpenseItem } from "./ExpenseItem"
 import { Gasto } from "./../hooks/useGastosFiltrados"
 import { format, parse, parseISO, addMinutes } from "date-fns"
 import { es } from "date-fns/locale"
-import { ConfirmModal } from "./ConfirmModal"
 type Props = {
   groupedExpenses: Record<string, Gasto[]>
   isLoading: boolean
@@ -52,23 +51,6 @@ function formatGroupTitle(key: string, groupBy: "dia" | "semana" | "mes"): strin
 
 export function ExpenseList({ groupedExpenses, isLoading, onDelete, groupBy }: Props) {
   console.log(groupedExpenses)
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-
-  // Abre el modal con el ID seleccionado
-  const handleRequestDelete = (id: string) => {
-    setSelectedId(id)
-    setConfirmOpen(true)
-  }
-
-  // Confirma la eliminación
-  const handleConfirmDelete = () => {
-    if (selectedId) {
-      onDelete(selectedId)
-      setConfirmOpen(false)
-      setSelectedId(null)
-    }
-  }
 
   const groupKeys = Object.keys(groupedExpenses).sort((a, b) => {
     const extractDate = (key: string) => {
@@ -89,36 +71,25 @@ export function ExpenseList({ groupedExpenses, isLoading, onDelete, groupBy }: P
   }
 
   return (
-    <>
-      <div className="space-y-6 max-h-96 overflow-y-auto pr-2">
-        {groupKeys.map((groupTitle) => (
-          <div key={groupTitle}>
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">
-              {formatGroupTitle(groupTitle, groupBy)}
-            </h3>
-            <div className="space-y-2">
-              {groupedExpenses[groupTitle].map((expense) => (
-                <ExpenseItem
-                  key={expense.id}
-                  expense={expense}
-                  onDelete={handleRequestDelete} // ahora solo abre el modal
-                  showDeleteIcon={true}
-                />
-              ))}
-            </div>
+    <div className="space-y-6 max-h-96 overflow-y-auto pr-2">
+      {groupKeys.map((groupTitle) => (
+        <div key={groupTitle}>
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">
+            {formatGroupTitle(groupTitle, groupBy)}
+          </h3>
+          <div className="space-y-2">
+            {groupedExpenses[groupTitle].map((expense) => (
+              <ExpenseItem
+                key={expense.id}
+                expense={expense}
+                onDelete={onDelete}
+                showDeleteIcon={true}
+              />
+            ))}
           </div>
-        ))}
-      </div>
-
-      <ConfirmModal
-        open={confirmOpen}
-        onConfirm={handleConfirmDelete}
-        onCancel={() => {
-          setConfirmOpen(false)
-          setSelectedId(null)
-        }}
-      />
-    </>
+        </div>
+      ))}
+    </div>
   )
 }
 

@@ -15,6 +15,7 @@ export async function GET() {
       categoria_id,
       metodo_pago_id,
       user_id,
+      is_recurrent,
       categoria (id, nombre),
       metodo_pago (id, nombre)
     `)
@@ -34,11 +35,14 @@ export async function POST(request: Request) {
   if (authError) return authError;
 
   const body = await request.json();
-  const { descripcion, monto, fecha, categoria_id, metodo_pago_id } = body;
+  const { descripcion, monto, fecha, categoria_id, metodo_pago_id, is_recurrent } = body;
 
   if (!descripcion || !monto || !fecha || !categoria_id || !metodo_pago_id) {
     return NextResponse.json({ error: 'Faltan datos requeridos.' }, { status: 400 });
   }
+
+  // Asegurar que is_recurrent siempre sea un booleano
+  const isRecurrentValue = typeof is_recurrent === 'boolean' ? is_recurrent : false;
 
   const { data, error } = await supabase.from('gasto').insert([
     { 
@@ -47,12 +51,15 @@ export async function POST(request: Request) {
       fecha, 
       categoria_id, 
       metodo_pago_id,
-      user_id: userId 
+      user_id: userId,
+      is_recurrent: isRecurrentValue
     },
-  ]);
+  ])
+  .select()
+  .single();
 
   if (error) {
-    console.error('Error al insertar gasto:', error);
+    console.error('❌ Error al insertar gasto:', error);
     return NextResponse.json({ error: 'Error al insertar el gasto' }, { status: 500 });
   }
 

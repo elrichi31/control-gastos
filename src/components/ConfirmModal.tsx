@@ -11,8 +11,12 @@ export function ConfirmModal({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const handleConfirm = () => {
+    onConfirm()
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onCancel}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>¿Estás seguro?</DialogTitle>
@@ -20,7 +24,7 @@ export function ConfirmModal({
         <p>Esta acción eliminará el gasto permanentemente.</p>
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={onCancel}>Cancelar</Button>
-          <Button className="sm: mb-4" variant="destructive" onClick={onConfirm}>Eliminar</Button>
+          <Button className="sm: mb-4" variant="destructive" onClick={handleConfirm}>Eliminar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

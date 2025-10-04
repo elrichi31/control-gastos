@@ -7,6 +7,7 @@ export interface BaseGasto {
   fecha: string // Formato: "YYYY-MM-DD"
   categoria_id: number
   categoria: { id: number; nombre: string }
+  is_recurrent?: boolean
 }
 
 export interface Gasto extends BaseGasto {

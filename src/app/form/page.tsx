@@ -24,7 +24,8 @@ function gastoToExpense(gasto: Gasto): Expense {
     categoria_id: gasto.categoria_id,
     metodo_pago_id: gasto.metodo_pago?.id || 1,
     categoria: gasto.categoria,
-    metodo_pago: gasto.metodo_pago || DEFAULT_METODO_PAGO
+    metodo_pago: gasto.metodo_pago || DEFAULT_METODO_PAGO,
+    is_recurrent: gasto.is_recurrent // ✅ Preservar is_recurrent
   }
 }
 

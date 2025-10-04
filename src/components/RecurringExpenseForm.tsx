@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
 import {
   Select,
   SelectContent,
@@ -16,6 +17,7 @@ import { createRecurringExpense } from "@/services/recurring-expenses"
 import { fetchCategories, type Category } from "@/services/categories"
 import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
 import { Frecuencia } from "@/types/recurring-expense"
+import toast from "react-hot-toast"
 
 export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
   // Calcular el primer día del mes actual
@@ -42,6 +44,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
+  const [mostrarFechaFin, setMostrarFechaFin] = useState(false)
 
   const resetForm = () => {
     setFormData({
@@ -56,6 +59,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
       fechaFin: "",
       activo: true,
     })
+    setMostrarFechaFin(false)
   }
 
   useEffect(() => {
@@ -94,10 +98,10 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
 
       resetForm()
       onSuccess?.()
-      alert("Gasto recurrente creado exitosamente")
+      toast.success("Gasto recurrente creado exitosamente")
     } catch (error) {
       console.error("Error al crear gasto recurrente:", error)
-      alert(error instanceof Error ? error.message : "Ocurrió un error al crear el gasto recurrente")
+      toast.error(error instanceof Error ? error.message : "Ocurrió un error al crear el gasto recurrente")
     } finally {
       setIsSubmitting(false)
     }
@@ -218,8 +222,9 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
         </div>
       )}
 
-      {/* Fechas en una línea */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Fechas - responsive: columna en móvil, fila en desktop */}
+      <div className="space-y-4">
+        {/* Fecha de Inicio */}
         <div className="space-y-2">
           <Label htmlFor="fecha-inicio" className="text-sm font-semibold text-gray-700">
             📅 Fecha de Inicio *
@@ -234,19 +239,44 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
           <p className="text-xs text-gray-500">Inicia desde el 1° del mes actual</p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="fecha-fin" className="text-sm font-semibold text-gray-700">
-            📅 Fecha de Fin
-          </Label>
-          <Input
-            id="fecha-fin"
-            type="date"
-            value={formData.fechaFin}
-            min={formData.fechaInicio}
-            onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
-            className="text-base border-2 border-gray-200 focus:border-blue-500 transition-colors h-12 rounded-lg"
+        {/* Switch para mostrar fecha fin */}
+        <div className="flex items-center justify-between space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex-1">
+            <Label htmlFor="switch-fecha-fin" className="text-sm font-semibold text-gray-700 cursor-pointer">
+              ¿Tiene fecha de finalización?
+            </Label>
+            <p className="text-xs text-gray-500 mt-1">
+              Deja desactivado si el gasto es indefinido
+            </p>
+          </div>
+          <Switch
+            id="switch-fecha-fin"
+            checked={mostrarFechaFin}
+            onCheckedChange={(checked) => {
+              setMostrarFechaFin(checked)
+              if (!checked) {
+                setFormData({ ...formData, fechaFin: "" })
+              }
+            }}
           />
         </div>
+
+        {/* Fecha de Fin - solo se muestra si el switch está activo */}
+        {mostrarFechaFin && (
+          <div className="space-y-2">
+            <Label htmlFor="fecha-fin" className="text-sm font-semibold text-gray-700">
+              📅 Fecha de Fin
+            </Label>
+            <Input
+              id="fecha-fin"
+              type="date"
+              value={formData.fechaFin}
+              min={formData.fechaInicio}
+              onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
+              className="text-base border-2 border-gray-200 focus:border-blue-500 transition-colors h-12 rounded-lg"
+            />
+          </div>
+        )}
       </div>
 
       {/* Categoría */}

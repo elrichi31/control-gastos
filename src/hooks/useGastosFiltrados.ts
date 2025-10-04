@@ -10,6 +10,7 @@ export interface Gasto {
   categoria_id: number
   categoria: { id: number; nombre: string }
   metodo_pago?: { id: number; nombre: string }
+  is_recurrent?: boolean
 }
 
 export function useGastosFiltrados() {
@@ -27,7 +28,8 @@ export function useGastosFiltrados() {
         // Formatear los datos para incluir metodo_pago si no existe
         const formattedData = data.map((gasto: any) => ({
           ...gasto,
-          metodo_pago: gasto.metodo_pago || DEFAULT_METODO_PAGO
+          metodo_pago: gasto.metodo_pago || DEFAULT_METODO_PAGO,
+          is_recurrent: gasto.is_recurrent ?? false
         }))
         
         setGastos(formattedData)

@@ -7,6 +7,7 @@ export interface CreateExpenseData {
   categoria_id: number
   fecha: string
   metodo_pago_id: number
+  is_recurrent?: boolean
 }
 
 export interface Expense {
@@ -17,6 +18,7 @@ export interface Expense {
   categoria_id: number
   categoria: { id: number; nombre: string }
   metodo_pago?: { id: number; nombre: string }
+  is_recurrent?: boolean
 }
 
 /**
@@ -40,12 +42,18 @@ export async function fetchExpenses(): Promise<Expense[]> {
  */
 export async function createExpense(expenseData: CreateExpenseData): Promise<Expense> {
   try {
+    // Asegurar que is_recurrent siempre tenga un valor explícito
+    const dataToSend = {
+      ...expenseData,
+      is_recurrent: expenseData.is_recurrent ?? false
+    }
+    
     const response = await fetch('/api/gastos', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(expenseData),
+      body: JSON.stringify(dataToSend),
     })
 
     if (!response.ok) {
@@ -103,6 +111,46 @@ export async function updateExpense(id: string | number, expenseData: Partial<Cr
     return await response.json()
   } catch (error) {
     console.error('Error updating expense:', error)
+    throw error
+  }
+}
+
+/**
+ * Obtiene el ID del gasto recurrente asociado a un gasto
+ */
+export async function getRecurringExpenseId(gastoId: string | number): Promise<number | null> {
+  try {
+    const response = await fetch(`/api/gastos/${gastoId}/recurring-info`)
+    if (!response.ok) {
+      return null
+    }
+    const data = await response.json()
+    return data.gasto_recurrente_id || null
+  } catch (error) {
+    console.error('Error getting recurring expense ID:', error)
+    return null
+  }
+}
+
+/**
+ * Desactiva un gasto recurrente
+ */
+export async function deactivateRecurringExpense(recurringExpenseId: number): Promise<void> {
+  try {
+    const response = await fetch(`/api/gastos-recurrentes/${recurringExpenseId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ activo: false }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Error al desactivar gasto recurrente')
+    }
+  } catch (error) {
+    console.error('Error deactivating recurring expense:', error)
     throw error
   }
 }

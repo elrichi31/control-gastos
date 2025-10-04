@@ -3,25 +3,17 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
-import { Home, FileText, Calculator, X, ChevronLeft, BarChart3, Receipt, LogOut, User } from "lucide-react"
+import { Home, FileText, Calculator, X, ChevronLeft, BarChart3, Receipt, LogOut, User, ChevronDown, Repeat, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { useState, useEffect } from "react"
 
 const menuItems = [
 	{
 		name: "Resumen",
 		href: "/",
 		icon: Home,
-	},
-	{
-		name: "Registro de Gastos",
-		href: "/form",
-		icon: FileText,
-	},
-	{
-		name: "Detalle de Gastos",
-		href: "/detalle-gastos",
-		icon: Receipt,
 	},
 	{
 		name: "Presupuesto",
@@ -32,6 +24,24 @@ const menuItems = [
 		name: "Estadísticas",
 		href: "/estadisticas",
 		icon: BarChart3,
+	},
+]
+
+const gastosSubmenu = [
+	{
+		name: "Crear Nuevo",
+		href: "/form",
+		icon: Plus,
+	},
+	{
+		name: "Detalle",
+		href: "/detalle-gastos",
+		icon: Receipt,
+	},
+	{
+		name: "Gastos Recurrentes",
+		href: "/gastos-recurrentes",
+		icon: Repeat,
 	},
 ]
 
@@ -53,6 +63,32 @@ export function Sidebar({
 	const pathname = usePathname()
 	const router = useRouter()
 	const { data: session } = useSession()
+	const [gastosOpen, setGastosOpen] = useState(false)
+
+	// Verificar si alguna ruta de gastos está activa
+	const isGastosActive = gastosSubmenu.some(item => pathname === item.href)
+
+	// Abrir automáticamente el dropdown si estamos en una ruta de gastos
+	useEffect(() => {
+		if (isGastosActive) {
+			setGastosOpen(true)
+		}
+	}, [isGastosActive])
+
+	// Cerrar dropdown cuando se hace clic fuera (solo para versión colapsada)
+	useEffect(() => {
+		if (!gastosOpen || !isCollapsed) return
+
+		const handleClickOutside = (e: MouseEvent) => {
+			const target = e.target as HTMLElement
+			if (!target.closest('.gastos-dropdown-container')) {
+				setGastosOpen(false)
+			}
+		}
+
+		document.addEventListener('click', handleClickOutside)
+		return () => document.removeEventListener('click', handleClickOutside)
+	}, [gastosOpen, isCollapsed])
 
 	const handleLogout = async () => {
 		await signOut({ 
@@ -114,6 +150,54 @@ export function Sidebar({
 								</Link>
 							)
 						})}
+
+						{/* Sección de Gastos con Collapsible */}
+						<Collapsible open={gastosOpen} onOpenChange={setGastosOpen}>
+							<CollapsibleTrigger asChild>
+								<button
+									className={cn(
+										"w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
+										isGastosActive
+											? "bg-gray-100 text-gray-900"
+											: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+									)}
+								>
+									<div className="flex items-center gap-3">
+										<FileText className="w-5 h-5" />
+										<span>Gastos</span>
+									</div>
+									<ChevronDown
+										className={cn(
+											"w-4 h-4 transition-transform",
+											gastosOpen && "rotate-180"
+										)}
+									/>
+								</button>
+							</CollapsibleTrigger>
+							<CollapsibleContent className="pl-4">
+								{gastosSubmenu.map((item) => {
+									const Icon = item.icon
+									const isActive = pathname === item.href
+
+									return (
+										<Link
+											key={item.name}
+											href={item.href}
+											onClick={onClose}
+											className={cn(
+												"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
+												isActive
+													? "bg-gray-100 text-gray-900"
+													: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+											)}
+										>
+											<Icon className="w-4 h-4" />
+											{item.name}
+										</Link>
+									)
+								})}
+							</CollapsibleContent>
+						</Collapsible>
 					</nav>
 
 					{/* Sección de usuario en la parte inferior del móvil */}
@@ -204,6 +288,98 @@ export function Sidebar({
 						</Link>
 					)
 				})}
+
+				{/* Sección de Gastos con Collapsible - Desktop */}
+				{isCollapsed ? (
+					// Versión colapsada: solo mostrar ícono con tooltip
+					<div className="relative group gastos-dropdown-container">
+						<button
+							onClick={() => setGastosOpen(!gastosOpen)}
+							className={cn(
+								"w-full flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
+								isGastosActive
+									? "bg-gray-100 text-gray-900"
+									: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+							)}
+							title="Gastos"
+						>
+							<FileText className="w-5 h-5 flex-shrink-0" />
+						</button>
+						
+						{/* Dropdown flotante cuando está colapsado */}
+						{gastosOpen && (
+							<div className="absolute left-full top-0 ml-2 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[180px] z-50">
+								{gastosSubmenu.map((item) => {
+									const Icon = item.icon
+									const isActive = pathname === item.href
+
+									return (
+										<Link
+											key={item.name}
+											href={item.href}
+											className={cn(
+												"flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors",
+												isActive
+													? "bg-gray-100 text-gray-900"
+													: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+											)}
+										>
+											<Icon className="w-4 h-4" />
+											{item.name}
+										</Link>
+									)
+								})}
+							</div>
+						)}
+					</div>
+				) : (
+					// Versión expandida: collapsible normal
+					<Collapsible open={gastosOpen} onOpenChange={setGastosOpen}>
+						<CollapsibleTrigger asChild>
+							<button
+								className={cn(
+									"w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
+									isGastosActive
+										? "bg-gray-100 text-gray-900"
+										: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+								)}
+							>
+								<div className="flex items-center gap-3">
+									<FileText className="w-5 h-5 flex-shrink-0" />
+									<span>Gastos</span>
+								</div>
+								<ChevronDown
+									className={cn(
+										"w-4 h-4 transition-transform",
+										gastosOpen && "rotate-180"
+									)}
+								/>
+							</button>
+						</CollapsibleTrigger>
+						<CollapsibleContent className="pl-4">
+							{gastosSubmenu.map((item) => {
+								const Icon = item.icon
+								const isActive = pathname === item.href
+
+								return (
+									<Link
+										key={item.name}
+										href={item.href}
+										className={cn(
+											"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
+											isActive
+												? "bg-gray-100 text-gray-900"
+												: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+										)}
+									>
+										<Icon className="w-4 h-4" />
+										{item.name}
+									</Link>
+								)
+							})}
+						</CollapsibleContent>
+					</Collapsible>
+				)}
 			</nav>
 
 			{/* Sección de usuario en la parte inferior */}

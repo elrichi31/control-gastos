@@ -77,6 +77,7 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
         categoria_id: parseInt(formData.categoryId),
         fecha: formData.date,
         metodo_pago_id: parseInt(formData.paymentMethodId),
+        is_recurrent: false, // Gastos manuales siempre son NO recurrentes
       })
 
       setSubmitSuccess(true)

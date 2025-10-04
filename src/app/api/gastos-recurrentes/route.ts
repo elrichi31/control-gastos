@@ -152,7 +152,8 @@ export async function POST(request: Request) {
           monto,
           categoria_id,
           metodo_pago_id,
-          fecha: fechaProgramada
+          fecha: fechaProgramada,
+          is_recurrent: true  // ✅ Marcar como recurrente
         })
         .select()
         .single()
