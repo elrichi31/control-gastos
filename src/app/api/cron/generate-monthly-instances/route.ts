@@ -7,9 +7,12 @@ import { createClient } from '@/lib/database/server'
  */
 export async function GET(request: Request) {
   try {
+    console.log('🔄 [CRON-MONTHLY] Iniciando generación de instancias mensuales:', new Date().toISOString())
+    
     // Verificar que la petición viene de Vercel Cron o incluye el token secreto
     const authHeader = request.headers.get('authorization')
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      console.log('❌ [CRON-MONTHLY] Acceso no autorizado')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -37,11 +40,15 @@ export async function GET(request: Request) {
     }
 
     if (!gastosRecurrentes || gastosRecurrentes.length === 0) {
+      console.log('ℹ️ [CRON-MONTHLY] No hay gastos recurrentes activos')
       return NextResponse.json({
         message: 'No hay gastos recurrentes activos',
         created: 0
       })
     }
+
+    console.log(`📋 [CRON-MONTHLY] Encontrados ${gastosRecurrentes.length} gastos recurrentes activos`)
+    console.log(`📅 [CRON-MONTHLY] Generando instancias para: ${anioSiguiente}-${String(mesSiguiente + 1).padStart(2, '0')}`)
 
     const resultados = {
       creadas: 0,
@@ -116,9 +123,10 @@ export async function GET(request: Request) {
             })
 
           if (createError) {
-            console.error(`Error creating instance for ${gastoRecurrente.id}:`, createError)
+            console.error(`❌ [CRON-MONTHLY] Error creating instance for ${gastoRecurrente.id}:`, createError)
             resultados.errores++
           } else {
+            console.log(`✅ [CRON-MONTHLY] Instancia creada para ${instancia.fecha_programada}`)
             resultados.creadas++
           }
         }
@@ -128,13 +136,14 @@ export async function GET(request: Request) {
       }
     }
 
+    console.log('✨ [CRON-MONTHLY] Generación completada:', resultados)
     return NextResponse.json({
       message: 'Generación de instancias completada',
       ...resultados,
       mes: `${anioSiguiente}-${String(mesSiguiente + 1).padStart(2, '0')}`,
     })
   } catch (error) {
-    console.error('Error in generate-monthly-instances cron:', error)
+    console.error('💥 [CRON-MONTHLY] Error in generate-monthly-instances cron:', error)
     return NextResponse.json(
       { error: 'Error al generar instancias mensuales' },
       { status: 500 }

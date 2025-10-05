@@ -8,14 +8,18 @@ import { createClient } from '@/lib/database/server'
  */
 export async function GET(request: Request) {
   try {
+    console.log('🔄 [CRON] Iniciando proceso de gastos recurrentes:', new Date().toISOString())
+    
     // Verificar que la petición viene de Vercel Cron o incluye el token secreto
     const authHeader = request.headers.get('authorization')
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      console.log('❌ [CRON] Acceso no autorizado')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const supabase = await createClient()
     const hoy = new Date().toISOString().split('T')[0]
+    console.log('📅 [CRON] Fecha actual:', hoy)
 
     // Obtener todas las instancias pendientes cuya fecha programada es hoy o anterior
     const { data: instanciasPendientes, error: fetchError } = await supabase
@@ -36,11 +40,14 @@ export async function GET(request: Request) {
     }
 
     if (!instanciasPendientes || instanciasPendientes.length === 0) {
+      console.log('ℹ️ [CRON] No hay instancias pendientes para procesar')
       return NextResponse.json({
         message: 'No hay instancias pendientes para procesar',
         processed: 0
       })
     }
+
+    console.log(`📋 [CRON] Encontradas ${instanciasPendientes.length} instancias pendientes para procesar`)
 
     const resultados = {
       procesados: 0,
@@ -54,6 +61,7 @@ export async function GET(request: Request) {
 
       // Verificar que el gasto recurrente esté activo
       if (!gastoRecurrente.activo) {
+        console.log(`⏭️ [CRON] Omitiendo instancia ${instancia.id} - Gasto recurrente inactivo`)
         // Marcar como omitido
         await supabase
           .from('gasto_recurrente_instancia')
@@ -108,9 +116,10 @@ export async function GET(request: Request) {
           .eq('id', instancia.id)
 
         if (updateError) {
-          console.error(`Error updating instance ${instancia.id}:`, updateError)
+          console.error(`❌ [CRON] Error updating instance ${instancia.id}:`, updateError)
           resultados.errores++
         } else {
+          console.log(`✅ [CRON] Gasto generado exitosamente - Instancia ${instancia.id}, Gasto ${gastoCreado.id}`)
           resultados.procesados++
         }
       } catch (error) {
@@ -119,13 +128,14 @@ export async function GET(request: Request) {
       }
     }
 
+    console.log('✨ [CRON] Procesamiento completado:', resultados)
     return NextResponse.json({
       message: 'Procesamiento completado',
       ...resultados,
       total: instanciasPendientes.length,
     })
   } catch (error) {
-    console.error('Error in process-recurring-expenses cron:', error)
+    console.error('💥 [CRON] Error in process-recurring-expenses cron:', error)
     return NextResponse.json(
       { error: 'Error al procesar gastos recurrentes' },
       { status: 500 }
