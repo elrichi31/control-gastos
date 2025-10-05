@@ -7,10 +7,6 @@
     {
       "path": "/api/cron/generate-monthly-instances",
       "schedule": "0 1 1 * *"
-    }, 
-    {
-      "path": "/api/cron/generate-monthly-instances",
-      "schedule": "* * * * *"
     }
   ]
 }

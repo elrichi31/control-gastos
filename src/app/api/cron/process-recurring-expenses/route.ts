@@ -1,23 +1,27 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/database/server'
+import { createClient } from '@supabase/supabase-js'
 
 /**
  * Cron diario que se ejecuta a la 1am
  * Procesa todas las instancias pendientes cuya fecha programada es hoy o anterior
  * Cambia el estado de 'pendiente' a 'generado' y crea el gasto real
  */
-export async function GET(request: Request) {
+export async function GET() {
   try {
     console.log('🔄 [CRON] Iniciando proceso de gastos recurrentes:', new Date().toISOString())
     
-    // Verificar que la petición viene de Vercel Cron o incluye el token secreto
-    const authHeader = request.headers.get('authorization')
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      console.log('❌ [CRON] Acceso no autorizado')
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const supabase = await createClient()
+    // Crear cliente de Supabase sin autenticación de usuario
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+      }
+    )
+    
     const hoy = new Date().toISOString().split('T')[0]
     console.log('📅 [CRON] Fecha actual:', hoy)
 

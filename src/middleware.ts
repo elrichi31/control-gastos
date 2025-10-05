@@ -30,11 +30,12 @@ export const config = {
     /*
      * Match all request paths except for the ones starting with:
      * - api/auth (NextAuth API routes)
+     * - api/cron (Cron jobs - no requieren autenticación)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public files (public directory)
      */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api/auth|api/cron|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

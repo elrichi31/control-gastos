@@ -118,27 +118,22 @@ export async function POST(request: Request) {
     } else if (frecuencia === 'semanal') {
       // Para semanal, calcular el próximo día de la semana
       const diaSemanaActual = hoy.getDay() === 0 ? 7 : hoy.getDay() // Convertir domingo de 0 a 7
-      const diasHastaProximo = (dia_semana - diaSemanaActual + 7) % 7
+      let diasHastaProximo = dia_semana - diaSemanaActual
       
-      if (diasHastaProximo === 0) {
-        // Es hoy, generar el gasto
-        fechaProgramada = new Date(hoy.getTime() - hoy.getTimezoneOffset() * 60000)
-          .toISOString()
-          .split('T')[0]
-        debeGenerarGasto = true
-      } else if (diasHastaProximo < 0 || dia_semana < diaSemanaActual) {
-        // Ya pasó esta semana
-        fechaProgramada = new Date(hoy.getTime() - Math.abs(diasHastaProximo) * 24 * 60 * 60 * 1000 - hoy.getTimezoneOffset() * 60000)
-          .toISOString()
-          .split('T')[0]
-        debeGenerarGasto = true
-      } else {
-        // Aún no llega esta semana
-        fechaProgramada = new Date(hoy.getTime() + diasHastaProximo * 24 * 60 * 60 * 1000 - hoy.getTimezoneOffset() * 60000)
-          .toISOString()
-          .split('T')[0]
-        debeGenerarGasto = false
+      // Si diasHastaProximo es 0 o negativo, significa que el día ya pasó esta semana
+      if (diasHastaProximo <= 0) {
+        // Calcular para la siguiente semana
+        diasHastaProximo += 7
       }
+      
+      // La fecha programada es en el futuro (próximo día de la semana)
+      const fechaProxima = new Date(hoy.getTime() + diasHastaProximo * 24 * 60 * 60 * 1000)
+      fechaProgramada = new Date(fechaProxima.getTime() - fechaProxima.getTimezoneOffset() * 60000)
+        .toISOString()
+        .split('T')[0]
+      
+      // Como es una fecha futura, no generar el gasto aún, solo crear la instancia pendiente
+      debeGenerarGasto = false
     }
 
     // Crear la instancia
