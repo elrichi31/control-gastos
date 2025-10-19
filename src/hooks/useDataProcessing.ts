@@ -70,14 +70,15 @@ export function useDataProcessing({ gastos, currentFilters }: DataProcessingHook
     }))
   }, [filteredGastos])
 
-  // Datos agregados para gráfico mensual (todo el año actual)
+  // Datos agregados para gráfico mensual (año seleccionado en filtros)
   const monthlyData = useMemo(() => {
-    const currentYear = new Date().getFullYear()
+    // Usar el año de los filtros, o el año actual si no hay filtro específico
+    const targetYear = currentFilters.year ? parseInt(currentFilters.year) : new Date().getFullYear()
     
     return MESES_NOMBRES.map((month, index) => {
       const monthGastos = gastos.filter(gasto => {
         const fecha = toDateWithTime(gasto.fecha)
-        return fecha.getFullYear() === currentYear && fecha.getMonth() === index
+        return fecha.getFullYear() === targetYear && fecha.getMonth() === index
       })
       
       const total = monthGastos.reduce((sum, gasto) => sum + gasto.monto, 0)
@@ -87,7 +88,7 @@ export function useDataProcessing({ gastos, currentFilters }: DataProcessingHook
         amount: total
       }
     })
-  }, [gastos])
+  }, [gastos, currentFilters.year])
 
   // Datos para radar chart
   const radarData = useMemo(() => {

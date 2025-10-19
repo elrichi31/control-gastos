@@ -36,7 +36,7 @@ export function PieChartWidget({ data, title }: PieChartWidgetProps) {
   const CustomLegend = ({ payload }: any) => {
     if (!payload?.length) return null
     return (
-      <div className="flex flex-wrap justify-center gap-4 mt-4">
+      <div className="flex flex-wrap justify-center gap-4 mt-6">
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
@@ -53,16 +53,16 @@ export function PieChartWidget({ data, title }: PieChartWidgetProps) {
         <CardTitle className="text-lg font-semibold text-gray-900">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-80">
+        <div className="h-96 flex flex-col">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={120} paddingAngle={2} dataKey="value">
+              <Pie data={data} cx="50%" cy="45%" innerRadius={50} outerRadius={85} paddingAngle={2} dataKey="value">
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} />
-              <Legend content={CustomLegend} />
+              <Legend content={CustomLegend} verticalAlign="bottom" />
             </PieChart>
           </ResponsiveContainer>
         </div>

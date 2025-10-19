@@ -38,10 +38,25 @@ const months = [
 const years = ["2023", "2024", "2025", "2026"]
 
 export function StatsFilterWidget({ onFiltersChange }: StatsFilterWidgetProps) {
+  // Obtener mes y año actual
+  const getCurrentMonthYear = () => {
+    const now = new Date()
+    const monthNames = [
+      "enero", "febrero", "marzo", "abril", "mayo", "junio",
+      "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+    ]
+    return {
+      month: monthNames[now.getMonth()],
+      year: now.getFullYear().toString()
+    }
+  }
+
+  const { month: currentMonth, year: currentYear } = getCurrentMonthYear()
+
   const [filters, setFilters] = useState<FilterOptions>({
     filterType: "year-month",
-    year: "2025",
-    month: "julio",
+    year: currentYear,
+    month: currentMonth,
     dateFrom: "",
     dateTo: "",
   })
@@ -166,7 +181,16 @@ export function StatsFilterWidget({ onFiltersChange }: StatsFilterWidgetProps) {
               size="sm"
               className="text-xs bg-white hover:bg-gray-50"
               onClick={() => {
-                const newFilters = { ...filters, filterType: "month" as const, month: "julio" }
+                const now = new Date()
+                const monthNames = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+                const currentMonth = monthNames[now.getMonth()]
+                const currentYear = now.getFullYear().toString()
+                const newFilters = { 
+                  ...filters, 
+                  filterType: "year-month" as const, 
+                  month: currentMonth,
+                  year: currentYear
+                }
                 setFilters(newFilters)
                 onFiltersChange(newFilters)
               }}
@@ -178,7 +202,8 @@ export function StatsFilterWidget({ onFiltersChange }: StatsFilterWidgetProps) {
               size="sm"
               className="text-xs bg-white hover:bg-gray-50"
               onClick={() => {
-                const newFilters = { ...filters, filterType: "year" as const, year: "2025" }
+                const currentYear = new Date().getFullYear().toString()
+                const newFilters = { ...filters, filterType: "year" as const, year: currentYear }
                 setFilters(newFilters)
                 onFiltersChange(newFilters)
               }}
@@ -192,11 +217,14 @@ export function StatsFilterWidget({ onFiltersChange }: StatsFilterWidgetProps) {
               onClick={() => {
                 const today = new Date()
                 const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+                const monthNames = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+                const lastMonthName = monthNames[lastMonth.getMonth()]
+                const lastMonthYear = lastMonth.getFullYear().toString()
                 const newFilters = {
                   ...filters,
-                  filterType: "custom" as const,
-                  dateFrom: lastMonth.toISOString().split("T")[0],
-                  dateTo: new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split("T")[0],
+                  filterType: "year-month" as const,
+                  month: lastMonthName,
+                  year: lastMonthYear
                 }
                 setFilters(newFilters)
                 onFiltersChange(newFilters)

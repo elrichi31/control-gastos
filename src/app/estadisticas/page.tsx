@@ -102,13 +102,21 @@ export default function EstadisticasPage() {
   }
 
   return (
-    <div className="p-4 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 lg:p-8">
       <PageTitle customTitle={getPageTitle()} />
-      <div className="mb-8">
-        <Breadcrumb items={[{ label: "Estadísticas" }]} large />
-        <p className="text-gray-600 mt-2">
-          Análisis detallado de tus gastos y patrones financieros - {getFilterDescription()}
-        </p>
+      {/* Header mejorado */}
+      <div className="mb-8 bg-white rounded-xl shadow-sm p-6">
+        <div className="mt-4 flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">Dashboard de Estadísticas</h2>
+            <p className="text-gray-600 mt-1">
+              Análisis detallado de tus gastos y patrones financieros
+            </p>
+          </div>
+          <div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
+            <p className="text-sm font-medium text-blue-900">{getFilterDescription()}</p>
+          </div>
+        </div>
       </div>
 
       {/* Estados de loading y error */}
@@ -132,27 +140,33 @@ export default function EstadisticasPage() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Columna de filtros */}
               <div className="lg:col-span-1">
-                <StatsFilterWidget onFiltersChange={handleFiltersChange} />
+                <div className="sticky top-4">
+                  <StatsFilterWidget onFiltersChange={handleFiltersChange} />
+                </div>
               </div>
 
               {/* Columna de métricas y análisis */}
               <div className="lg:col-span-3 space-y-6">
                 {/* Métricas principales */}
-                <StatsGrid
-                  totalExpenses={totalExpenses}
-                  monthlyAverage={monthlyAverage}
-                  totalTransactions={totalTransactions}
-                  averagePerCategory={averagePerCategory}
-                  currentMonthStats={currentMonthStats}
-                />
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <StatsGrid
+                    totalExpenses={totalExpenses}
+                    monthlyAverage={monthlyAverage}
+                    totalTransactions={totalTransactions}
+                    averagePerCategory={averagePerCategory}
+                    currentMonthStats={currentMonthStats}
+                  />
+                </div>
 
                 {/* Widget de análisis rápido */}
-                <QuickAnalysisWidget
-                  filteredGastos={filteredGastos}
-                  totalExpenses={totalExpenses}
-                  monthlyAverage={monthlyAverage}
-                  categoryData={categoryData}
-                />
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <QuickAnalysisWidget
+                    filteredGastos={filteredGastos}
+                    totalExpenses={totalExpenses}
+                    monthlyAverage={monthlyAverage}
+                    categoryData={categoryData}
+                  />
+                </div>
               </div>
             </div>
 
@@ -160,12 +174,16 @@ export default function EstadisticasPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Gráfico de líneas - más ancho */}
               <div className="lg:col-span-8">
-                <LineChartWidget data={monthlyData} title="Evolución Mensual de Gastos" />
+                <div className="bg-white rounded-xl shadow-sm p-6 h-full">
+                  <LineChartWidget data={monthlyData} title="Evolución Mensual de Gastos" />
+                </div>
               </div>
 
               {/* Gráfico de pie */}
               <div className="lg:col-span-4">
-                <PieChartWidget data={categoryData} title="Distribución por Categorías" />
+                <div className="bg-white rounded-xl shadow-sm p-6 h-full">
+                  <PieChartWidget data={categoryData} title="Distribución por Categorías" />
+                </div>
               </div>
             </div>
 
@@ -173,34 +191,42 @@ export default function EstadisticasPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Radar Chart */}
               <div className="lg:col-span-5">
-                <RadarChartWidget data={radarData} title="Análisis de Gastos por Categoría" />
+                <div className="bg-white rounded-xl shadow-sm p-6 h-full">
+                  <RadarChartWidget data={radarData} title="Análisis de Gastos por Categoría" />
+                </div>
               </div>
 
               {/* Comparación de categorías */}
               <div className="lg:col-span-7">
-                <CategoryComparison categoryComparisonStats={categoryComparisonStats} />
+                <div className="bg-white rounded-xl shadow-sm p-6 h-full">
+                  <CategoryComparison categoryComparisonStats={categoryComparisonStats} />
+                </div>
               </div>
             </div>
 
             {/* Cuarta fila: Resumen del período */}
             <div className="grid grid-cols-1">
-              <PeriodSummaryWidget
-                maxMonth={maxMonth}
-                minMonth={minMonth}
-                topCategory={topCategory}
-                categoryPercentage={categoryPercentage}
-                totalExpenses={totalExpenses}
-                filteredGastos={filteredGastos}
-                totalTransactions={totalTransactions}
-              />
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <PeriodSummaryWidget
+                  maxMonth={maxMonth}
+                  minMonth={minMonth}
+                  topCategory={topCategory}
+                  categoryPercentage={categoryPercentage}
+                  totalExpenses={totalExpenses}
+                  filteredGastos={filteredGastos}
+                  totalTransactions={totalTransactions}
+                />
+              </div>
             </div>
 
             {/* Quinta fila: Insights adicionales */}
-            <InsightsCards
-              filteredGastos={filteredGastos}
-              categoryData={categoryData}
-              totalExpenses={totalExpenses}
-            />
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <InsightsCards
+                filteredGastos={filteredGastos}
+                categoryData={categoryData}
+                totalExpenses={totalExpenses}
+              />
+            </div>
           </div>
         </>
       )}
