@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
-import { Home, FileText, Calculator, X, ChevronLeft, BarChart3, Receipt, LogOut, User, ChevronDown, Repeat, Plus } from "lucide-react"
+import { Home, FileText, Calculator, X, ChevronLeft, BarChart3, Receipt, LogOut, User, ChevronDown, Repeat, Plus, Wallet } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -12,7 +12,7 @@ import { useState, useEffect } from "react"
 const menuItems = [
 	{
 		name: "Resumen",
-		href: "/",
+		href: "/dashboard",
 		icon: Home,
 	},
 	{
@@ -116,7 +116,12 @@ export function Sidebar({
 					)}
 				>
 					<div className="flex items-center justify-between p-6">
-						<h1 className="text-2xl font-bold text-gray-900">GastosApp</h1>
+						<div className="flex items-center gap-2">
+							<div className="p-1.5 rounded-lg bg-blue-500 text-white">
+								<Wallet className="w-5 h-5" />
+							</div>
+							<h1 className="text-xl font-bold text-gray-900">BethaSpend</h1>
+						</div>
 						<Button variant="ghost" size="sm" onClick={onClose}>
 							<X className="w-5 h-5" />
 						</Button>
@@ -236,11 +241,20 @@ export function Sidebar({
 			<div
 				className={cn(
 					"flex items-center p-6",
-					isCollapsed ? "justify-center" : "justify-between",
+					isCollapsed ? "flex-col gap-3" : "justify-between",
 				)}
 			>
-				{!isCollapsed && (
-					<h1 className="text-2xl font-bold text-gray-900">GastosApp</h1>
+				{isCollapsed ? (
+					<div className="p-1.5 rounded-lg bg-blue-500 text-white">
+						<Wallet className="w-5 h-5" />
+					</div>
+				) : (
+					<div className="flex items-center gap-2">
+						<div className="p-1.5 rounded-lg bg-blue-500 text-white">
+							<Wallet className="w-5 h-5" />
+						</div>
+						<h1 className="text-xl font-bold text-gray-900">BethaSpend</h1>
+					</div>
 				)}
 				<Button
 					variant="ghost"

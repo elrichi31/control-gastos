@@ -1,11 +1,16 @@
 import { withAuth } from "next-auth/middleware"
 import { NextResponse } from "next/server"
 
+// Rutas públicas que no requieren autenticación
+const publicRoutes = ['/', '/auth/login', '/auth/register']
+
 export default withAuth(
   function middleware(req) {
+    const { pathname } = req.nextUrl
+    
     // Verificar si el usuario está intentando acceder a rutas de auth cuando ya está autenticado
-    if (req.nextauth.token && req.nextUrl.pathname.startsWith('/auth/')) {
-      return NextResponse.redirect(new URL('/', req.url))
+    if (req.nextauth.token && pathname.startsWith('/auth/')) {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
     }
     
     return NextResponse.next()
@@ -13,8 +18,15 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
+        const { pathname } = req.nextUrl
+        
+        // Rutas públicas no requieren autenticación
+        if (publicRoutes.includes(pathname)) {
+          return true
+        }
+        
         // Si está intentando acceder a rutas de auth, no requiere autenticación
-        if (req.nextUrl.pathname.startsWith('/auth/')) {
+        if (pathname.startsWith('/auth/')) {
           return true
         }
         

@@ -1,6 +1,6 @@
-# 💰 Control de Gastos
+# 💰 BethaSpend
 
-Sistema de gestión de gastos personales con presupuestos mensuales, gastos recurrentes automatizados y análisis estadístico.
+Sistema de gestión de gastos personales desarrollado por **Bethalabs**. Incluye presupuestos mensuales, gastos recurrentes automatizados y análisis estadístico.
 
 ## 🚀 Características
 

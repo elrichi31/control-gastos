@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { PageTitle } from '@/components/PageTitle'
+import { Navbar } from '@/components/landing/Navbar'
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react'
 
 export default function LoginPage() {
@@ -50,7 +51,7 @@ export default function LoginPage() {
         // Verificar que la sesión se haya creado correctamente
         const session = await getSession()
         if (session) {
-          router.push('/')
+          router.push('/dashboard')
         } else {
           setError('Error al iniciar sesión')
         }
@@ -63,12 +64,14 @@ export default function LoginPage() {
   }
 
   const handleGoogleSignIn = () => {
-    signIn('google', { callbackUrl: '/' })
+    signIn('google', { callbackUrl: '/dashboard' })
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <PageTitle customTitle="Iniciar Sesión - Control de Gastos" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <Navbar />
+      <div className="min-h-screen flex items-center justify-center p-4 pt-24">
+        <PageTitle customTitle="Iniciar Sesión - BethaSpend" />
       
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-1">
@@ -185,6 +188,7 @@ export default function LoginPage() {
           </div>
         </CardFooter>
       </Card>
+      </div>
     </div>
   )
 }

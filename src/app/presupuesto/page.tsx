@@ -36,7 +36,7 @@ export default function HomePage() {
 
   return (
     <div className="p-4 lg:p-8">
-      <PageTitle customTitle={`Presupuestos ${selectedYear} - Control de Gastos`} />
+      <PageTitle customTitle={`Presupuestos ${selectedYear} - BethaSpend`} />
       <Breadcrumb items={[{ label: "Presupuesto" }]} large />
       
       <div className="mb-8 mt-8">

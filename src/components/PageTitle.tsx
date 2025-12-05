@@ -9,19 +9,19 @@ interface PageTitleProps {
 
 const getPageTitle = (pathname: string): string => {
   const baseTitles: Record<string, string> = {
-    "/": "Dashboard - Control de Gastos",
-    "/form": "Registrar Gasto - Control de Gastos", 
-    "/estadisticas": "Estadísticas - Control de Gastos",
-    "/presupuesto": "Presupuestos - Control de Gastos",
-    "/datos": "Datos - Control de Gastos"
+    "/": "Dashboard - BethaSpend",
+    "/form": "Registrar Gasto - BethaSpend", 
+    "/estadisticas": "Estadísticas - BethaSpend",
+    "/presupuesto": "Presupuestos - BethaSpend",
+    "/datos": "Datos - BethaSpend"
   }
 
   // Rutas dinámicas
   if (pathname.startsWith("/presupuesto/")) {
-    return "Detalle Presupuesto - Control de Gastos"
+    return "Detalle Presupuesto - BethaSpend"
   }
 
-  return baseTitles[pathname] || "Control de Gastos"
+  return baseTitles[pathname] || "BethaSpend"
 }
 
 export function PageTitle({ customTitle }: PageTitleProps) {

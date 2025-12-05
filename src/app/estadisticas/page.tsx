@@ -89,15 +89,15 @@ export default function EstadisticasPage() {
     const period = getFilterDescription()
     switch (currentFilters.filterType) {
       case "year-month":
-        return `Estadísticas ${period} - Control de Gastos`
+        return `Estadísticas ${period} - BethaSpend`
       case "year":
-        return `Estadísticas ${period} - Control de Gastos`
+        return `Estadísticas ${period} - BethaSpend`
       case "month":
-        return `Estadísticas de ${period} - Control de Gastos`
+        return `Estadísticas de ${period} - BethaSpend`
       case "custom":
-        return `Estadísticas ${period} - Control de Gastos`
+        return `Estadísticas ${period} - BethaSpend`
       default:
-        return "Estadísticas Generales - Control de Gastos"
+        return "Estadísticas Generales - BethaSpend"
     }
   }
 

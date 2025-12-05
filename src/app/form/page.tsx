@@ -79,7 +79,7 @@ export default function ExpenseTracker() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-md mx-auto lg:max-w-7xl p-4 lg:p-6 space-y-6">
-        <PageTitle customTitle="Nuevo Gasto - Control de Gastos" />
+        <PageTitle customTitle="Nuevo Gasto - BethaSpend" />
         
         {/* Header optimizado para móvil */}
         <div className="text-center py-4">

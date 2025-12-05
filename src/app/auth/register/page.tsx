@@ -100,7 +100,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <PageTitle customTitle="Crear Cuenta - Control de Gastos" />
+      <PageTitle customTitle="Crear Cuenta - BethaSpend" />
       
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-1">

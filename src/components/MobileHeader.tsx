@@ -1,6 +1,6 @@
 "use client"
 
-import { Menu } from "lucide-react"
+import { Menu, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface MobileHeaderProps {
@@ -17,7 +17,12 @@ export function MobileHeader({ onMenuClick, isMobile }: MobileHeaderProps) {
         <Button variant="ghost" size="sm" onClick={onMenuClick} className="lg:hidden">
           <Menu className="w-5 h-5" />
         </Button>
-        <h1 className="text-xl font-bold text-gray-900">GastosApp</h1>
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-blue-500 text-white">
+            <Wallet className="w-4 h-4" />
+          </div>
+          <h1 className="text-lg font-bold text-gray-900">BethaSpend</h1>
+        </div>
       </div>
     </div>
   )

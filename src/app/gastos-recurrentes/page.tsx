@@ -25,7 +25,7 @@ export default function GastosRecurrentesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8">
-      <PageTitle customTitle="Gastos Recurrentes - Control de Gastos" />
+      <PageTitle customTitle="Gastos Recurrentes - BethaSpend" />
       
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="mb-8">

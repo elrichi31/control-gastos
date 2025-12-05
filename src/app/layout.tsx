@@ -22,8 +22,10 @@ export default function RootLayout({
   const pathname = usePathname()
   const { isOpen, toggle, close, isMobile, isCollapsed, toggleCollapse } = useSidebar()
 
-  // Rutas que no necesitan el layout principal
+  // Rutas que no necesitan el layout principal (sin sidebar)
   const isAuthRoute = pathname?.startsWith('/auth')
+  const isLandingPage = pathname === '/'
+  const isPublicRoute = isAuthRoute || isLandingPage
 
   const getMainMargin = () => {
     if (isMobile) return "ml-0"
@@ -37,9 +39,9 @@ export default function RootLayout({
         <Providers>
           <PageTitle />
           
-          {isAuthRoute ? (
-            // Layout simple para páginas de autenticación
-            <main className="min-h-screen bg-gray-50">{children}</main>
+          {isPublicRoute ? (
+            // Layout simple para landing y páginas de autenticación
+            <main className="min-h-screen">{children}</main>
           ) : (
             // Layout principal con sidebar
             <div className="flex min-h-screen">

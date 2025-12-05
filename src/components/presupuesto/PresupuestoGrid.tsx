@@ -45,7 +45,7 @@ export function PresupuestoGrid({
     allMonths.filter((month) => activeMonths.includes(month.value)).sort((a, b) => a.number - b.number)
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 max-w-none lg:max-w-6xl">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
       {/* Meses activos */}
       {getActiveMonths().map((month) => {
         const data = monthlyData[month.value] || {

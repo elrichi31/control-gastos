@@ -87,6 +87,18 @@ export const authOptions: NextAuthOptions = {
       }
       return session
     },
+    async redirect({ url, baseUrl }) {
+      // Si la URL es relativa, construir URL completa
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`
+      }
+      // Si la URL es del mismo origen, permitir
+      if (url.startsWith(baseUrl)) {
+        return url
+      }
+      // Por defecto, redirigir al dashboard
+      return `${baseUrl}/dashboard`
+    },
   },
 
   pages: {
