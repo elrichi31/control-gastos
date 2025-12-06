@@ -83,7 +83,7 @@ const colorClasses = {
 
 export function Features() {
   return (
-    <section id="features" className="py-24 bg-white dark:bg-neutral-900">
+    <section id="features" className="py-24 bg-white dark:bg-neutral-950">
       <div className="max-w-6xl mx-auto px-6">
         {/* Section header */}
         <div className="text-center mb-16">
@@ -106,7 +106,7 @@ export function Features() {
             return (
               <div 
                 key={feature.title}
-                className="group p-6 rounded-2xl border border-gray-100 dark:border-neutral-800 hover:border-gray-200 dark:hover:border-neutral-700 hover:shadow-lg hover:shadow-gray-100/50 dark:hover:shadow-neutral-900/50 transition-all duration-300 bg-white dark:bg-neutral-800"
+                className="group p-6 rounded-2xl border border-gray-100 dark:border-neutral-800 hover:border-gray-200 dark:hover:border-neutral-700 hover:shadow-lg hover:shadow-gray-100/50 dark:hover:shadow-neutral-900/50 transition-all duration-300 bg-white dark:bg-neutral-900"
                 style={{
                   animationDelay: `${index * 100}ms`
                 }}

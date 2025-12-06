@@ -2,12 +2,26 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Wallet, Menu, X } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Wallet, Menu, X, LayoutDashboard } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { data: session, status } = useSession()
+  const isAuthenticated = status === "authenticated"
+  
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (!session?.user?.name) return "U"
+    const names = session.user.name.split(" ")
+    if (names.length >= 2) {
+      return `${names[0][0]}${names[1][0]}`.toUpperCase()
+    }
+    return names[0][0].toUpperCase()
+  }
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 animate-slide-down">
@@ -44,20 +58,41 @@ export function Navbar() {
               {/* Auth Buttons - Hidden on mobile */}
               <div className="hidden md:flex items-center gap-2">
                 <ModeToggle />
-                <Link href="/auth/login">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-neutral-800/50"
-                  >
-                    Iniciar sesión
-                  </Button>
-                </Link>
-                <Link href="/auth/register">
-                  <Button size="sm" className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 transition-all">
-                    Comenzar gratis
-                  </Button>
-                </Link>
+                {isAuthenticated ? (
+                  <>
+                    <Link href="/dashboard">
+                      <Button size="sm" className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 transition-all gap-2">
+                        <LayoutDashboard className="w-4 h-4" />
+                        Dashboard
+                      </Button>
+                    </Link>
+                    <Link href="/dashboard">
+                      <Avatar className="w-8 h-8 cursor-pointer ring-2 ring-blue-500/20 hover:ring-blue-500/40 transition-all">
+                        <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name || "Usuario"} />
+                        <AvatarFallback className="bg-blue-500 text-white text-xs font-medium">
+                          {getUserInitials()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/auth/login">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-neutral-800/50"
+                      >
+                        Iniciar sesión
+                      </Button>
+                    </Link>
+                    <Link href="/auth/register">
+                      <Button size="sm" className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 transition-all">
+                        Comenzar gratis
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
 
               {/* Mobile Menu Button */}
@@ -94,20 +129,31 @@ export function Navbar() {
                   Cómo funciona
                 </Link>
                 <div className="flex flex-col gap-2 pt-2">
-                  <Link href="/auth/login" onClick={() => setIsMenuOpen(false)}>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="w-full text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-                    >
-                      Iniciar sesión
-                    </Button>
-                  </Link>
-                  <Link href="/auth/register" onClick={() => setIsMenuOpen(false)}>
-                    <Button size="sm" className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 transition-all">
-                      Comenzar gratis
-                    </Button>
-                  </Link>
+                  {isAuthenticated ? (
+                    <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                      <Button size="sm" className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 transition-all gap-2">
+                        <LayoutDashboard className="w-4 h-4" />
+                        Dashboard
+                      </Button>
+                    </Link>
+                  ) : (
+                    <>
+                      <Link href="/auth/login" onClick={() => setIsMenuOpen(false)}>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="w-full text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                        >
+                          Iniciar sesión
+                        </Button>
+                      </Link>
+                      <Link href="/auth/register" onClick={() => setIsMenuOpen(false)}>
+                        <Button size="sm" className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 transition-all">
+                          Comenzar gratis
+                        </Button>
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             )}

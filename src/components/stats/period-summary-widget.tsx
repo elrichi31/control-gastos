@@ -18,7 +18,7 @@ export function PeriodSummaryWidget({
   totalTransactions
 }: PeriodSummaryWidgetProps) {
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-neutral-800 dark:to-neutral-700 rounded-lg p-6 border border-blue-200 dark:border-neutral-600 h-full">
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-neutral-900 dark:to-neutral-950 rounded-lg p-6 border border-blue-200 dark:border-neutral-700 h-full">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Resumen del Período</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-3">

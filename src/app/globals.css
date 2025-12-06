@@ -116,6 +116,64 @@ body {
   }
 }
 
+@keyframes float-orb {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+  33% {
+    transform: translate(-50%, -60%) scale(1.1);
+    opacity: 0.8;
+  }
+  66% {
+    transform: translate(-50%, -40%) scale(0.95);
+    opacity: 0.5;
+  }
+}
+
+@keyframes float-particle {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(20px);
+    opacity: 0;
+  }
+}
+
+@keyframes ray {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--rotation)) scaleX(0);
+  }
+  50% {
+    opacity: 0.3;
+    transform: rotate(var(--rotation)) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--rotation)) scaleX(0);
+  }
+}
+
+@keyframes scroll-indicator {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(8px);
+    opacity: 0.3;
+  }
+}
+
 @keyframes blob {
   0%, 100% {
     transform: translate(0, 0) scale(1);
@@ -168,6 +226,22 @@ body {
 
   .animate-float {
     animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-float-orb {
+    animation: float-orb 8s ease-in-out infinite;
+  }
+
+  .animate-float-particle {
+    animation: float-particle linear infinite;
+  }
+
+  .animate-ray {
+    animation: ray 4s ease-in-out infinite;
+  }
+
+  .animate-scroll-indicator {
+    animation: scroll-indicator 2s ease-in-out infinite;
   }
 
   .animate-blob {

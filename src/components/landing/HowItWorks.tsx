@@ -53,7 +53,7 @@ export function HowItWorks() {
                     {/* Icon container with number badge */}
                     <div className="relative mb-6">
                       {/* Main icon box */}
-                      <div className="w-20 h-20 rounded-2xl bg-white dark:bg-neutral-800 shadow-lg shadow-gray-200/50 dark:shadow-neutral-900/50 flex items-center justify-center border border-gray-100 dark:border-neutral-700">
+                      <div className="w-20 h-20 rounded-2xl bg-white dark:bg-neutral-900 shadow-lg shadow-gray-200/50 dark:shadow-neutral-950/50 flex items-center justify-center border border-gray-100 dark:border-neutral-800">
                         <Icon className="w-8 h-8 text-blue-500" />
                       </div>
                       {/* Number badge - positioned top-right outside */}
