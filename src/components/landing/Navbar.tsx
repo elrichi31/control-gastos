@@ -1,10 +1,13 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Wallet } from "lucide-react"
+import { Wallet, Menu, X } from "lucide-react"
 
 export function Navbar() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 animate-slide-down">
       <div className="max-w-4xl mx-auto px-4 mt-3">
@@ -37,8 +40,8 @@ export function Navbar() {
                 </Link>
               </div>
 
-              {/* Auth Buttons */}
-              <div className="flex items-center gap-2">
+              {/* Auth Buttons - Hidden on mobile */}
+              <div className="hidden md:flex items-center gap-2">
                 <Link href="/auth/login">
                   <Button 
                     variant="ghost" 
@@ -54,7 +57,55 @@ export function Navbar() {
                   </Button>
                 </Link>
               </div>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="md:hidden p-2 rounded-lg hover:bg-gray-100/50 transition-colors"
+              >
+                {isMenuOpen ? (
+                  <X className="w-5 h-5 text-gray-600" />
+                ) : (
+                  <Menu className="w-5 h-5 text-gray-600" />
+                )}
+              </button>
             </div>
+
+            {/* Mobile Menu */}
+            {isMenuOpen && (
+              <div className="md:hidden pt-4 pb-2 border-t border-gray-200/50 mt-3 space-y-3">
+                <Link 
+                  href="/#features" 
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block text-sm text-gray-600 hover:text-gray-900 transition-colors py-2"
+                >
+                  Características
+                </Link>
+                <Link 
+                  href="/#how-it-works" 
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block text-sm text-gray-600 hover:text-gray-900 transition-colors py-2"
+                >
+                  Cómo funciona
+                </Link>
+                <div className="flex flex-col gap-2 pt-2">
+                  <Link href="/auth/login" onClick={() => setIsMenuOpen(false)}>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="w-full text-gray-600 hover:text-gray-900"
+                    >
+                      Iniciar sesión
+                    </Button>
+                  </Link>
+                  <Link href="/auth/register" onClick={() => setIsMenuOpen(false)}>
+                    <Button size="sm" className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 transition-all">
+                      Comenzar gratis
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
