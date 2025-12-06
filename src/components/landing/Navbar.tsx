@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Wallet, Menu, X, LayoutDashboard } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 
@@ -68,7 +68,6 @@ export function Navbar() {
                     </Link>
                     <Link href="/dashboard">
                       <Avatar className="w-8 h-8 cursor-pointer ring-2 ring-blue-500/20 hover:ring-blue-500/40 transition-all">
-                        <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name || "Usuario"} />
                         <AvatarFallback className="bg-blue-500 text-white text-xs font-medium">
                           {getUserInitials()}
                         </AvatarFallback>
