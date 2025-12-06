@@ -48,11 +48,11 @@ export default function DetalleGastosPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-white min-h-screen">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-gray-50 dark:bg-neutral-950 min-h-screen">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
-          <div className="h-96 bg-gray-200 rounded"></div>
+          <div className="h-8 bg-gray-200 dark:bg-neutral-900 rounded w-1/4"></div>
+          <div className="h-32 bg-gray-200 dark:bg-neutral-900 rounded"></div>
+          <div className="h-96 bg-gray-200 dark:bg-neutral-900 rounded"></div>
         </div>
       </div>
     )
@@ -61,10 +61,10 @@ export default function DetalleGastosPage() {
   // Error state
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-white min-h-screen">
-        <Card className="border-red-200 bg-red-50">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-gray-50 dark:bg-neutral-950 min-h-screen">
+        <Card className="border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20">
           <CardContent className="p-6 text-center">
-            <p className="text-red-600">Error al cargar los gastos: {error}</p>
+            <p className="text-red-600 dark:text-red-400">Error al cargar los gastos: {error}</p>
           </CardContent>
         </Card>
       </div>
@@ -72,18 +72,18 @@ export default function DetalleGastosPage() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 bg-white min-h-screen overflow-x-hidden">
+    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 bg-gray-50 dark:bg-neutral-950 min-h-screen overflow-x-hidden">
       <PageTitle customTitle="Detalle de Gastos - BethaSpend" />
       
       {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Receipt className="w-8 h-8" />
               Detalle de Gastos
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
               Análisis detallado y filtrado de todos tus gastos
             </p>
           </div>

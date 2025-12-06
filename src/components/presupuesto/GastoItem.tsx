@@ -12,10 +12,10 @@ interface GastoItemProps {
 
 const GastoItem: React.FC<GastoItemProps> = ({ expense, categoryId, onEditExpense, onDeleteExpense }) => {
   return (
-    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-neutral-900 rounded-lg border dark:border-neutral-700">
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-gray-900 truncate">{expense.descripcion}</p>
-        <p className="text-sm text-gray-600">
+        <p className="font-medium text-gray-900 dark:text-white truncate">{expense.descripcion}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Pago: {(() => {
             // Si la fecha viene en formato yyyy-MM-dd, parsear como local
             const [year, month, day] = expense.fecha.split("-")
@@ -28,7 +28,7 @@ const GastoItem: React.FC<GastoItemProps> = ({ expense, categoryId, onEditExpens
         </p>
       </div>
       <div className="flex items-center gap-1 lg:gap-2 ml-2">
-        <span className="font-semibold text-gray-900 text-sm lg:text-base">
+        <span className="font-semibold text-gray-900 dark:text-white text-sm lg:text-base">
           ${expense.monto.toFixed(2)}
         </span>
         <Button variant="ghost" size="sm" onClick={() => onEditExpense(expense, categoryId)}>

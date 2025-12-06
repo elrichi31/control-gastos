@@ -22,16 +22,16 @@ export function GastoTableRow({
 }: GastoTableRowProps) {
   const getCategoryColor = (categoria: string) => {
     const colors = {
-      'Alimentación': 'bg-orange-100 text-orange-800',
-      'Transporte': 'bg-blue-100 text-blue-800', 
-      'Entretenimiento': 'bg-purple-100 text-purple-800',
-      'Salud': 'bg-red-100 text-red-800',
-      'Hogar': 'bg-green-100 text-green-800',
-      'Educación': 'bg-indigo-100 text-indigo-800',
-      'Trabajo': 'bg-gray-100 text-gray-800',
-      'Otros': 'bg-yellow-100 text-yellow-800',
+      'Alimentación': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+      'Transporte': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', 
+      'Entretenimiento': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+      'Salud': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+      'Hogar': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+      'Educación': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+      'Trabajo': 'bg-gray-100 text-gray-800 dark:bg-neutral-900 dark:text-gray-300',
+      'Otros': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
     }
-    return colors[categoria as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+    return colors[categoria as keyof typeof colors] || 'bg-gray-100 text-gray-800 dark:bg-neutral-900 dark:text-gray-300'
   }
 
   const getPaymentMethodIcon = (metodo: string) => {
@@ -49,10 +49,10 @@ export function GastoTableRow({
   }
 
   return (
-    <TableRow className="hover:bg-gray-50">
+    <TableRow className="hover:bg-gray-50 dark:hover:bg-neutral-900/50">
       <TableCell className="font-medium px-4 py-4 w-[180px] min-w-[180px]">
         <div 
-          className="text-sm truncate pr-2" 
+          className="text-sm truncate pr-2 dark:text-white" 
           title={gasto.descripcion}
         >
           {gasto.descripcion}
@@ -67,7 +67,7 @@ export function GastoTableRow({
         </Badge>
       </TableCell>
       <TableCell className="px-3 py-4 w-[150px] min-w-[150px]">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 dark:text-gray-300">
           <div className="flex-shrink-0">
             {getPaymentMethodIcon(gasto.metodo_pago?.nombre || '')}
           </div>
@@ -77,11 +77,11 @@ export function GastoTableRow({
         </div>
       </TableCell>
       <TableCell className="px-3 py-4 w-[100px] min-w-[100px]">
-        <span className="text-xs whitespace-nowrap">
+        <span className="text-xs whitespace-nowrap dark:text-gray-300">
           {formatDate(gasto.fecha)}
         </span>
       </TableCell>
-      <TableCell className="text-right font-semibold text-red-600 px-3 py-4 w-[100px] min-w-[100px]">
+      <TableCell className="text-right font-semibold text-red-600 dark:text-red-400 px-3 py-4 w-[100px] min-w-[100px]">
         <span className="text-sm whitespace-nowrap">
           {formatMoney(gasto.monto)}
         </span>
@@ -90,7 +90,7 @@ export function GastoTableRow({
         <Button
           size="sm"
           onClick={() => onDeleteGasto(gasto.id.toString())}
-          className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 h-8 w-8 bg-transparent border-0 shadow-none"
+          className="text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 p-2 h-8 w-8 bg-transparent border-0 shadow-none"
         >
           <Trash2 className="h-4 w-4" />
         </Button>

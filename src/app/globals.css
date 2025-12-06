@@ -35,24 +35,24 @@ body {
     --radius: 0.5rem;
   }
   .dark {
-    --background: 0 0% 3.9%;
+    --background: 0 0% 7%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
+    --card: 0 0% 14%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
+    --popover: 0 0% 14%;
     --popover-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
     --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
+    --secondary: 0 0% 18%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
+    --muted: 0 0% 18%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
+    --accent: 0 0% 18%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
+    --border: 0 0% 22%;
+    --input: 0 0% 22%;
     --ring: 0 0% 83.1%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -220,11 +220,21 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.3);
   }
 
+  .dark .glass {
+    background: rgba(23, 23, 23, 0.7);
+    border: 1px solid rgba(64, 64, 64, 0.3);
+  }
+
   .glass-strong {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
     border: 1px solid rgba(255, 255, 255, 0.4);
+  }
+
+  .dark .glass-strong {
+    background: rgba(23, 23, 23, 0.85);
+    border: 1px solid rgba(64, 64, 64, 0.4);
   }
 
   /* Notion-style text gradient */

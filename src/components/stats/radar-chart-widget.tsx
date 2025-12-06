@@ -24,8 +24,8 @@ export function RadarChartWidget({ data, title }: RadarChartWidgetProps) {
     if (active && payload && payload.length) {
       const data = payload[0]
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{data.payload.category}</p>
+        <div className="bg-white dark:bg-neutral-900 p-3 border border-gray-200 dark:border-neutral-600 rounded-lg shadow-lg">
+          <p className="font-medium text-gray-900 dark:text-white">{data.payload.category}</p>
           <p className="text-sm font-semibold" style={{ color: data.payload.color }}>
             ${data.value.toLocaleString()}
           </p>
@@ -41,9 +41,9 @@ export function RadarChartWidget({ data, title }: RadarChartWidgetProps) {
   }))
 
   return (
-    <Card className="bg-white shadow-sm border border-gray-200">
+    <Card className="bg-white dark:bg-neutral-900 shadow-sm border border-gray-200 dark:border-neutral-700">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-gray-900">{title}</CardTitle>
+        <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-80">

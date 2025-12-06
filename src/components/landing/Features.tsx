@@ -50,48 +50,48 @@ const features = [
 
 const colorClasses = {
   blue: {
-    bg: "bg-blue-50",
+    bg: "bg-blue-50 dark:bg-blue-900/20",
     icon: "text-blue-500",
-    hover: "group-hover:bg-blue-100"
+    hover: "group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30"
   },
   purple: {
-    bg: "bg-purple-50",
+    bg: "bg-purple-50 dark:bg-purple-900/20",
     icon: "text-purple-500",
-    hover: "group-hover:bg-purple-100"
+    hover: "group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30"
   },
   green: {
-    bg: "bg-green-50",
+    bg: "bg-green-50 dark:bg-green-900/20",
     icon: "text-green-500",
-    hover: "group-hover:bg-green-100"
+    hover: "group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
   },
   orange: {
-    bg: "bg-orange-50",
+    bg: "bg-orange-50 dark:bg-orange-900/20",
     icon: "text-orange-500",
-    hover: "group-hover:bg-orange-100"
+    hover: "group-hover:bg-orange-100 dark:group-hover:bg-orange-900/30"
   },
   indigo: {
-    bg: "bg-indigo-50",
+    bg: "bg-indigo-50 dark:bg-indigo-900/20",
     icon: "text-indigo-500",
-    hover: "group-hover:bg-indigo-100"
+    hover: "group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30"
   },
   teal: {
-    bg: "bg-teal-50",
+    bg: "bg-teal-50 dark:bg-teal-900/20",
     icon: "text-teal-500",
-    hover: "group-hover:bg-teal-100"
+    hover: "group-hover:bg-teal-100 dark:group-hover:bg-teal-900/30"
   }
 }
 
 export function Features() {
   return (
-    <section id="features" className="py-24 bg-white">
+    <section id="features" className="py-24 bg-white dark:bg-neutral-900">
       <div className="max-w-6xl mx-auto px-6">
         {/* Section header */}
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             Todo lo que necesitas para{" "}
             <span className="text-gradient-blue">controlar tus gastos</span>
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             Herramientas simples pero poderosas diseñadas para ayudarte a 
             entender y mejorar tus finanzas personales.
           </p>
@@ -106,7 +106,7 @@ export function Features() {
             return (
               <div 
                 key={feature.title}
-                className="group p-6 rounded-2xl border border-gray-100 hover:border-gray-200 hover:shadow-lg hover:shadow-gray-100/50 transition-all duration-300 bg-white"
+                className="group p-6 rounded-2xl border border-gray-100 dark:border-neutral-800 hover:border-gray-200 dark:hover:border-neutral-700 hover:shadow-lg hover:shadow-gray-100/50 dark:hover:shadow-neutral-900/50 transition-all duration-300 bg-white dark:bg-neutral-800"
                 style={{
                   animationDelay: `${index * 100}ms`
                 }}
@@ -117,10 +117,10 @@ export function Features() {
                 </div>
                 
                 {/* Content */}
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
                   {feature.description}
                 </p>
               </div>

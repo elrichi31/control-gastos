@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { useState, useEffect } from "react"
+import { ModeToggle } from "@/components/mode-toggle"
 
 const menuItems = [
 	{
@@ -111,7 +112,7 @@ export function Sidebar({
 				{/* Sidebar móvil */}
 				<div
 					className={cn(
-						"fixed left-0 top-0 h-screen bg-white border-r border-gray-200 z-50 transition-transform duration-300 ease-in-out w-64 lg:hidden flex flex-col",
+						"fixed left-0 top-0 h-screen bg-white dark:bg-neutral-950 border-r border-gray-200 dark:border-neutral-800 z-50 transition-transform duration-300 ease-in-out w-64 lg:hidden flex flex-col",
 						isOpen ? "translate-x-0" : "-translate-x-full",
 					)}
 				>
@@ -120,15 +121,15 @@ export function Sidebar({
 							<div className="p-1.5 rounded-lg bg-blue-500 text-white">
 								<Wallet className="w-5 h-5" />
 							</div>
-							<h1 className="text-xl font-bold text-gray-900">BethaSpend</h1>
+							<h1 className="text-xl font-bold text-gray-900 dark:text-white">BethaSpend</h1>
 						</div>
 						<Button variant="ghost" size="sm" onClick={onClose}>
-							<X className="w-5 h-5" />
+							<X className="w-5 h-5 dark:text-white" />
 						</Button>
 					</div>
 
 					<div className="px-6 pb-4">
-						<p className="text-sm font-medium text-gray-600">Menu</p>
+						<p className="text-sm font-medium text-gray-600 dark:text-gray-400">Menu</p>
 					</div>
 
 					<nav className="px-3 flex-1">
@@ -146,8 +147,8 @@ export function Sidebar({
 									className={cn(
 										"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
 										isActive
-											? "bg-gray-100 text-gray-900"
-											: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+											? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
+											: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
 									)}
 								>
 									<Icon className="w-5 h-5" />
@@ -163,8 +164,8 @@ export function Sidebar({
 									className={cn(
 										"w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
 										isGastosActive
-											? "bg-gray-100 text-gray-900"
-											: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+											? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
+											: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
 									)}
 								>
 									<div className="flex items-center gap-3">
@@ -192,8 +193,8 @@ export function Sidebar({
 											className={cn(
 												"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
 												isActive
-													? "bg-gray-100 text-gray-900"
-													: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+													? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
+													: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
 											)}
 										>
 											<Icon className="w-4 h-4" />
@@ -206,20 +207,20 @@ export function Sidebar({
 					</nav>
 
 					{/* Sección de usuario en la parte inferior del móvil */}
-					<div className="mt-auto border-t border-gray-200 p-3">
+					<div className="mt-auto border-t border-gray-200 dark:border-neutral-800 p-3">
 						{session?.user && (
 							<div className="px-3 py-2 mb-2">
 								<div className="flex items-center gap-2 mb-1">
-									<User className="w-4 h-4 text-gray-500" />
-									<p className="text-sm font-medium text-gray-900">{session.user.name}</p>
+									<User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+									<p className="text-sm font-medium text-gray-900 dark:text-white">{session.user.name}</p>
 								</div>
-								<p className="text-xs text-gray-500 ml-6">{session.user.email}</p>
+								<p className="text-xs text-gray-500 dark:text-gray-400 ml-6">{session.user.email}</p>
 							</div>
 						)}
 						
 						<button
 							onClick={handleLogout}
-							className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-red-600 hover:bg-red-50 hover:text-red-700"
+							className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
 						>
 							<LogOut className="w-5 h-5 flex-shrink-0" />
 							<span>Cerrar Sesión</span>
@@ -234,7 +235,7 @@ export function Sidebar({
 	return (
 		<div
 			className={cn(
-				"fixed left-0 top-0 h-screen bg-white border-r border-gray-200 z-50 transition-all duration-300 ease-in-out hidden lg:block",
+				"fixed left-0 top-0 h-screen bg-white dark:bg-neutral-950 border-r border-gray-200 dark:border-neutral-800 z-50 transition-all duration-300 ease-in-out hidden lg:block",
 				isCollapsed ? "w-16" : "w-64",
 			)}
 		>
@@ -253,7 +254,7 @@ export function Sidebar({
 						<div className="p-1.5 rounded-lg bg-blue-500 text-white">
 							<Wallet className="w-5 h-5" />
 						</div>
-						<h1 className="text-xl font-bold text-gray-900">BethaSpend</h1>
+						<h1 className="text-xl font-bold text-gray-900 dark:text-white">BethaSpend</h1>
 					</div>
 				)}
 				<Button
@@ -264,7 +265,7 @@ export function Sidebar({
 				>
 					<ChevronLeft
 						className={cn(
-							"w-5 h-5 transition-transform",
+							"w-5 h-5 transition-transform dark:text-white",
 							isCollapsed && "rotate-180",
 						)}
 					/>
@@ -273,7 +274,7 @@ export function Sidebar({
 
 			{!isCollapsed && (
 				<div className="px-6 pb-4">
-					<p className="text-sm font-medium text-gray-600">Menu</p>
+					<p className="text-sm font-medium text-gray-600 dark:text-gray-400">Menu</p>
 				</div>
 			)}
 
@@ -291,8 +292,8 @@ export function Sidebar({
 							className={cn(
 								"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1 group",
 								isActive
-									? "bg-gray-100 text-gray-900"
-									: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+									? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
+									: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
 								isCollapsed && "justify-center",
 							)}
 							title={isCollapsed ? item.name : undefined}
@@ -312,8 +313,8 @@ export function Sidebar({
 							className={cn(
 								"w-full flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
 								isGastosActive
-									? "bg-gray-100 text-gray-900"
-									: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+									? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
+									: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
 							)}
 							title="Gastos"
 						>
@@ -322,7 +323,7 @@ export function Sidebar({
 						
 						{/* Dropdown flotante cuando está colapsado */}
 						{gastosOpen && (
-							<div className="absolute left-full top-0 ml-2 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[180px] z-50">
+							<div className="absolute left-full top-0 ml-2 bg-white dark:bg-neutral-950 border border-gray-200 dark:border-neutral-800 rounded-lg shadow-lg py-1 min-w-[180px] z-50">
 								{gastosSubmenu.map((item) => {
 									const Icon = item.icon
 									const isActive = pathname === item.href
@@ -334,8 +335,8 @@ export function Sidebar({
 											className={cn(
 												"flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors",
 												isActive
-													? "bg-gray-100 text-gray-900"
-													: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+													? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
+													: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
 											)}
 										>
 											<Icon className="w-4 h-4" />
@@ -354,8 +355,8 @@ export function Sidebar({
 								className={cn(
 									"w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
 									isGastosActive
-										? "bg-gray-100 text-gray-900"
-										: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+										? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
+										: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
 								)}
 							>
 								<div className="flex items-center gap-3">
@@ -382,8 +383,8 @@ export function Sidebar({
 										className={cn(
 											"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
 											isActive
-												? "bg-gray-100 text-gray-900"
-												: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+												? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
+												: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
 										)}
 									>
 										<Icon className="w-4 h-4" />
@@ -397,11 +398,15 @@ export function Sidebar({
 			</nav>
 
 			{/* Sección de usuario en la parte inferior */}
-			<div className="mt-auto border-t border-gray-200 p-3">
+			<div className="mt-auto border-t border-gray-200 dark:border-neutral-800 p-3">
+				<div className={cn("mb-2 flex justify-center", !isCollapsed && "justify-start px-3")}>
+					<ModeToggle />
+				</div>
+				
 				{session?.user && !isCollapsed && (
 					<div className="px-3 py-2 mb-2">
-						<p className="text-sm font-medium text-gray-900">{session.user.name}</p>
-						<p className="text-xs text-gray-500">{session.user.email}</p>
+						<p className="text-sm font-medium text-gray-900 dark:text-white">{session.user.name}</p>
+						<p className="text-xs text-gray-500 dark:text-gray-400">{session.user.email}</p>
 					</div>
 				)}
 				
@@ -409,7 +414,7 @@ export function Sidebar({
 					onClick={handleLogout}
 					className={cn(
 						"w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-						"text-red-600 hover:bg-red-50 hover:text-red-700",
+						"text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20",
 						isCollapsed && "justify-center"
 					)}
 					title={isCollapsed ? "Cerrar Sesión" : undefined}

@@ -77,21 +77,21 @@ export default function ExpenseTracker() {
 
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-neutral-950">
       <div className="max-w-md mx-auto lg:max-w-7xl p-4 lg:p-6 space-y-6">
         <PageTitle customTitle="Nuevo Gasto - BethaSpend" />
         
         {/* Header optimizado para móvil */}
         <div className="text-center py-4">
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">💰 Nuevo Gasto</h1>
-          <p className="text-gray-600 mt-1 text-sm lg:text-base">Registra tu gasto de forma rápida y sencilla</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">💰 Nuevo Gasto</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm lg:text-base">Registra tu gasto de forma rápida y sencilla</p>
         </div>
 
         {/* Layout responsive: móvil (columna) / desktop (grid) */}
         <div className="lg:grid lg:grid-cols-3 lg:gap-6 lg:items-start space-y-6 lg:space-y-0">
           {/* Formulario principal - Prioridad en móvil */}
           <div className="lg:order-1">
-            <Card className="shadow-lg rounded-xl border border-gray-200 bg-white">
+            <Card className="shadow-lg rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-lg lg:text-xl">
                   <DollarSign className="h-5 w-5 text-green-600" />
@@ -136,7 +136,7 @@ export default function ExpenseTracker() {
 
           {/* Lista de gastos - Último en móvil */}
           <div className="lg:order-3">
-            <Card className="shadow-lg rounded-xl border border-gray-200 bg-white">
+            <Card className="shadow-lg rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg lg:text-xl">📝 Gastos Recientes</CardTitle>
                 <CardDescription className="text-sm">Últimos gastos agrupados por {groupBy}</CardDescription>

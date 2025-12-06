@@ -8,9 +8,9 @@ interface YearSelectorProps {
 export function YearSelector({ selectedYear, setSelectedYear }: YearSelectorProps) {
   return (
     <div className="mb-6">
-      <label className="block text-sm font-medium text-gray-700 mb-2">Año</label>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Año</label>
       <Select value={selectedYear} onValueChange={setSelectedYear}>
-        <SelectTrigger className="w-full sm:w-48 bg-white">
+        <SelectTrigger className="w-full sm:w-48 bg-white dark:bg-neutral-950 dark:border-neutral-700">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

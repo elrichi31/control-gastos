@@ -91,20 +91,20 @@ export function RecurringExpenseList() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-blue-600 dark:border-gray-400 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   if (expenses.length === 0) {
     return (
-      <Card className="border-2 border-dashed border-gray-300">
+      <Card className="border-2 border-dashed border-gray-300 dark:border-neutral-700 dark:bg-neutral-900">
         <CardContent className="flex flex-col items-center justify-center py-16">
-          <Repeat className="w-20 h-20 text-gray-400 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">
+          <Repeat className="w-20 h-20 text-gray-400 dark:text-gray-500 mb-4" />
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
             No tienes gastos recurrentes
           </h3>
-          <p className="text-gray-500 text-center max-w-md mb-4">
+          <p className="text-gray-500 dark:text-gray-400 text-center max-w-md mb-4">
             Crea tu primer gasto recurrente desde "Crear Nuevo" en el menú de Gastos
           </p>
         </CardContent>
@@ -120,48 +120,48 @@ export function RecurringExpenseList() {
             key={expense.id}
             className={`relative overflow-hidden transition-all hover:shadow-lg ${
               expense.activo
-                ? "border-2 border-gray-200 bg-white"
-                : "border-2 border-gray-300 bg-gray-100 opacity-75"
+                ? "border-2 border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
+                : "border-2 border-gray-300 dark:border-neutral-600 bg-gray-100 dark:bg-neutral-900 opacity-75"
             }`}
           >
             {/* Badge de estado en la esquina */}
             <div className="absolute top-3 right-3">
               <Badge
                 variant={expense.activo ? "default" : "secondary"}
-                className={expense.activo ? "bg-blue-600" : "bg-gray-500"}
+                className={expense.activo ? "bg-blue-600 dark:bg-neutral-700" : "bg-gray-500 dark:bg-gray-600"}
               >
                 {expense.activo ? "Activo" : "Inactivo"}
               </Badge>
             </div>
 
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg pr-20 line-clamp-2">
+              <CardTitle className="text-lg pr-20 line-clamp-2 dark:text-white">
                 {expense.descripcion}
               </CardTitle>
             </CardHeader>
 
             <CardContent className="space-y-4">
               {/* Monto destacado */}
-              <div className="flex items-center justify-center py-3 bg-gray-50 rounded-lg border-2 border-gray-200">
-                <DollarSign className="w-6 h-6 text-green-600 mr-1" />
-                <span className="text-3xl font-bold text-gray-900">
+              <div className="flex items-center justify-center py-3 bg-gray-50 dark:bg-neutral-900 rounded-lg border-2 border-gray-200 dark:border-neutral-700">
+                <DollarSign className="w-6 h-6 text-green-600 dark:text-emerald-400 mr-1" />
+                <span className="text-3xl font-bold text-gray-900 dark:text-white">
                   {expense.monto.toFixed(2)}
                 </span>
               </div>
 
               {/* Información de frecuencia y fechas */}
               <div className="space-y-2 text-sm">
-                <div className="flex items-start gap-2 text-gray-700 bg-blue-50 p-3 rounded-lg">
-                  <Clock className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2 text-gray-700 dark:text-gray-300 bg-blue-50 dark:bg-neutral-900 p-3 rounded-lg">
+                  <Clock className="w-4 h-4 text-blue-600 dark:text-gray-400 flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium capitalize">{expense.frecuencia}</div>
                     {expense.frecuencia === "semanal" && expense.dia_semana && (
-                      <div className="text-gray-600 text-xs mt-0.5">
+                      <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
                         Cada {DIAS_SEMANA[expense.dia_semana]}
                       </div>
                     )}
                     {expense.frecuencia === "mensual" && expense.dia_mes && (
-                      <div className="text-gray-600 text-xs mt-0.5">
+                      <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
                         Cada día {expense.dia_mes} del mes
                       </div>
                     )}
@@ -169,11 +169,11 @@ export function RecurringExpenseList() {
                 </div>
 
                 {expense.fecha_fin && (
-                  <div className="flex items-start gap-2 text-gray-700 bg-gray-50 p-3 rounded-lg">
-                    <Calendar className="w-4 h-4 text-gray-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2 text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-neutral-900 p-3 rounded-lg">
+                    <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-xs">Finaliza</div>
-                      <div className="text-gray-600 text-xs mt-0.5">
+                      <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
                         {new Date(expense.fecha_fin).toLocaleDateString('es-ES')}
                       </div>
                     </div>
@@ -183,31 +183,31 @@ export function RecurringExpenseList() {
 
               {/* Categoría y Método de Pago en dos columnas */}
               <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="flex flex-col gap-1 bg-purple-50 p-3 rounded-lg">
-                  <div className="flex items-center gap-1 text-purple-600">
+                <div className="flex flex-col gap-1 bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg">
+                  <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400">
                     <Tag className="w-3.5 h-3.5" />
                     <span className="text-xs font-medium">Categoría</span>
                   </div>
-                  <span className="text-gray-900 text-xs font-medium truncate">
+                  <span className="text-gray-900 dark:text-white text-xs font-medium truncate">
                     {getCategoryName(expense.categoria_id)}
                   </span>
                 </div>
 
-                <div className="flex flex-col gap-1 bg-orange-50 p-3 rounded-lg">
-                  <div className="flex items-center gap-1 text-orange-600">
+                <div className="flex flex-col gap-1 bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg">
+                  <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
                     <CreditCard className="w-3.5 h-3.5" />
                     <span className="text-xs font-medium">Método</span>
                   </div>
-                  <span className="text-gray-900 text-xs font-medium truncate">
+                  <span className="text-gray-900 dark:text-white text-xs font-medium truncate">
                     {getPaymentMethodName(expense.metodo_pago_id)}
                   </span>
                 </div>
               </div>
 
               {/* Controles */}
-              <div className="pt-3 border-t border-gray-200 space-y-2">
-                <div className="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700">
+              <div className="pt-3 border-t border-gray-200 dark:border-neutral-700 space-y-2">
+                <div className="flex items-center justify-between bg-gray-50 dark:bg-neutral-900 p-2 rounded-lg">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {expense.activo ? "Activado" : "Desactivado"}
                   </span>
                   <Switch

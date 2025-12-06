@@ -4,7 +4,7 @@ import { MESES_NOMBRES, MESES_NOMBRES_LOWERCASE } from "@/lib/constants"
 import { startOfMonth, endOfMonth, subMonths } from "date-fns"
 
 interface FilterOptions {
-  filterType: "year-month" | "year" | "month" | "custom"
+  filterType: "year-month" | "year" | "month" | "custom" | "all"
   year: string
   month: string
   dateFrom: string
@@ -43,6 +43,9 @@ export function useDataProcessing({ gastos, currentFilters }: DataProcessingHook
           const toDate = new Date(currentFilters.dateTo)
           return fecha >= fromDate && fecha <= toDate
         
+        case "all":
+          return true
+
         default:
           return true
       }

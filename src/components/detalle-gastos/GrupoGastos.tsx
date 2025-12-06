@@ -28,44 +28,44 @@ export function GrupoGastos({
   onDeleteGasto
 }: GrupoGastosProps) {
   return (
-    <div className="border rounded-lg">
+    <div className="border dark:border-neutral-700 rounded-lg">
       <div 
-        className="flex items-center justify-between p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors rounded-t-lg"
+        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-neutral-900 cursor-pointer hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors rounded-t-lg"
         onClick={() => onToggle(index.toString())}
       >
         <div className="flex items-center gap-3">
           {isExpanded ? (
-            <ChevronDown className="w-5 h-5 text-gray-500" />
+            <ChevronDown className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-gray-500" />
+            <ChevronRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           )}
           <div>
-            <h3 className="font-semibold text-gray-900">{group.title}</h3>
-            <p className="text-sm text-gray-600">
+            <h3 className="font-semibold text-gray-900 dark:text-white">{group.title}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               {group.gastos.length} gasto{group.gastos.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-lg font-bold text-red-600">
+          <p className="text-lg font-bold text-red-600 dark:text-red-400">
             {formatMoney(group.total)}
           </p>
         </div>
       </div>
       
       {isExpanded && (
-        <div className="border-t">
+        <div className="border-t dark:border-neutral-700">
           {/* Vista de tabla para desktop */}
           <div className="hidden lg:block">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="px-4 py-3">Descripción</TableHead>
-                  <TableHead className="px-3 py-3">Categoría</TableHead>
-                  <TableHead className="px-3 py-3">Método de Pago</TableHead>
-                  <TableHead className="px-3 py-3">Fecha</TableHead>
-                  <TableHead className="px-3 py-3 text-right">Monto</TableHead>
-                  <TableHead className="px-3 py-3 text-center">Acciones</TableHead>
+                <TableRow className="dark:border-neutral-800 hover:bg-transparent dark:hover:bg-transparent">
+                  <TableHead className="px-4 py-3 dark:text-gray-300">Descripción</TableHead>
+                  <TableHead className="px-3 py-3 dark:text-gray-300">Categoría</TableHead>
+                  <TableHead className="px-3 py-3 dark:text-gray-300">Método de Pago</TableHead>
+                  <TableHead className="px-3 py-3 dark:text-gray-300">Fecha</TableHead>
+                  <TableHead className="px-3 py-3 text-right dark:text-gray-300">Monto</TableHead>
+                  <TableHead className="px-3 py-3 text-center dark:text-gray-300">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

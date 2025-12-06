@@ -76,44 +76,44 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
   }
 
   return (
-    <div className="p-4 lg:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 p-4 lg:p-8">
       <div className="mb-8">
         <Breadcrumb items={[{ label: "Presupuesto", href: "/presupuesto" }, { label: monthName }]} large />
 
         <div className="flex flex-col lg:flex-row gap-4 mt-8">
           {/* Card Total Presupuestado */}
-          <div className="bg-white rounded-lg border shadow-sm p-6 flex-1">
+          <div className="bg-white dark:bg-neutral-900 rounded-lg border dark:border-neutral-700 shadow-sm p-6 flex-1">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-2">Total Presupuestado</p>
-              <p className="text-2xl lg:text-3xl font-bold text-green-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Total Presupuestado</p>
+              <p className="text-2xl lg:text-3xl font-bold text-green-600 dark:text-emerald-400">
                 ${calculations.getBudgetTotal().toFixed(2)}
               </p>
             </div>
           </div>
 
           {/* Card Total Gastado */}
-          <div className="bg-white rounded-lg border shadow-sm p-6 flex-1">
+          <div className="bg-white dark:bg-neutral-900 rounded-lg border dark:border-neutral-700 shadow-sm p-6 flex-1">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-2">Total Gastado</p>
-              <p className="text-2xl lg:text-3xl font-bold text-red-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Total Gastado</p>
+              <p className="text-2xl lg:text-3xl font-bold text-red-600 dark:text-red-400">
                 ${calculations.getSpentTotal().toFixed(2)}
               </p>
             </div>
           </div>
 
           {/* Card Ahorro/Diferencia */}
-          <div className="bg-white rounded-lg border shadow-sm p-6 flex-1">
+          <div className="bg-white dark:bg-neutral-900 rounded-lg border dark:border-neutral-700 shadow-sm p-6 flex-1">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                 {calculations.getBudgetDifference() >= 0 ? 'Ahorro' : 'Exceso'}
               </p>
               <p className={`text-2xl lg:text-3xl font-bold ${
-                calculations.getBudgetDifference() >= 0 ? 'text-blue-600' : 'text-orange-600'
+                calculations.getBudgetDifference() >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'
               }`}>
                 ${Math.abs(calculations.getBudgetDifference()).toFixed(2)}
               </p>
               {calculations.getBudgetDifference() < 0 && (
-                <p className="text-xs text-orange-500 mt-1">Sobre presupuesto</p>
+                <p className="text-xs text-orange-500 dark:text-orange-400 mt-1">Sobre presupuesto</p>
               )}
             </div>
           </div>
@@ -140,21 +140,21 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
 
       {/* Modal de confirmación de eliminación de gasto */}
       <Dialog open={!!budgetData.expenseToDelete} onOpenChange={(open) => !open && budgetData.setExpenseToDelete(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md dark:bg-neutral-900 dark:border-neutral-700">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-gray-900">
+            <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white">
               ¿Eliminar gasto?
             </DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-sm text-gray-600">
-              ¿Seguro que quieres eliminar el gasto <span className="font-semibold text-gray-900">{budgetData.expenseToDelete?.descripcion}</span>? Esta acción no se puede deshacer.
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              ¿Seguro que quieres eliminar el gasto <span className="font-semibold text-gray-900 dark:text-white">{budgetData.expenseToDelete?.descripcion}</span>? Esta acción no se puede deshacer.
             </p>
           </div>
           <div className="flex gap-3 pt-2">
             <Button 
               onClick={() => budgetData.setExpenseToDelete(null)}
-              className="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="flex-1 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-neutral-700"
             >
               Cancelar
             </Button>

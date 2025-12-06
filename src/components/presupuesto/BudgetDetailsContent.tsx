@@ -56,7 +56,7 @@ export const BudgetDetailsContent: React.FC<BudgetDetailsContentProps> = ({
   if (loading) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">Cargando información...</p>
+        <p className="text-gray-500 dark:text-gray-400">Cargando información...</p>
       </div>
     )
   }
@@ -81,8 +81,8 @@ export const BudgetDetailsContent: React.FC<BudgetDetailsContentProps> = ({
         ))
       ) : (
         <div className="text-center py-8 col-span-full">
-          <p className="text-gray-500 mb-4">No hay categorías para este presupuesto</p>
-          <p className="text-sm text-gray-400">Puedes agregar categorías manualmente o copiar del mes anterior</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">No hay categorías para este presupuesto</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">Puedes agregar categorías manualmente o copiar del mes anterior</p>
         </div>
       )}
 
@@ -90,24 +90,24 @@ export const BudgetDetailsContent: React.FC<BudgetDetailsContentProps> = ({
       {availableCategories.length > 0 && (
         <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
           <DialogTrigger asChild>
-            <Card className="bg-gray-50 border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors cursor-pointer">
+            <Card className="bg-gray-50 dark:bg-neutral-900/50 border-2 border-dashed border-gray-300 dark:border-neutral-600 hover:border-gray-400 dark:hover:border-gray-500 transition-colors cursor-pointer">
               <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-                <Plus className="w-8 h-8 text-gray-400 mb-3" />
-                <h3 className="text-lg font-medium text-gray-600 mb-1">Agregar categoría</h3>
-                <p className="text-sm text-gray-500">Selecciona una categoría para organizar tus gastos</p>
+                <Plus className="w-8 h-8 text-gray-400 dark:text-gray-500 mb-3" />
+                <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300 mb-1">Agregar categoría</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Selecciona una categoría para organizar tus gastos</p>
               </CardContent>
             </Card>
           </DialogTrigger>
-          <DialogContent className="bg-white mx-4 max-w-md">
+          <DialogContent className="bg-white dark:bg-neutral-900 dark:border-neutral-700 mx-4 max-w-md">
             <DialogHeader>
-              <DialogTitle>Seleccionar categoría</DialogTitle>
+              <DialogTitle className="dark:text-white">Seleccionar categoría</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {availableCategories.map((category) => (
                 <Button
                   key={category.id}
-                  className="w-full justify-start bg-white hover:bg-gray-50 border border-gray-200"
+                  className="w-full justify-start bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-700 border border-gray-200 dark:border-neutral-600 dark:text-white"
                   onClick={() => onAddCategory(category.id)}
                 >
                   <span className="text-xl mr-3">{category.icono}</span>
@@ -122,13 +122,13 @@ export const BudgetDetailsContent: React.FC<BudgetDetailsContentProps> = ({
       {/* Botón para copiar del mes anterior - solo mostrar si no hay categorías */}
       {presupuestoCategorias.length === 0 && (
         <Card 
-          className="bg-blue-50 border-2 border-dashed border-blue-300 hover:border-blue-400 transition-colors cursor-pointer"
+          className="bg-blue-50 dark:bg-neutral-900 border-2 border-dashed border-blue-300 dark:border-neutral-600 hover:border-blue-400 dark:hover:border-gray-500 transition-colors cursor-pointer"
           onClick={onCopyFromPreviousMonth}
         >
           <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-            <Plus className="w-8 h-8 text-blue-400 mb-3" />
-            <h3 className="text-lg font-medium text-blue-600 mb-1">Copiar mes anterior</h3>
-            <p className="text-sm text-blue-500">Copia las categorías y montos del mes anterior</p>
+            <Plus className="w-8 h-8 text-blue-400 dark:text-gray-400 mb-3" />
+            <h3 className="text-lg font-medium text-blue-600 dark:text-gray-300 mb-1">Copiar mes anterior</h3>
+            <p className="text-sm text-blue-500 dark:text-gray-400">Copia las categorías y montos del mes anterior</p>
           </CardContent>
         </Card>
       )}
@@ -136,7 +136,7 @@ export const BudgetDetailsContent: React.FC<BudgetDetailsContentProps> = ({
       {/* Mensaje cuando no hay categorías disponibles */}
       {availableCategories.length === 0 && presupuestoCategorias.length > 0 && (
         <div className="text-center py-8 col-span-full">
-          <p className="text-gray-500">Todas las categorías están siendo utilizadas</p>
+          <p className="text-gray-500 dark:text-gray-400">Todas las categorías están siendo utilizadas</p>
         </div>
       )}
     </div>

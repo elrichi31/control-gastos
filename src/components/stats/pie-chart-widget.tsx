@@ -22,9 +22,9 @@ export function PieChartWidget({ data, title }: PieChartWidgetProps) {
       const data = payload[0]
       const percentage = ((data.value / total) * 100).toFixed(1)
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{data.payload.name}</p>
-          <p className="text-sm text-gray-600">
+        <div className="bg-white dark:bg-neutral-900 p-3 border border-gray-200 dark:border-neutral-600 rounded-lg shadow-lg">
+          <p className="font-medium text-gray-900 dark:text-white">{data.payload.name}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(data.value)} ({percentage}%)
           </p>
         </div>
@@ -40,7 +40,7 @@ export function PieChartWidget({ data, title }: PieChartWidgetProps) {
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
-            <span className="text-sm text-gray-600">{entry.value}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">{entry.value}</span>
           </div>
         ))}
       </div>
@@ -48,9 +48,9 @@ export function PieChartWidget({ data, title }: PieChartWidgetProps) {
   }
 
   return (
-    <Card className="bg-white shadow-sm border border-gray-200">
+    <Card className="bg-white dark:bg-neutral-900 shadow-sm border border-gray-200 dark:border-neutral-700">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-gray-900">{title}</CardTitle>
+        <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-96 flex flex-col">

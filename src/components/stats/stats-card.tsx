@@ -17,14 +17,14 @@ interface StatsCardProps {
 
 export function StatsCard({ title, value, subtitle, icon: Icon, trend, color = "text-blue-600" }: StatsCardProps) {
   return (
-    <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+    <Card className="bg-white dark:bg-neutral-900 shadow-sm border border-gray-200 dark:border-neutral-700 hover:shadow-md transition-shadow">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-gray-600">{title}</CardTitle>
+        <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</CardTitle>
         <Icon className={`h-4 w-4 ${color}`} />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-gray-900">{value}</div>
-        {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+        <div className="text-2xl font-bold text-gray-900 dark:text-white">{value}</div>
+        {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>}
         {trend && (
           <div className="flex items-center mt-2">
             <span className={`text-xs font-medium ${trend.isPositive ? "text-green-600" : "text-red-600"}`}>

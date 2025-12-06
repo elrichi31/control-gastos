@@ -100,22 +100,22 @@ export function Hero() {
   }
 
   return (
-    <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-gray-50 to-white pt-24">
+    <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-gray-50 to-white dark:from-neutral-950 dark:to-neutral-900 pt-24">
       {/* Abstract background shapes */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Large blue blob - top right */}
         <div 
-          className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-blue-400/20 blur-3xl animate-blob"
+          className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-blue-400/20 dark:bg-blue-500/10 blur-3xl animate-blob"
         />
         
         {/* Medium blue blob - bottom left */}
         <div 
-          className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-blue-500/15 blur-3xl animate-blob animation-delay-2000"
+          className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-blue-500/15 dark:bg-blue-500/10 blur-3xl animate-blob animation-delay-2000"
         />
         
         {/* Small accent blob - center */}
         <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-r from-blue-400/10 to-indigo-400/10 blur-3xl animate-pulse-slow"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-r from-blue-400/10 to-indigo-400/10 dark:from-blue-500/5 dark:to-indigo-500/5 blur-3xl animate-pulse-slow"
         />
         
         {/* Interactive floating dots that follow cursor within radius */}
@@ -136,7 +136,7 @@ export function Hero() {
         
         {/* Grid pattern overlay */}
         <div 
-          className="absolute inset-0 opacity-[0.015]"
+          className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03]"
           style={{
             backgroundImage: `linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px)`,
             backgroundSize: '60px 60px'
@@ -147,16 +147,16 @@ export function Hero() {
       {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 mb-8 animate-fade-in">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 mb-8 animate-fade-in">
           <Sparkles className="w-4 h-4 text-blue-500" />
-          <span className="text-sm text-blue-600 font-medium">
+          <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
             Simple, intuitivo y poderoso
           </span>
         </div>
 
         {/* Main heading */}
         <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 animate-slide-up">
-          <span className="text-gray-900">Tus finanzas personales,</span>
+          <span className="text-gray-900 dark:text-white">Tus finanzas personales,</span>
           <br />
           <span className="text-gradient-blue">
             {displayText}
@@ -165,7 +165,7 @@ export function Hero() {
         </h1>
 
         {/* Subheading */}
-        <p className="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto mb-10 animate-slide-up animation-delay-200">
+        <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 animate-slide-up animation-delay-200">
           Registra tus gastos, establece presupuestos y visualiza tu progreso financiero. 
           Todo en un solo lugar.
         </p>
@@ -185,7 +185,7 @@ export function Hero() {
             <Button 
               variant="outline" 
               size="lg" 
-              className="text-gray-600 border-gray-200 hover:bg-gray-50 text-lg px-8 py-6 rounded-xl"
+              className="text-gray-600 dark:text-gray-300 border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 text-lg px-8 py-6 rounded-xl"
             >
               Conocer más
             </Button>
@@ -194,10 +194,10 @@ export function Hero() {
 
         {/* Social proof */}
         <div className="mt-16 animate-fade-in animation-delay-500">
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             Diseñado para quienes quieren control total de sus finanzas
           </p>
-          <div className="flex items-center justify-center gap-8 text-gray-400">
+          <div className="flex items-center justify-center gap-8 text-gray-400 dark:text-gray-500">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-400" />
               <span className="text-sm">100% Gratis</span>
@@ -215,7 +215,7 @@ export function Hero() {
       </div>
 
       {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white dark:from-neutral-900 to-transparent" />
     </section>
   )
 }

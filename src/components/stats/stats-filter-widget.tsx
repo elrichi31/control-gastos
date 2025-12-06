@@ -1,15 +1,13 @@
 "use client"
 
-import { useState } from "react"
-import { Calendar } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { Calendar, X, Filter } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 interface FilterOptions {
-  filterType: "year-month" | "year" | "month" | "custom"
+  filterType: "year-month" | "year" | "month" | "custom" | "all"
   year: string
   month: string
   dateFrom: string
@@ -54,56 +52,85 @@ export function StatsFilterWidget({ onFiltersChange }: StatsFilterWidgetProps) {
   const { month: currentMonth, year: currentYear } = getCurrentMonthYear()
 
   const [filters, setFilters] = useState<FilterOptions>({
-    filterType: "year-month",
+    filterType: "all",
     year: currentYear,
     month: currentMonth,
     dateFrom: "",
     dateTo: "",
   })
 
-  const handleFilterChange = (key: keyof FilterOptions, value: string) => {
-    const newFilters = { ...filters, [key]: value }
-    setFilters(newFilters)
-    onFiltersChange(newFilters)
+  // Effect to notify parent when filters change
+  useEffect(() => {
+    onFiltersChange(filters)
+  }, [filters, onFiltersChange])
+
+  const handleFilterTypeChange = (value: FilterOptions["filterType"]) => {
+    setFilters(prev => ({ ...prev, filterType: value }))
   }
 
-  const handleApplyFilters = () => {
-    onFiltersChange(filters)
+  const handleFilterChange = (key: keyof FilterOptions, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }))
   }
+
+  const clearFilters = () => {
+    setFilters(prev => ({ ...prev, filterType: "all" }))
+  }
+
+  const getActiveFilterLabel = () => {
+    switch (filters.filterType) {
+      case "year-month":
+        return `${filters.month.charAt(0).toUpperCase() + filters.month.slice(1)} ${filters.year}`
+      case "year":
+        return `Año ${filters.year}`
+      case "month":
+        return filters.month.charAt(0).toUpperCase() + filters.month.slice(1)
+      case "custom":
+        if (filters.dateFrom && filters.dateTo) {
+          return `${filters.dateFrom} - ${filters.dateTo}`
+        }
+        return "Rango personalizado"
+      default:
+        return null
+    }
+  }
+
+  const activeLabel = getActiveFilterLabel()
 
   return (
-    <Card className="bg-white shadow-sm border border-gray-200">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-semibold text-gray-900">Filtrar por</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Tipo de filtro */}
-        <div className="space-y-2">
+    <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700 p-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 font-medium min-w-fit">
+          <Filter className="h-4 w-4" />
+          <span>Filtrar por:</span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 flex-1">
           <Select
             value={filters.filterType}
-            onValueChange={(value: FilterOptions["filterType"]) => handleFilterChange("filterType", value)}
+            onValueChange={handleFilterTypeChange}
           >
-            <SelectTrigger className="bg-gray-50 border-gray-200">
-              <SelectValue />
+            <SelectTrigger className="w-[180px] bg-gray-50 dark:bg-neutral-900 border-gray-200 dark:border-neutral-700">
+              <SelectValue placeholder="Seleccionar filtro" />
             </SelectTrigger>
-            <SelectContent className="bg-white">
+            <SelectContent className="bg-white dark:bg-neutral-900">
+              <SelectItem value="all">Todo el historial</SelectItem>
               <SelectItem value="year-month">Año y mes</SelectItem>
               <SelectItem value="year">Solo año</SelectItem>
               <SelectItem value="month">Solo mes</SelectItem>
               <SelectItem value="custom">Rango personalizado</SelectItem>
             </SelectContent>
           </Select>
-        </div>
 
-        {/* Filtros por año y mes */}
-        {(filters.filterType === "year-month" || filters.filterType === "year") && (
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">Año</Label>
-            <Select value={filters.year} onValueChange={(value) => handleFilterChange("year", value)}>
-              <SelectTrigger className="bg-gray-50 border-gray-200">
-                <SelectValue />
+          {/* Controles adicionales según el tipo de filtro */}
+          {(filters.filterType === "year-month" || filters.filterType === "year") && (
+            <Select
+              value={filters.year}
+              onValueChange={(value) => handleFilterChange("year", value)}
+            >
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="Año" />
               </SelectTrigger>
-              <SelectContent className="bg-white">
+              <SelectContent>
                 {years.map((year) => (
                   <SelectItem key={year} value={year}>
                     {year}
@@ -111,17 +138,17 @@ export function StatsFilterWidget({ onFiltersChange }: StatsFilterWidgetProps) {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        )}
+          )}
 
-        {(filters.filterType === "year-month" || filters.filterType === "month") && (
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">Mes</Label>
-            <Select value={filters.month} onValueChange={(value) => handleFilterChange("month", value)}>
-              <SelectTrigger className="bg-gray-50 border-gray-200">
-                <SelectValue />
+          {(filters.filterType === "year-month" || filters.filterType === "month") && (
+            <Select
+              value={filters.month}
+              onValueChange={(value) => handleFilterChange("month", value)}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Mes" />
               </SelectTrigger>
-              <SelectContent className="bg-white">
+              <SelectContent>
                 {months.map((month) => (
                   <SelectItem key={month.value} value={month.value}>
                     {month.label}
@@ -129,112 +156,43 @@ export function StatsFilterWidget({ onFiltersChange }: StatsFilterWidgetProps) {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        )}
+          )}
 
-        {/* Filtros por rango personalizado */}
-        {filters.filterType === "custom" && (
-          <>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Desde</Label>
-              <div className="relative">
-                <Input
-                  type="date"
-                  value={filters.dateFrom}
-                  onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
-                  className="bg-gray-50 border-gray-200 pr-10"
-                  placeholder="dd/mm/aaaa"
-                />
-                <Calendar className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
-              </div>
+          {filters.filterType === "custom" && (
+            <div className="flex items-center gap-2">
+              <Input
+                type="date"
+                value={filters.dateFrom}
+                onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
+                className="w-auto"
+              />
+              <span className="text-gray-500">-</span>
+              <Input
+                type="date"
+                value={filters.dateTo}
+                onChange={(e) => handleFilterChange("dateTo", e.target.value)}
+                className="w-auto"
+              />
             </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Hasta</Label>
-              <div className="relative">
-                <Input
-                  type="date"
-                  value={filters.dateTo}
-                  onChange={(e) => handleFilterChange("dateTo", e.target.value)}
-                  className="bg-gray-50 border-gray-200 pr-10"
-                  placeholder="dd/mm/aaaa"
-                />
-                <Calendar className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Botón aplicar filtros */}
-        <div className="pt-4 border-t border-gray-100">
-          <Button onClick={handleApplyFilters} className="w-full bg-blue-500 hover:bg-blue-600 text-white">
-            Aplicar filtros
-          </Button>
+          )}
         </div>
 
-        {/* Filtros rápidos */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">Filtros rápidos</Label>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs bg-white hover:bg-gray-50"
-              onClick={() => {
-                const now = new Date()
-                const monthNames = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
-                const currentMonth = monthNames[now.getMonth()]
-                const currentYear = now.getFullYear().toString()
-                const newFilters = { 
-                  ...filters, 
-                  filterType: "year-month" as const, 
-                  month: currentMonth,
-                  year: currentYear
-                }
-                setFilters(newFilters)
-                onFiltersChange(newFilters)
-              }}
-            >
-              Este mes
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs bg-white hover:bg-gray-50"
-              onClick={() => {
-                const currentYear = new Date().getFullYear().toString()
-                const newFilters = { ...filters, filterType: "year" as const, year: currentYear }
-                setFilters(newFilters)
-                onFiltersChange(newFilters)
-              }}
-            >
-              Este año
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs bg-white hover:bg-gray-50"
-              onClick={() => {
-                const today = new Date()
-                const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
-                const monthNames = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
-                const lastMonthName = monthNames[lastMonth.getMonth()]
-                const lastMonthYear = lastMonth.getFullYear().toString()
-                const newFilters = {
-                  ...filters,
-                  filterType: "year-month" as const,
-                  month: lastMonthName,
-                  year: lastMonthYear
-                }
-                setFilters(newFilters)
-                onFiltersChange(newFilters)
-              }}
-            >
-              Mes anterior
-            </Button>
+        {/* Active Filter Tag */}
+        {filters.filterType !== "all" && activeLabel && (
+          <div className="flex items-center ml-auto md:ml-0">
+            <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1.5 text-sm font-normal bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-100 hover:bg-blue-100 dark:hover:bg-blue-900/40 border-blue-200 dark:border-blue-800">
+              {activeLabel}
+              <button
+                onClick={clearFilters}
+                className="ml-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5 transition-colors"
+              >
+                <X className="h-3 w-3" />
+                <span className="sr-only">Eliminar filtro</span>
+              </button>
+            </Badge>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        )}
+      </div>
+    </div>
   )
 }

@@ -16,7 +16,7 @@ import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
 import { useDataProcessing } from "@/hooks/useDataProcessing"
 
 interface FilterOptions {
-  filterType: "year-month" | "year" | "month" | "custom"
+  filterType: "year-month" | "year" | "month" | "custom" | "all"
   year: string
   month: string
   dateFrom: string
@@ -41,7 +41,7 @@ export default function EstadisticasPage() {
   const { year: currentYear, month: currentMonth } = getCurrentDate()
   
   const [currentFilters, setCurrentFilters] = useState<FilterOptions>({
-    filterType: "year-month",
+    filterType: "all",
     year: currentYear,
     month: currentMonth,
     dateFrom: "",
@@ -80,6 +80,8 @@ export default function EstadisticasPage() {
         return currentFilters.month.charAt(0).toUpperCase() + currentFilters.month.slice(1)
       case "custom":
         return `${currentFilters.dateFrom} - ${currentFilters.dateTo}`
+      case "all":
+        return "Todo el historial"
       default:
         return "Todos los períodos"
     }
@@ -96,25 +98,27 @@ export default function EstadisticasPage() {
         return `Estadísticas de ${period} - BethaSpend`
       case "custom":
         return `Estadísticas ${period} - BethaSpend`
+      case "all":
+        return "Estadísticas Históricas - BethaSpend"
       default:
         return "Estadísticas Generales - BethaSpend"
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-950 dark:to-neutral-900 p-4 lg:p-8">
       <PageTitle customTitle={getPageTitle()} />
       {/* Header mejorado */}
-      <div className="mb-8 bg-white rounded-xl shadow-sm p-6">
+      <div className="mb-8 bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6">
         <div className="mt-4 flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">Dashboard de Estadísticas</h2>
-            <p className="text-gray-600 mt-1">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard de Estadísticas</h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
               Análisis detallado de tus gastos y patrones financieros
             </p>
           </div>
-          <div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
-            <p className="text-sm font-medium text-blue-900">{getFilterDescription()}</p>
+          <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-200 dark:border-blue-800">
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">{getFilterDescription()}</p>
           </div>
         </div>
       </div>
@@ -136,77 +140,57 @@ export default function EstadisticasPage() {
         <>
           {/* Layout responsivo mejorado */}
           <div className="space-y-6">
-            {/* Grid principal con filtros y métricas */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Columna de filtros */}
-              <div className="lg:col-span-1">
-                <div className="sticky top-4">
-                  <StatsFilterWidget onFiltersChange={handleFiltersChange} />
-                </div>
-              </div>
+            {/* Filtros horizontal */}
+            <StatsFilterWidget onFiltersChange={handleFiltersChange} />
 
-              {/* Columna de métricas y análisis */}
-              <div className="lg:col-span-3 space-y-6">
-                {/* Métricas principales */}
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <StatsGrid
-                    totalExpenses={totalExpenses}
-                    monthlyAverage={monthlyAverage}
-                    totalTransactions={totalTransactions}
-                    averagePerCategory={averagePerCategory}
-                    currentMonthStats={currentMonthStats}
-                  />
-                </div>
-
-                {/* Widget de análisis rápido */}
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <QuickAnalysisWidget
-                    filteredGastos={filteredGastos}
-                    totalExpenses={totalExpenses}
-                    monthlyAverage={monthlyAverage}
-                    categoryData={categoryData}
-                  />
-                </div>
-              </div>
+            {/* Métricas principales */}
+            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6">
+              <StatsGrid
+                totalExpenses={totalExpenses}
+                monthlyAverage={monthlyAverage}
+                totalTransactions={totalTransactions}
+                averagePerCategory={averagePerCategory}
+                currentMonthStats={currentMonthStats}
+              />
             </div>
 
-            {/* Segunda fila: Gráficos principales */}
+            {/* Gráficos principales */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Gráfico de líneas - más ancho */}
               <div className="lg:col-span-8">
-                <div className="bg-white rounded-xl shadow-sm p-6 h-full">
+                <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6 h-full">
                   <LineChartWidget data={monthlyData} title="Evolución Mensual de Gastos" />
                 </div>
               </div>
 
               {/* Gráfico de pie */}
               <div className="lg:col-span-4">
-                <div className="bg-white rounded-xl shadow-sm p-6 h-full">
+                <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6 h-full">
                   <PieChartWidget data={categoryData} title="Distribución por Categorías" />
                 </div>
               </div>
             </div>
 
-            {/* Tercera fila: Radar y Comparación de Categorías */}
+            {/* Radar y Comparación de Categorías */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Radar Chart */}
               <div className="lg:col-span-5">
-                <div className="bg-white rounded-xl shadow-sm p-6 h-full">
+                <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6 h-full">
                   <RadarChartWidget data={radarData} title="Análisis de Gastos por Categoría" />
                 </div>
               </div>
 
               {/* Comparación de categorías */}
               <div className="lg:col-span-7">
-                <div className="bg-white rounded-xl shadow-sm p-6 h-full">
+                <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6 h-full">
                   <CategoryComparison categoryComparisonStats={categoryComparisonStats} />
                 </div>
               </div>
             </div>
 
-            {/* Cuarta fila: Resumen del período */}
+            {/* Resumen del período */}
             <div className="grid grid-cols-1">
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6">
                 <PeriodSummaryWidget
                   maxMonth={maxMonth}
                   minMonth={minMonth}
@@ -219,12 +203,22 @@ export default function EstadisticasPage() {
               </div>
             </div>
 
-            {/* Quinta fila: Insights adicionales */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
+            {/* Insights adicionales */}
+            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6">
               <InsightsCards
                 filteredGastos={filteredGastos}
                 categoryData={categoryData}
                 totalExpenses={totalExpenses}
+              />
+            </div>
+
+            {/* Widget de análisis rápido - Moved to bottom */}
+            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6">
+              <QuickAnalysisWidget
+                filteredGastos={filteredGastos}
+                totalExpenses={totalExpenses}
+                monthlyAverage={monthlyAverage}
+                categoryData={categoryData}
               />
             </div>
           </div>

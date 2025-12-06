@@ -34,7 +34,7 @@ export default function RootLayout({
   }
 
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
           <PageTitle />
@@ -55,7 +55,7 @@ export default function RootLayout({
 
               <div className={cn("flex-1 transition-all duration-300 ease-in-out", getMainMargin())}>
                 <MobileHeader onMenuClick={toggle} isMobile={isMobile} />
-                <main className="bg-gray-50 min-h-screen">{children}</main>
+                <main className="bg-gray-50 dark:bg-neutral-950 min-h-screen">{children}</main>
               </div>
             </div>
           )}

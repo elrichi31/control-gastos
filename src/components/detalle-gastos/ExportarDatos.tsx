@@ -92,14 +92,14 @@ export function ExportarDatos({ gastos, gastosOriginal }: ExportarDatosProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
+        <Button variant="outline" className="flex items-center gap-2 dark:bg-neutral-900 dark:border-neutral-700 dark:hover:bg-neutral-700">
           <Download className="w-4 h-4" />
           Exportar
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md dark:bg-neutral-900 dark:border-neutral-700">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 dark:text-white">
             <Download className="w-5 h-5" />
             Exportar Datos
           </DialogTitle>
@@ -108,11 +108,11 @@ export function ExportarDatos({ gastos, gastosOriginal }: ExportarDatosProps) {
         <div className="space-y-6">
           {/* Seleccionar alcance */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
               ¿Qué datos exportar?
             </label>
             <Select value={alcance} onValueChange={(value: 'filtrados' | 'todos') => setAlcance(value)}>
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-neutral-900 dark:border-neutral-700">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -134,11 +134,11 @@ export function ExportarDatos({ gastos, gastosOriginal }: ExportarDatosProps) {
 
           {/* Seleccionar formato */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Formato de exportación
             </label>
             <Select value={formato} onValueChange={(value: 'csv' | 'json') => setFormato(value)}>
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-neutral-900 dark:border-neutral-700">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -159,9 +159,9 @@ export function ExportarDatos({ gastos, gastosOriginal }: ExportarDatosProps) {
           </div>
 
           {/* Vista previa de datos */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-medium text-gray-900 mb-2">Vista previa</h4>
-            <div className="space-y-1 text-sm text-gray-600">
+          <div className="bg-gray-50 dark:bg-neutral-900 p-4 rounded-lg">
+            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Vista previa</h4>
+            <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
               <p>• Cantidad: {gastosAExportar.length} gastos</p>
               <p>• Total: {formatMoney(gastosAExportar.reduce((sum, g) => sum + g.monto, 0))}</p>
               <p>• Formato: {formato.toUpperCase()}</p>
@@ -174,13 +174,13 @@ export function ExportarDatos({ gastos, gastosOriginal }: ExportarDatosProps) {
             <Button
               variant="outline"
               onClick={() => setIsOpen(false)}
-              className="flex-1"
+              className="flex-1 dark:bg-neutral-900 dark:border-neutral-700 dark:hover:bg-neutral-700"
             >
               Cancelar
             </Button>
             <Button
               onClick={handleExportar}
-              className="flex-1 bg-green-600 hover:bg-green-700"
+              className="flex-1 bg-green-600 hover:bg-green-700 dark:bg-emerald-600 dark:hover:bg-emerald-700"
               disabled={gastosAExportar.length === 0}
             >
               <Download className="w-4 h-4 mr-2" />

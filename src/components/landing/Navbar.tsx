@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Wallet, Menu, X } from "lucide-react"
+import { ModeToggle } from "@/components/mode-toggle"
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -19,7 +20,7 @@ export function Navbar() {
                 <div className="p-1.5 rounded-lg bg-blue-500 text-white group-hover:bg-blue-600 transition-colors">
                   <Wallet className="w-4 h-4" />
                 </div>
-                <span className="text-base font-semibold text-gray-900">
+                <span className="text-base font-semibold text-gray-900 dark:text-white">
                   BethaSpend
                 </span>
               </Link>
@@ -28,13 +29,13 @@ export function Navbar() {
               <div className="hidden md:flex items-center gap-6">
                 <Link 
                   href="/#features" 
-                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                  className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
                 >
                   Características
                 </Link>
                 <Link 
                   href="/#how-it-works" 
-                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                  className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
                 >
                   Cómo funciona
                 </Link>
@@ -42,11 +43,12 @@ export function Navbar() {
 
               {/* Auth Buttons - Hidden on mobile */}
               <div className="hidden md:flex items-center gap-2">
+                <ModeToggle />
                 <Link href="/auth/login">
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/50"
+                    className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-neutral-800/50"
                   >
                     Iniciar sesión
                   </Button>
@@ -59,32 +61,35 @@ export function Navbar() {
               </div>
 
               {/* Mobile Menu Button */}
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="md:hidden p-2 rounded-lg hover:bg-gray-100/50 transition-colors"
-              >
-                {isMenuOpen ? (
-                  <X className="w-5 h-5 text-gray-600" />
-                ) : (
-                  <Menu className="w-5 h-5 text-gray-600" />
-                )}
-              </button>
+              <div className="flex items-center gap-2 md:hidden">
+                <ModeToggle />
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="p-2 rounded-lg hover:bg-gray-100/50 dark:hover:bg-neutral-800/50 transition-colors"
+                >
+                  {isMenuOpen ? (
+                    <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                  ) : (
+                    <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Mobile Menu */}
             {isMenuOpen && (
-              <div className="md:hidden pt-4 pb-2 border-t border-gray-200/50 mt-3 space-y-3">
+              <div className="md:hidden pt-4 pb-2 border-t border-gray-200/50 dark:border-neutral-700/50 mt-3 space-y-3">
                 <Link 
                   href="/#features" 
                   onClick={() => setIsMenuOpen(false)}
-                  className="block text-sm text-gray-600 hover:text-gray-900 transition-colors py-2"
+                  className="block text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors py-2"
                 >
                   Características
                 </Link>
                 <Link 
                   href="/#how-it-works" 
                   onClick={() => setIsMenuOpen(false)}
-                  className="block text-sm text-gray-600 hover:text-gray-900 transition-colors py-2"
+                  className="block text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors py-2"
                 >
                   Cómo funciona
                 </Link>
@@ -93,7 +98,7 @@ export function Navbar() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      className="w-full text-gray-600 hover:text-gray-900"
+                      className="w-full text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                     >
                       Iniciar sesión
                     </Button>

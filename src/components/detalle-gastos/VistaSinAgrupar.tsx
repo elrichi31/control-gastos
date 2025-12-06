@@ -24,20 +24,20 @@ export function VistaSinAgrupar({
   onDeleteGasto
 }: VistaSinAgruparProps) {
   return (
-    <Card>
+    <Card className="dark:bg-neutral-900 dark:border-neutral-700">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex items-center justify-between dark:text-white">
           <span>Resultados ({gastos.length} gastos)</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         {gastos.length === 0 ? (
           <div className="text-center py-12 px-6">
-            <Receipt className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <Receipt className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               No se encontraron gastos
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               {activeFiltersCount > 0 
                 ? "Intenta ajustar los filtros para ver más resultados"
                 : "Aún no hay gastos registrados"
@@ -50,13 +50,13 @@ export function VistaSinAgrupar({
             <div className="hidden lg:block">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="px-4 py-3">Descripción</TableHead>
-                    <TableHead className="px-3 py-3">Categoría</TableHead>
-                    <TableHead className="px-3 py-3">Método de Pago</TableHead>
-                    <TableHead className="px-3 py-3">Fecha</TableHead>
-                    <TableHead className="px-3 py-3 text-right">Monto</TableHead>
-                    <TableHead className="px-3 py-3 text-center">Acciones</TableHead>
+                  <TableRow className="dark:border-neutral-800 hover:bg-transparent dark:hover:bg-transparent">
+                    <TableHead className="px-4 py-3 dark:text-gray-300">Descripción</TableHead>
+                    <TableHead className="px-3 py-3 dark:text-gray-300">Categoría</TableHead>
+                    <TableHead className="px-3 py-3 dark:text-gray-300">Método de Pago</TableHead>
+                    <TableHead className="px-3 py-3 dark:text-gray-300">Fecha</TableHead>
+                    <TableHead className="px-3 py-3 text-right dark:text-gray-300">Monto</TableHead>
+                    <TableHead className="px-3 py-3 text-center dark:text-gray-300">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

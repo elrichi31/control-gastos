@@ -17,9 +17,9 @@ export function LineChartWidget({ data, title }: LineChartWidgetProps) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{label}</p>
-          <p className="text-sm text-blue-600">Total: ${payload[0].value.toLocaleString()}</p>
+        <div className="bg-white dark:bg-neutral-900 p-3 border border-gray-200 dark:border-neutral-600 rounded-lg shadow-lg">
+          <p className="font-medium text-gray-900 dark:text-white">{label}</p>
+          <p className="text-sm text-blue-600 dark:text-blue-400">Total: ${payload[0].value.toLocaleString()}</p>
         </div>
       )
     }
@@ -27,9 +27,9 @@ export function LineChartWidget({ data, title }: LineChartWidgetProps) {
   }
 
   return (
-    <Card className="bg-white shadow-sm border border-gray-200">
+    <Card className="bg-white dark:bg-neutral-900 shadow-sm border border-gray-200 dark:border-neutral-700">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-gray-900">{title}</CardTitle>
+        <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-80">

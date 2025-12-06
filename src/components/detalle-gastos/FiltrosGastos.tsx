@@ -45,15 +45,15 @@ export function FiltrosGastos({
   setShowAdvancedFilters
 }: FiltrosGastosProps) {
   return (
-    <Card className="mb-6">
+    <Card className="mb-6 dark:bg-neutral-900 dark:border-neutral-700">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex items-center justify-between dark:text-white">
           <span className="flex items-center gap-2">
             <Filter className="w-5 h-5" />
             Filtros
           </span>
           {activeFiltersCount > 0 && (
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="dark:bg-neutral-900 dark:text-gray-200">
               {activeFiltersCount} filtro{activeFiltersCount !== 1 ? 's' : ''} activo{activeFiltersCount !== 1 ? 's' : ''}
             </Badge>
           )}
@@ -62,21 +62,21 @@ export function FiltrosGastos({
       <CardContent className="space-y-4">
         {/* Búsqueda principal */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
           <Input
             placeholder="Buscar por descripción del gasto..."
             value={filters.search}
             onChange={(e) => onFilterChange("search", e.target.value)}
-            className="pl-10"
+            className="pl-10 dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
           />
         </div>
 
         {/* Filtros básicos */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Categoría</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Categoría</label>
             <Select value={filters.category || "all"} onValueChange={(value) => onFilterChange("category", value === "all" ? "" : value)}>
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-neutral-900 dark:border-neutral-700">
                 <SelectValue placeholder="Todas las categorías" />
               </SelectTrigger>
               <SelectContent>
@@ -91,9 +91,9 @@ export function FiltrosGastos({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Método de Pago</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Método de Pago</label>
             <Select value={filters.paymentMethod || "all"} onValueChange={(value) => onFilterChange("paymentMethod", value === "all" ? "" : value)}>
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-neutral-900 dark:border-neutral-700">
                 <SelectValue placeholder="Todos los métodos" />
               </SelectTrigger>
               <SelectContent>
@@ -108,9 +108,9 @@ export function FiltrosGastos({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Período</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Período</label>
             <Select value={filters.dateRange} onValueChange={(value) => onFilterChange("dateRange", value as FilterOptions["dateRange"])}>
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-neutral-900 dark:border-neutral-700">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -128,7 +128,7 @@ export function FiltrosGastos({
           <Button
             variant="outline"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 dark:bg-neutral-900 dark:border-neutral-700 dark:hover:bg-neutral-700"
           >
             <Filter className="w-4 h-4" />
             Filtros avanzados
@@ -138,7 +138,7 @@ export function FiltrosGastos({
             <Button
               variant="ghost"
               onClick={onClearFilters}
-              className="flex items-center gap-2 text-red-600 hover:text-red-700"
+              className="flex items-center gap-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
             >
               <X className="w-4 h-4" />
               Limpiar filtros
@@ -148,24 +148,26 @@ export function FiltrosGastos({
 
         {/* Filtros avanzados */}
         {showAdvancedFilters && (
-          <div className="space-y-4 pt-4 border-t">
+          <div className="space-y-4 pt-4 border-t dark:border-neutral-700">
             {/* Filtros de fecha personalizados */}
             {filters.dateRange === "custom" && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Fecha desde</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha desde</label>
                   <Input
                     type="date"
                     value={filters.dateFrom}
                     onChange={(e) => onFilterChange("dateFrom", e.target.value)}
+                    className="dark:bg-neutral-900 dark:border-neutral-700"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Fecha hasta</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha hasta</label>
                   <Input
                     type="date"
                     value={filters.dateTo}
                     onChange={(e) => onFilterChange("dateTo", e.target.value)}
+                    className="dark:bg-neutral-900 dark:border-neutral-700"
                   />
                 </div>
               </div>
@@ -174,9 +176,9 @@ export function FiltrosGastos({
             {/* Filtro de año */}
             {filters.dateRange === "year" && (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Año</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Año</label>
                 <Select value={filters.year} onValueChange={(value) => onFilterChange("year", value)}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-48 dark:bg-neutral-900 dark:border-neutral-700">
                     <SelectValue placeholder="Selecciona un año" />
                   </SelectTrigger>
                   <SelectContent>
@@ -193,21 +195,23 @@ export function FiltrosGastos({
             {/* Filtros de monto */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Monto mínimo</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Monto mínimo</label>
                 <Input
                   type="number"
                   placeholder="0"
                   value={filters.minAmount}
                   onChange={(e) => onFilterChange("minAmount", e.target.value)}
+                  className="dark:bg-neutral-900 dark:border-neutral-700"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Monto máximo</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Monto máximo</label>
                 <Input
                   type="number"
                   placeholder="Sin límite"
                   value={filters.maxAmount}
                   onChange={(e) => onFilterChange("maxAmount", e.target.value)}
+                  className="dark:bg-neutral-900 dark:border-neutral-700"
                 />
               </div>
             </div>
@@ -215,9 +219,9 @@ export function FiltrosGastos({
             {/* Ordenamiento y Agrupación */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Ordenar por</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Ordenar por</label>
                 <Select value={filters.sortBy} onValueChange={(value) => onFilterChange("sortBy", value as FilterOptions["sortBy"])}>
-                  <SelectTrigger>
+                  <SelectTrigger className="dark:bg-neutral-900 dark:border-neutral-700">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -229,9 +233,9 @@ export function FiltrosGastos({
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Orden</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Orden</label>
                 <Select value={filters.sortOrder} onValueChange={(value) => onFilterChange("sortOrder", value as FilterOptions["sortOrder"])}>
-                  <SelectTrigger>
+                  <SelectTrigger className="dark:bg-neutral-900 dark:border-neutral-700">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -241,9 +245,9 @@ export function FiltrosGastos({
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Agrupar por</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Agrupar por</label>
                 <Select value={filters.groupBy} onValueChange={(value) => onFilterChange("groupBy", value as FilterOptions["groupBy"])}>
-                  <SelectTrigger>
+                  <SelectTrigger className="dark:bg-neutral-900 dark:border-neutral-700">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

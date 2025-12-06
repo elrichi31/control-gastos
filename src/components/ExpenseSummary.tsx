@@ -59,41 +59,43 @@ export function ExpenseSummary({
     const total = expenses.reduce((sum, e) => sum + e.monto, 0)
 
     return (
-        <Card>
+        <Card className="dark:bg-neutral-900 dark:border-neutral-700">
             <CardHeader>
-                <CardTitle>Resumen</CardTitle>
-                <CardDescription>Filtra y revisa tus gastos totales en un rango de fechas</CardDescription>
+                <CardTitle className="dark:text-white">Resumen</CardTitle>
+                <CardDescription className="dark:text-gray-400">Filtra y revisa tus gastos totales en un rango de fechas</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium">Filtrar por fechas</label>
+                            <label className="text-sm font-medium dark:text-gray-300">Filtrar por fechas</label>
 
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1">
-                                <Label className="text-xs text-gray-500">Desde</Label>
+                                <Label className="text-xs text-gray-500 dark:text-gray-400">Desde</Label>
                                 <Input
                                     type="date"
                                     value={dateRange.from}
                                     onChange={(e) => handleRangeChange({ ...dateRange, from: e.target.value })}
+                                    className="dark:bg-neutral-900 dark:border-neutral-700"
                                 />
                             </div>
                             <div className="space-y-1">
-                                <Label className="text-xs text-gray-500">Hasta</Label>
+                                <Label className="text-xs text-gray-500 dark:text-gray-400">Hasta</Label>
                                 <Input
                                     type="date"
                                     value={dateRange.to}
                                     onChange={(e) => handleRangeChange({ ...dateRange, to: e.target.value })}
+                                    className="dark:bg-neutral-900 dark:border-neutral-700"
                                 />
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Label className="text-xs text-gray-500">Agrupar por</Label>
+                            <Label className="text-xs text-gray-500 dark:text-gray-400">Agrupar por</Label>
                             <Select value={groupBy} onValueChange={(val) => handleGroupByChange(val as "dia" | "semana" | "mes")}>
-                                <SelectTrigger className="w-[120px] h-8 text-sm">
+                                <SelectTrigger className="w-[120px] h-8 text-sm dark:bg-neutral-900 dark:border-neutral-700">
                                     <SelectValue placeholder="Agrupar por" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -110,17 +112,17 @@ export function ExpenseSummary({
                                 onClick={clearFilters}
                                 variant="ghost"
                                 size="sm"
-                                className="text-xs text-gray-500 hover:text-gray-700 mt-1"
+                                className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mt-1"
                             >
                                 Limpiar filtros
                             </Button>
                         )}
                     </div>
 
-                    <div className="text-center border-t pt-3">
-                        <p className="text-sm text-gray-600">Total de gastos</p>
-                        <p className="text-3xl font-bold text-red-600">${total.toFixed(2)}</p>
-                        <p className="text-sm text-gray-600 mt-1">{expenses.length} gastos filtrados</p>
+                    <div className="text-center border-t dark:border-neutral-700 pt-3">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Total de gastos</p>
+                        <p className="text-3xl font-bold text-red-600 dark:text-red-400">${total.toFixed(2)}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{expenses.length} gastos filtrados</p>
                     </div>
                 </div>
             </CardContent>

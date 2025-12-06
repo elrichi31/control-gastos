@@ -84,21 +84,21 @@ export function ExpenseItem({ expense, onDelete, showDeleteIcon = false }: Props
 
   return (
     <>
-      <div className={`border rounded-lg p-3 space-y-2 ${
+      <div className={`border dark:border-neutral-700 rounded-lg p-3 space-y-2 ${
         expense.is_recurrent 
-          ? 'border-2 border-blue-400 bg-blue-50' 
+          ? 'border-2 border-blue-400 dark:border-neutral-600 bg-blue-50 dark:bg-neutral-900' 
           : ''
       }`}>
         <div className="flex justify-between items-start">
           <div className="flex-1">
-            <p className="font-medium text-sm">{expense.descripcion}</p>
+            <p className="font-medium text-sm dark:text-white">{expense.descripcion}</p>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <Badge className={COLORES_CATEGORIA[expense.categoria?.nombre as keyof typeof COLORES_CATEGORIA] || "bg-gray-100 text-gray-800"}>
+              <Badge className={COLORES_CATEGORIA[expense.categoria?.nombre as keyof typeof COLORES_CATEGORIA] || "bg-gray-100 text-gray-800 dark:bg-neutral-900 dark:text-gray-200"}>
                 <Tag className="h-3 w-3 mr-1" />
                 {expense.categoria?.nombre}
               </Badge>
               {expense.is_recurrent && (
-                <Badge className="bg-blue-600 text-white border-blue-700">
+                <Badge className="bg-blue-600 text-white border-blue-700 dark:bg-neutral-700 dark:border-neutral-600">
                   <Repeat className="h-3 w-3 mr-1 font-bold" />
                   Recurrente
                 </Badge>
@@ -106,11 +106,11 @@ export function ExpenseItem({ expense, onDelete, showDeleteIcon = false }: Props
             </div>
           </div>
           <div className="text-right flex flex-col items-end gap-1">
-            <p className="font-bold text-red-600">${expense.monto.toFixed(2)}</p>
+            <p className="font-bold text-red-600 dark:text-red-400">${expense.monto.toFixed(2)}</p>
             {showDeleteIcon && (
               <button
                 onClick={handleDeleteClick}
-                className="h-6 w-6 p-0 text-red-500 hover:text-red-700 transition-colors"
+                className="h-6 w-6 p-0 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
                 title="Eliminar"
               >
                 <Trash2 className="h-3 w-3" />
@@ -118,7 +118,7 @@ export function ExpenseItem({ expense, onDelete, showDeleteIcon = false }: Props
             )}
           </div>
         </div>
-        <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             {formatDisplayDate(expense.fecha)}

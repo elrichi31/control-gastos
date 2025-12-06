@@ -34,24 +34,24 @@ const CategoriaCard: React.FC<CategoriaCardProps> = ({
   const hasExpenses = categoryExpenses.length > 0
 
   return (
-    <Card className="bg-white shadow-sm border border-gray-200">
+    <Card className="bg-white dark:bg-neutral-900 shadow-sm border border-gray-200 dark:border-neutral-700">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-xl lg:text-2xl">🏷️</span>
             <div>
-              <CardTitle className="text-base lg:text-lg">{categoria.categoria.nombre}</CardTitle>
-              <p className="text-sm text-gray-600">{categoryExpenses.length} gastos</p>
+              <CardTitle className="text-base lg:text-lg dark:text-white">{categoria.categoria.nombre}</CardTitle>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{categoryExpenses.length} gastos</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Badge className="bg-blue-100 text-blue-800">${getCategoryTotal(categoria).toFixed(2)}</Badge>
+            <Badge className="bg-blue-100 dark:bg-neutral-700 text-blue-800 dark:text-gray-200">${getCategoryTotal(categoria).toFixed(2)}</Badge>
             {!hasExpenses && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onDeleteCategory(categoria.categoria_id)}
-                className="text-gray-400 hover:text-red-500"
+                className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -69,7 +69,7 @@ const CategoriaCard: React.FC<CategoriaCardProps> = ({
           anio={anio}
         />
         {categoryExpenses.length === 0 ? (
-          <p className="text-gray-500 text-sm text-center py-4">No hay gastos en esta categoría</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">No hay gastos en esta categoría</p>
         ) : (
           categoryExpenses.map((expense) => (
             <GastoItem
@@ -83,7 +83,7 @@ const CategoriaCard: React.FC<CategoriaCardProps> = ({
         )}
         <Button
           variant="outline"
-          className="w-full bg-white text-sm lg:text-base mt-2"
+          className="w-full bg-white dark:bg-neutral-900 dark:border-neutral-600 dark:text-white dark:hover:bg-neutral-700 text-sm lg:text-base mt-2"
           onClick={onAddExpenseClick}
         >
           <Plus className="w-4 h-4 mr-2" />

@@ -35,7 +35,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="p-4 lg:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 p-4 lg:p-8">
       <PageTitle customTitle={`Presupuestos ${selectedYear} - BethaSpend`} />
       <Breadcrumb items={[{ label: "Presupuesto" }]} large />
       
@@ -51,7 +51,7 @@ export default function HomePage() {
       
       {budgetData.isLoading ? (
         <div className="text-center py-8">
-          <p className="text-gray-500">Cargando presupuestos...</p>
+          <p className="text-gray-500 dark:text-gray-400">Cargando presupuestos...</p>
         </div>
       ) : (
         <BudgetContent
