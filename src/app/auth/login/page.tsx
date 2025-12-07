@@ -7,11 +7,9 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { PageTitle } from '@/components/PageTitle'
-import { Navbar } from '@/components/landing/Navbar'
-import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react'
+import { ModeToggle } from '@/components/mode-toggle'
+import { Eye, EyeOff, Wallet } from 'lucide-react'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -29,7 +27,6 @@ export default function LoginPage() {
       ...prev,
       [name]: value
     }))
-    // Limpiar error cuando el usuario empiece a escribir
     if (error) setError('')
   }
 
@@ -48,7 +45,6 @@ export default function LoginPage() {
       if (result?.error) {
         setError('Credenciales incorrectas')
       } else {
-        // Verificar que la sesión se haya creado correctamente
         const session = await getSession()
         if (session) {
           router.push('/dashboard')
@@ -68,126 +64,186 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <Navbar />
-      <div className="min-h-screen flex items-center justify-center p-4 pt-24">
-        <PageTitle customTitle="Iniciar Sesión - BethaSpend" />
+    <div className="min-h-screen flex">
+      <PageTitle customTitle="Iniciar Sesión - BethaSpend" />
       
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mx-auto mb-4">
-            <LogIn className="w-6 h-6 text-blue-600" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-center">Iniciar sesión</CardTitle>
-          <CardDescription className="text-center text-gray-600">
-            Ingresa tus credenciales para acceder a tu cuenta
-          </CardDescription>
-        </CardHeader>
+      {/* Left Panel - Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-12 lg:px-16 xl:px-24 bg-white dark:bg-neutral-950 relative">
+        {/* Logo and Theme Toggle */}
+        <div className="absolute top-6 left-6 sm:left-8 lg:left-16 xl:left-24 flex items-center gap-4">
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="p-2 rounded-xl bg-blue-500 text-white group-hover:bg-blue-600 transition-colors">
+              <Wallet className="w-5 h-5" />
+            </div>
+            <span className="text-lg font-semibold text-gray-900 dark:text-white">
+              BethaSpend
+            </span>
+          </Link>
+        </div>
+        
+        <div className="absolute top-6 right-6 sm:right-8 lg:hidden">
+          <ModeToggle />
+        </div>
+        
+        <div className="absolute top-6 right-6 hidden lg:block">
+          <ModeToggle />
+        </div>
 
-        <CardContent className="space-y-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="max-w-md w-full mx-auto mt-16 lg:mt-0">
+          <div className="mb-8">
+            <h1 className="text-4xl font-light text-gray-900 dark:text-white mb-3">
+              Bienvenido
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400">
+              Accede a tu cuenta y continúa gestionando tus finanzas
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">Correo electrónico</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="pl-10"
-                  required
-                />
-              </div>
+              <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">
+                Correo electrónico
+              </Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Ingresa tu correo electrónico"
+                value={formData.email}
+                onChange={handleChange}
+                className="h-12 px-4 bg-gray-50 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
+                required
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password" className="text-gray-700 dark:text-gray-300">
+                Contraseña
+              </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Tu contraseña"
+                  placeholder="Ingresa tu contraseña"
                   value={formData.password}
                   onChange={handleChange}
-                  className="pl-10 pr-10"
+                  className="h-12 px-4 pr-12 bg-gray-50 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
             {error && (
-              <div className="text-red-500 text-sm text-center bg-red-50 p-2 rounded">
+              <div className="text-red-500 dark:text-red-400 text-sm text-center bg-red-50 dark:bg-red-900/20 p-3 rounded-xl">
                 {error}
               </div>
             )}
 
             <Button 
               type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all"
               disabled={isLoading}
             >
               {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </Button>
           </form>
 
-          <div className="relative">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
+              <div className="w-full border-t border-gray-200 dark:border-neutral-800"></div>
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">O continúa con</span>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white dark:bg-neutral-950 text-gray-500 dark:text-gray-400">
+                O continúa con
+              </span>
             </div>
           </div>
 
           <Button
             type="button"
             variant="outline"
-            className="w-full"
+            className="w-full h-12 bg-gray-50 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-xl font-medium transition-all"
             onClick={handleGoogleSignIn}
           >
-            <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-              <path
-                fill="currentColor"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="currentColor"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
+            <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
             Continuar con Google
           </Button>
-        </CardContent>
 
-        <CardFooter>
-          <div className="text-center text-sm text-gray-600 w-full">
-            ¿No tienes una cuenta?{' '}
-            <Link href="/auth/register" className="text-blue-600 hover:underline font-medium">
+          <p className="mt-8 text-center text-gray-600 dark:text-gray-400">
+            ¿Nuevo en nuestra plataforma?{' '}
+            <Link href="/auth/register" className="text-blue-500 hover:text-blue-600 font-medium">
               Crear cuenta
             </Link>
+          </p>
+        </div>
+      </div>
+
+      {/* Right Panel - Decorative */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600">
+        {/* Subtle Background Pattern */}
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 -left-20 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-indigo-400/10 rounded-full blur-3xl"></div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-center items-center p-12 w-full">
+          {/* Main Message */}
+          <div className="text-center max-w-md">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl mb-8 border border-white/20">
+              <Wallet className="w-8 h-8 text-white" />
+            </div>
+            
+            <h2 className="text-3xl font-semibold text-white mb-4">
+              Toma el control de tus finanzas
+            </h2>
+            
+            <p className="text-white/70 text-lg leading-relaxed mb-8">
+              Organiza tus gastos, establece presupuestos y alcanza tus metas financieras de forma simple.
+            </p>
+
+            {/* Feature List */}
+            <div className="space-y-4 text-left">
+              <div className="flex items-center gap-3 text-white/80">
+                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>Registra gastos en segundos</span>
+              </div>
+              <div className="flex items-center gap-3 text-white/80">
+                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>Visualiza a dónde va tu dinero</span>
+              </div>
+              <div className="flex items-center gap-3 text-white/80">
+                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>Crea presupuestos personalizados</span>
+              </div>
+            </div>
           </div>
-        </CardFooter>
-      </Card>
+        </div>
       </div>
     </div>
   )
