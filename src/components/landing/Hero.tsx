@@ -277,41 +277,41 @@ export function Hero() {
           </Link>
         </div>
 
-        {/* Feature highlights */}
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in animation-delay-500">
-          <div className="flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-sm shadow-sm dark:shadow-none">
-            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-500/20">
-              <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+        {/* Feature highlights (responsive: stacked on small screens, compact cards) */}
+        <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 animate-fade-in animation-delay-500">
+          <div className="w-full flex items-center gap-3 px-3 py-3 sm:px-4 sm:py-4 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-sm shadow-sm dark:shadow-none">
+            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-500/20 flex-shrink-0">
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
             </div>
-            <span className="text-gray-700 dark:text-gray-300 font-medium">Seguimiento en tiempo real</span>
+            <span className="text-gray-700 dark:text-gray-300 font-medium min-w-0 truncate">Seguimiento en tiempo real</span>
           </div>
-          <div className="flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-sm shadow-sm dark:shadow-none">
-            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-500/20">
-              <Zap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <div className="w-full flex items-center gap-3 px-3 py-3 sm:px-4 sm:py-4 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-sm shadow-sm dark:shadow-none">
+            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex-shrink-0">
+              <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <span className="text-gray-700 dark:text-gray-300 font-medium">100% Gratis</span>
+            <span className="text-gray-700 dark:text-gray-300 font-medium min-w-0 truncate">100% Gratis</span>
           </div>
-          <div className="flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-sm shadow-sm dark:shadow-none">
-            <div className="p-2 rounded-lg bg-sky-100 dark:bg-sky-500/20">
-              <Shield className="w-5 h-5 text-sky-600 dark:text-sky-400" />
+          <div className="w-full flex items-center gap-3 px-3 py-3 sm:px-4 sm:py-4 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-sm shadow-sm dark:shadow-none">
+            <div className="p-2 rounded-lg bg-sky-100 dark:bg-sky-500/20 flex-shrink-0">
+              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-sky-600 dark:text-sky-400" />
             </div>
-            <span className="text-gray-700 dark:text-gray-300 font-medium">Datos 100% seguros</span>
+            <span className="text-gray-700 dark:text-gray-300 font-medium min-w-0 truncate">Datos 100% seguros</span>
           </div>
         </div>
 
-        {/* Stats or social proof */}
-        <div className="mt-12 flex items-center justify-center gap-12 animate-fade-in animation-delay-700">
-          <div className="text-center">
+        {/* Stats or social proof (stack on mobile to avoid overflow) */}
+        <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12 animate-fade-in animation-delay-700">
+          <div className="text-center w-full sm:w-auto">
             <div className="text-3xl font-bold text-gray-900 dark:text-white">∞</div>
             <div className="text-sm text-gray-500">Gastos ilimitados</div>
           </div>
-          <div className="h-8 w-px bg-gray-200 dark:bg-white/10" />
-          <div className="text-center">
+          <div className="hidden sm:block h-8 w-px bg-gray-200 dark:bg-white/10" />
+          <div className="text-center w-full sm:w-auto">
             <div className="text-3xl font-bold text-gray-900 dark:text-white">24/7</div>
             <div className="text-sm text-gray-500">Acceso total</div>
           </div>
-          <div className="h-8 w-px bg-gray-200 dark:bg-white/10" />
-          <div className="text-center">
+          <div className="hidden sm:block h-8 w-px bg-gray-200 dark:bg-white/10" />
+          <div className="text-center w-full sm:w-auto">
             <div className="text-3xl font-bold text-gray-900 dark:text-white">0%</div>
             <div className="text-sm text-gray-500">Comisiones</div>
           </div>
@@ -321,12 +321,7 @@ export function Hero() {
       {/* Bottom gradient fade */}
       <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-white dark:from-neutral-950 via-white/80 dark:via-neutral-950/80 to-transparent" />
       
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 rounded-full border-2 border-gray-300 dark:border-white/20 flex items-start justify-center p-2">
-          <div className="w-1 h-2 bg-gray-400 dark:bg-white/40 rounded-full animate-scroll-indicator" />
-        </div>
-      </div>
+      {/* scroll indicator removed to match Notion-like minimal aesthetic */}
     </section>
   )
 }
