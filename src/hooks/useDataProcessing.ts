@@ -73,25 +73,44 @@ export function useDataProcessing({ gastos, currentFilters }: DataProcessingHook
     }))
   }, [filteredGastos])
 
-  // Datos agregados para gráfico mensual (año seleccionado en filtros)
+  // Datos agregados para gráfico adaptativo según filtro
   const monthlyData = useMemo(() => {
-    // Usar el año de los filtros, o el año actual si no hay filtro específico
     const targetYear = currentFilters.year ? parseInt(currentFilters.year) : new Date().getFullYear()
-    
+
+    // Filtro mensual -> mostrar días
+    if (currentFilters.filterType === "year-month") {
+      const monthIndex = MESES_NOMBRES_LOWERCASE.indexOf(currentFilters.month.toLowerCase() as any)
+      const daysInMonth = new Date(targetYear, monthIndex + 1, 0).getDate()
+
+      return Array.from({ length: daysInMonth }, (_, i) => {
+        const day = i + 1
+        const dayGastos = filteredGastos.filter(gasto => {
+          const fecha = toDateWithTime(gasto.fecha)
+          return fecha.getDate() === day
+        })
+
+        return {
+          month: `Día ${day}`,
+          amount: dayGastos.reduce((sum, gasto) => sum + gasto.monto, 0)
+        }
+      })
+    }
+
+    // Filtro anual o todo el historial -> mostrar meses
     return MESES_NOMBRES.map((month, index) => {
       const monthGastos = gastos.filter(gasto => {
         const fecha = toDateWithTime(gasto.fecha)
         return fecha.getFullYear() === targetYear && fecha.getMonth() === index
       })
-      
+
       const total = monthGastos.reduce((sum, gasto) => sum + gasto.monto, 0)
-      
+
       return {
         month,
         amount: total
       }
     })
-  }, [gastos, currentFilters.year])
+  }, [gastos, filteredGastos, currentFilters])
 
   // Datos para radar chart
   const radarData = useMemo(() => {

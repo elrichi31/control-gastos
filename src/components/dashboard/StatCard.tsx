@@ -9,7 +9,7 @@ interface StatCardProps {
   value: string
   subtitle?: ReactNode
   icon: LucideIcon
-  colorScheme: "blue" | "green" | "purple" | "orange" | "indigo"
+  colorScheme: "blue" | "green" | "purple" | "orange" | "indigo" | "teal" | "red"
 }
 
 const colorSchemes = {
@@ -47,6 +47,20 @@ const colorSchemes = {
     title: "text-indigo-600 dark:text-gray-400",
     value: "text-indigo-900 dark:text-gray-100",
     icon: "text-indigo-600 dark:text-gray-400"
+  },
+  teal: {
+    gradient: "from-teal-50 to-teal-100 dark:from-neutral-900 dark:to-neutral-800",
+    border: "border-teal-200 dark:border-neutral-700",
+    title: "text-teal-600 dark:text-gray-400",
+    value: "text-teal-900 dark:text-gray-100",
+    icon: "text-teal-600 dark:text-gray-400"
+  },
+  red: {
+    gradient: "from-red-50 to-red-100 dark:from-neutral-900 dark:to-neutral-800",
+    border: "border-red-200 dark:border-neutral-700",
+    title: "text-red-600 dark:text-gray-400",
+    value: "text-red-900 dark:text-gray-100",
+    icon: "text-red-600 dark:text-gray-400"
   }
 }
 
@@ -56,13 +70,13 @@ export function StatCard({ title, value, subtitle, icon: Icon, colorScheme }: St
   return (
     <Card className={`bg-gradient-to-br ${colors.gradient} ${colors.border}`}>
       <CardContent className="p-4 sm:p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className={`${colors.title} text-sm font-medium`}>{title}</p>
-            <p className={`text-2xl font-bold ${colors.value}`}>{value}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <p className={`${colors.title} text-sm font-medium mb-1`}>{title}</p>
+            <p className={`text-xl sm:text-2xl font-bold ${colors.value} truncate`}>{value}</p>
             {subtitle && <div className="mt-2">{subtitle}</div>}
           </div>
-          <Icon className={`w-8 h-8 ${colors.icon}`} />
+          <Icon className={`w-7 h-7 sm:w-8 sm:h-8 ${colors.icon} flex-shrink-0`} />
         </div>
       </CardContent>
     </Card>

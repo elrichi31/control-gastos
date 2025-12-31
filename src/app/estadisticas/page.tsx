@@ -39,9 +39,9 @@ export default function EstadisticasPage() {
   }
 
   const { year: currentYear, month: currentMonth } = getCurrentDate()
-  
+
   const [currentFilters, setCurrentFilters] = useState<FilterOptions>({
-    filterType: "all",
+    filterType: "year-month",
     year: currentYear,
     month: currentMonth,
     dateFrom: "",
@@ -68,6 +68,18 @@ export default function EstadisticasPage() {
   const handleFiltersChange = (filters: FilterOptions) => {
     setCurrentFilters(filters)
     console.log("Filtros aplicados:", filters)
+  }
+
+  const getChartTitle = () => {
+    switch (currentFilters.filterType) {
+      case "year-month":
+        return "Evolución Diaria de Gastos"
+      case "year":
+      case "all":
+        return "Evolución Mensual de Gastos"
+      default:
+        return "Evolución de Gastos"
+    }
   }
 
   const getFilterDescription = () => {
@@ -151,6 +163,7 @@ export default function EstadisticasPage() {
                 totalTransactions={totalTransactions}
                 averagePerCategory={averagePerCategory}
                 currentMonthStats={currentMonthStats}
+                filterType={currentFilters.filterType}
               />
             </div>
 
@@ -159,7 +172,7 @@ export default function EstadisticasPage() {
               {/* Gráfico de líneas - más ancho */}
               <div className="lg:col-span-8">
                 <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6 h-full">
-                  <LineChartWidget data={monthlyData} title="Evolución Mensual de Gastos" />
+                  <LineChartWidget data={monthlyData} title={getChartTitle()} />
                 </div>
               </div>
 

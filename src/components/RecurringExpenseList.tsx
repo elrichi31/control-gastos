@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { Trash2, Calendar, DollarSign, Clock, Tag, CreditCard, Repeat } from "lucide-react"
+import { Trash2, Calendar, DollarSign, Clock, Tag, CreditCard, Repeat, Edit } from "lucide-react"
 import { GastoRecurrente } from "@/types/recurring-expense"
 import { fetchRecurringExpenses, deleteRecurringExpense, updateRecurringExpense } from "@/services/recurring-expenses"
 import { fetchCategories, type Category } from "@/services/categories"
 import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
 import { ConfirmModal } from "@/components/ConfirmModal"
+import { EditRecurringExpenseModal } from "@/components/EditRecurringExpenseModal"
 import toast from "react-hot-toast"
 
 const DIAS_SEMANA: Record<number, string> = {
@@ -29,6 +30,7 @@ export function RecurringExpenseList() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
   const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [editExpense, setEditExpense] = useState<GastoRecurrente | null>(null)
 
   const loadData = async () => {
     try {
@@ -86,6 +88,20 @@ export function RecurringExpenseList() {
 
   const getPaymentMethodName = (id: number) => {
     return paymentMethods.find(p => p.id === id)?.nombre || "Sin método"
+  }
+
+  const handleEdit = async (id: number, data: Partial<GastoRecurrente>) => {
+    try {
+      await updateRecurringExpense(id, data)
+      setExpenses(prev =>
+        prev.map(exp => (exp.id === id ? { ...exp, ...data } : exp))
+      )
+      toast.success("Gasto recurrente actualizado correctamente")
+    } catch (error) {
+      console.error("Error al editar:", error)
+      toast.error("Error al actualizar el gasto recurrente")
+      throw error
+    }
   }
 
   if (loading) {
@@ -216,20 +232,40 @@ export function RecurringExpenseList() {
                   />
                 </div>
 
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setDeleteId(expense.id)}
-                  className="w-full"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Eliminar
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditExpense(expense)}
+                    className="w-full dark:bg-neutral-800 dark:text-white dark:border-neutral-700 dark:hover:bg-neutral-700"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setDeleteId(expense.id)}
+                    className="w-full"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Eliminar
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <EditRecurringExpenseModal
+        expense={editExpense}
+        open={editExpense !== null}
+        onClose={() => setEditExpense(null)}
+        onSave={handleEdit}
+        categories={categories}
+        paymentMethods={paymentMethods}
+      />
 
       <ConfirmModal
         open={deleteId !== null}

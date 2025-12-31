@@ -52,7 +52,7 @@ export function StatsFilterWidget({ onFiltersChange }: StatsFilterWidgetProps) {
   const { month: currentMonth, year: currentYear } = getCurrentMonthYear()
 
   const [filters, setFilters] = useState<FilterOptions>({
-    filterType: "all",
+    filterType: "year-month",
     year: currentYear,
     month: currentMonth,
     dateFrom: "",

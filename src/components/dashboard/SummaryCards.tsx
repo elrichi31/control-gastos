@@ -1,6 +1,6 @@
 "use client"
 
-import { TrendingUp, TrendingDown, Calendar, ShoppingCart, CreditCard, DollarSign } from "lucide-react"
+import { TrendingUp, TrendingDown, Calendar, ShoppingCart, CreditCard, DollarSign, PiggyBank } from "lucide-react"
 import { StatCard } from "./StatCard"
 import { formatMoney } from "@/lib/utils"
 
@@ -13,6 +13,8 @@ interface SummaryCardsProps {
   currentMonthCount: number
   monthlyChange: number
   monthlyChangePercentage: number
+  budgetTotal?: number
+  savingsAmount?: number
 }
 
 export function SummaryCards({
@@ -23,10 +25,16 @@ export function SummaryCards({
   totalExpenses,
   currentMonthCount,
   monthlyChange,
-  monthlyChangePercentage
+  monthlyChangePercentage,
+  budgetTotal,
+  savingsAmount
 }: SummaryCardsProps) {
+  const hasBudget = budgetTotal !== undefined && budgetTotal > 0
+  const savings = savingsAmount !== undefined ? savingsAmount : 0
+  const isOverBudget = savings < 0
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+    <div className={`grid grid-cols-1 sm:grid-cols-2 ${hasBudget ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4 sm:gap-6 mb-8`}>
       {/* Gasto del mes */}
       <StatCard
         title="Este mes"
@@ -67,7 +75,7 @@ export function SummaryCards({
         colorScheme="purple"
         icon={ShoppingCart}
         subtitle={
-          <p className="text-2xl font-bold text-purple-900 dark:text-gray-100">
+          <p className="text-lg font-bold text-purple-900 dark:text-gray-100">
             {formatMoney(topCategory.total)}
           </p>
         }
@@ -85,6 +93,34 @@ export function SummaryCards({
           </p>
         }
       />
+
+      {/* Ahorro del mes - solo mostrar si hay presupuesto */}
+      {hasBudget && (
+        <StatCard
+          title={isOverBudget ? "Exceso de gasto" : "Ahorro del mes"}
+          value={formatMoney(Math.abs(savings))}
+          colorScheme={isOverBudget ? "red" : "teal"}
+          icon={PiggyBank}
+          subtitle={
+            <div className="space-y-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Presupuesto: {formatMoney(budgetTotal || 0)}
+              </p>
+              {isOverBudget ? (
+                <p className="text-xs text-red-500 dark:text-red-400">
+                  Sobre presupuesto
+                </p>
+              ) : (
+                <p className="text-xs text-teal-600 dark:text-teal-400">
+                  {budgetTotal && budgetTotal > 0
+                    ? `${((savings / budgetTotal) * 100).toFixed(1)}% ahorrado`
+                    : ''}
+                </p>
+              )}
+            </div>
+          }
+        />
+      )}
     </div>
   )
 }
