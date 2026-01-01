@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(npm run build:*)",
-      "Bash(npx next lint:*)"
+      "Bash(npx next lint:*)",
+      "Bash(npm install:*)",
+      "Bash(ls:*)",
+      "Bash(node scripts/generate-icons.js:*)",
+      "Bash(node -e:*)"
     ]
   }
 }

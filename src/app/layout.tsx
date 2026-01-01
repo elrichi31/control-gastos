@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/Sidebar"
 import { MobileHeader } from "@/components/MobileHeader"
 import { PageTitle } from "@/components/PageTitle"
 import { Providers } from "@/components/Providers"
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt"
 import { useSidebar } from "@/hooks/useSidebar"
 import { cn } from "@/lib/utils"
 import { Toaster } from "react-hot-toast"
@@ -35,6 +36,21 @@ export default function RootLayout({
 
   return (
     <html lang="es" suppressHydrationWarning>
+      <head>
+        <meta name="application-name" content="BethaSpend" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="BethaSpend" />
+        <meta name="description" content="Aplicación para el control y gestión de gastos personales" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="theme-color" content="#0a0a0a" />
+
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+        <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+      </head>
       <body className={inter.className}>
         <Providers>
           <PageTitle />
@@ -59,8 +75,9 @@ export default function RootLayout({
               </div>
             </div>
           )}
-          
+
           <Toaster position="top-right" />
+          <PWAInstallPrompt />
         </Providers>
       </body>
     </html>

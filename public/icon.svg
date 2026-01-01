@@ -1,0 +1,23 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="115" fill="#0a0a0a"/>
+
+  <!-- Coin/Dollar symbol -->
+  <circle cx="256" cy="256" r="160" fill="#10b981" opacity="0.2"/>
+  <circle cx="256" cy="256" r="140" stroke="#10b981" stroke-width="8" fill="none"/>
+
+  <!-- Dollar sign -->
+  <path d="M256 140 L256 372" stroke="#10b981" stroke-width="16" stroke-linecap="round"/>
+  <path d="M220 180 C220 180, 220 160, 256 160 C292 160, 292 180, 292 200 C292 220, 275 230, 256 235 C237 240, 220 250, 220 270 C220 290, 220 310, 256 310 C292 310, 292 290, 292 290"
+        stroke="#10b981"
+        stroke-width="16"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"/>
+
+  <!-- Accent lines -->
+  <path d="M180 140 L210 170" stroke="#10b981" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+  <path d="M332 140 L302 170" stroke="#10b981" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+  <path d="M180 372 L210 342" stroke="#10b981" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+  <path d="M332 372 L302 342" stroke="#10b981" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+</svg>
