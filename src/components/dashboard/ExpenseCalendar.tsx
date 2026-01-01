@@ -78,10 +78,10 @@ export function ExpenseCalendar({ currentDate, expenses }: ExpenseCalendarProps)
                 key={date.toISOString()}
                 className={`
                   h-12 sm:h-16 p-1 sm:p-2 rounded-lg text-center text-xs sm:text-sm cursor-pointer transition-colors flex flex-col justify-center
-                  ${isCurrentDay 
-                    ? 'bg-blue-100 dark:bg-neutral-900 border border-blue-500 dark:border-neutral-600 sm:border-2' 
-                    : hasExpenses 
-                      ? 'bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800' 
+                  ${isCurrentDay
+                    ? 'bg-blue-100 dark:bg-neutral-900 border border-blue-500 dark:border-neutral-600 sm:border-2'
+                    : hasExpenses
+                      ? 'bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800'
                       : 'bg-gray-50 dark:bg-neutral-900 hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-800'
                   }
                 `}

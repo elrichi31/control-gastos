@@ -9,7 +9,8 @@ import { useBudgetData } from "@/hooks/useBudgetData"
 import { useBudgetValidation } from "@/hooks/useBudgetValidation"
 
 export default function HomePage() {
-  const [selectedYear, setSelectedYear] = useState<string>("2025")
+  const currentYear = new Date().getFullYear().toString()
+  const [selectedYear, setSelectedYear] = useState<string>(currentYear)
   const [isMonthDialogOpen, setIsMonthDialogOpen] = useState(false)
   
   // Hooks personalizados para manejo de datos y validación

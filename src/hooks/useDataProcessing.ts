@@ -96,7 +96,24 @@ export function useDataProcessing({ gastos, currentFilters }: DataProcessingHook
       })
     }
 
-    // Filtro anual o todo el historial -> mostrar meses
+    // Filtro "todo el historial" -> mostrar meses agrupados de todos los años
+    if (currentFilters.filterType === "all") {
+      return MESES_NOMBRES.map((month, index) => {
+        const monthGastos = filteredGastos.filter(gasto => {
+          const fecha = toDateWithTime(gasto.fecha)
+          return fecha.getMonth() === index
+        })
+
+        const total = monthGastos.reduce((sum, gasto) => sum + gasto.monto, 0)
+
+        return {
+          month,
+          amount: total
+        }
+      })
+    }
+
+    // Filtro anual -> mostrar meses del año específico
     return MESES_NOMBRES.map((month, index) => {
       const monthGastos = gastos.filter(gasto => {
         const fecha = toDateWithTime(gasto.fecha)

@@ -170,3 +170,37 @@ export function getBudgetStateString(year: number, month: number): string {
   // Para meses futuros, usar "En progreso" también (ya que "Pendiente" no funciona)
   return "En progreso"
 }
+
+/**
+ * Obtiene todos los años que tienen presupuestos registrados
+ */
+export async function fetchAvailableYears(): Promise<number[]> {
+  try {
+    const response = await fetch('/api/presupuestos')
+    if (!response.ok) {
+      throw new Error('Error al obtener presupuestos')
+    }
+    const budgets: BudgetMonth[] = await response.json()
+
+    // Extraer años únicos y ordenarlos
+    const years = [...new Set(budgets.map(b => b.anio))].sort((a, b) => a - b)
+
+    // Siempre incluir el año actual y el siguiente
+    const currentYear = new Date().getFullYear()
+    const nextYear = currentYear + 1
+
+    if (!years.includes(currentYear)) {
+      years.push(currentYear)
+    }
+    if (!years.includes(nextYear)) {
+      years.push(nextYear)
+    }
+
+    return years.sort((a, b) => a - b)
+  } catch (error) {
+    console.error('Error fetching available years:', error)
+    // En caso de error, retornar al menos el año actual y siguiente
+    const currentYear = new Date().getFullYear()
+    return [currentYear, currentYear + 1]
+  }
+}
