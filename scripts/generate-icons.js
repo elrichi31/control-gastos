@@ -20,6 +20,15 @@ async function generateIcons() {
     console.log(`✓ Generado: icon-${size}x${size}.png`);
   }
 
+  // Generar favicon.png (tamaño 32x32)
+  const faviconPngPath = path.join(publicDir, 'favicon.png');
+  await sharp(iconPath)
+    .resize(32, 32)
+    .png()
+    .toFile(faviconPngPath);
+
+  console.log('✓ Generado: favicon.png');
+
   // Generar favicon.ico (tamaño 32x32)
   const faviconPath = path.join(publicDir, 'favicon.ico');
   await sharp(iconPath)

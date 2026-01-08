@@ -1,23 +1,60 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
-  <rect width="512" height="512" rx="115" fill="#0a0a0a"/>
+  <!-- Background with gradient -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGradient)"/>
 
-  <!-- Coin/Dollar symbol -->
-  <circle cx="256" cy="256" r="160" fill="#10b981" opacity="0.2"/>
-  <circle cx="256" cy="256" r="140" stroke="#10b981" stroke-width="8" fill="none"/>
+  <defs>
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1e40af"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
 
-  <!-- Dollar sign -->
-  <path d="M256 140 L256 372" stroke="#10b981" stroke-width="16" stroke-linecap="round"/>
-  <path d="M220 180 C220 180, 220 160, 256 160 C292 160, 292 180, 292 200 C292 220, 275 230, 256 235 C237 240, 220 250, 220 270 C220 290, 220 310, 256 310 C292 310, 292 290, 292 290"
-        stroke="#10b981"
-        stroke-width="16"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        fill="none"/>
+    <linearGradient id="walletGradient" x1="0" y1="0" x2="400" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#93c5fd"/>
+    </linearGradient>
 
-  <!-- Accent lines -->
-  <path d="M180 140 L210 170" stroke="#10b981" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
-  <path d="M332 140 L302 170" stroke="#10b981" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
-  <path d="M180 372 L210 342" stroke="#10b981" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
-  <path d="M332 372 L302 342" stroke="#10b981" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Wallet shape -->
+  <g transform="translate(106, 140)">
+    <!-- Wallet body -->
+    <rect x="0" y="60" width="300" height="200" rx="20" fill="url(#walletGradient)" filter="url(#glow)"/>
+
+    <!-- Wallet flap -->
+    <path d="M 0 60 L 0 40 C 0 25 15 10 30 10 L 270 10 C 285 10 300 25 300 40 L 300 80 L 280 80 L 280 40 C 280 35 276 30 270 30 L 30 30 C 24 30 20 35 20 40 L 20 80 Z"
+          fill="#93c5fd" opacity="0.8"/>
+
+    <!-- Card slot detail -->
+    <rect x="20" y="90" width="260" height="50" rx="8" fill="#1e40af" opacity="0.3"/>
+    <rect x="20" y="155" width="180" height="12" rx="6" fill="#1e40af" opacity="0.2"/>
+    <rect x="20" y="180" width="140" height="12" rx="6" fill="#1e40af" opacity="0.2"/>
+
+    <!-- Dollar symbol overlay -->
+    <g transform="translate(200, 140)">
+      <circle cx="0" cy="0" r="45" fill="#fef3c7" opacity="0.95"/>
+      <circle cx="0" cy="0" r="45" stroke="#fbbf24" stroke-width="3" fill="none"/>
+
+      <!-- Dollar sign -->
+      <path d="M 0 -25 L 0 25" stroke="#b45309" stroke-width="8" stroke-linecap="round"/>
+      <path d="M -12 -15 C -12 -15, -12 -20, 0 -20 C 12 -20, 12 -15, 12 -8 C 12 -1, 6 2, 0 4 C -6 6, -12 9, -12 16 C -12 23, -12 20, 0 20 C 12 20, 12 15, 12 15"
+            stroke="#b45309"
+            stroke-width="8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            fill="none"/>
+    </g>
+  </g>
+
+  <!-- Decorative elements -->
+  <circle cx="120" cy="120" r="8" fill="#93c5fd" opacity="0.4"/>
+  <circle cx="390" cy="380" r="12" fill="#93c5fd" opacity="0.3"/>
+  <circle cx="420" cy="140" r="6" fill="#60a5fa" opacity="0.5"/>
+  <circle cx="100" cy="400" r="10" fill="#60a5fa" opacity="0.4"/>
 </svg>
