@@ -69,6 +69,21 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+
+  /* iPhone safe area support */
+  html, body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+
+  /* Ensure proper background in dark mode for status bar area */
+  html.dark {
+    background-color: #0a0a0a;
+  }
+
+  html {
+    background-color: #ffffff;
+  }
 }
 
 /* ========================================

@@ -9,6 +9,7 @@ import { MobileHeader } from "@/components/MobileHeader"
 import { PageTitle } from "@/components/PageTitle"
 import { Providers } from "@/components/Providers"
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt"
+import { MobileRedirect } from "@/components/MobileRedirect"
 import { useSidebar } from "@/hooks/useSidebar"
 import { cn } from "@/lib/utils"
 import { Toaster } from "react-hot-toast"
@@ -44,7 +45,9 @@ export default function RootLayout({
         <meta name="description" content="Aplicación para el control y gestión de gastos personales" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#0a0a0a" />
+        <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
@@ -78,6 +81,7 @@ export default function RootLayout({
 
           <Toaster position="top-right" />
           <PWAInstallPrompt />
+          <MobileRedirect />
         </Providers>
       </body>
     </html>
