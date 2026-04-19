@@ -3,7 +3,7 @@ import { getAuthenticatedSupabaseClient } from '@/lib/auth'
 
 // GET: Obtener un presupuesto mensual específico por ID
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(req)
   if (authError) return authError
 
   const { id } = await params

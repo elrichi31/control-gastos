@@ -3,7 +3,7 @@ import { getAuthenticatedSupabaseClient } from '@/lib/auth'
 
 // GET: Obtener todos los presupuestos mensuales, con filtro opcional por año
 export async function GET(req: NextRequest) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(req)
   if (authError) return authError
 
   const { searchParams } = new URL(req.url)
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
 
 // POST: Crear un nuevo presupuesto mensual
 export async function POST(req: NextRequest) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(req)
   if (authError) return authError
 
   const body = await req.json()
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
 
 // PUT: Actualizar un presupuesto mensual con total presupuestado
 export async function PUT(req: NextRequest) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(req)
   if (authError) return authError
 
   const body = await req.json()
@@ -176,7 +176,7 @@ export async function PUT(req: NextRequest) {
 
 // DELETE: Eliminar un presupuesto mensual por año y mes
 export async function DELETE(req: NextRequest) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(req)
   if (authError) return authError
 
   const { searchParams } = new URL(req.url)

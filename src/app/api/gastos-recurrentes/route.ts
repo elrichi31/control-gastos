@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { getAuthenticatedSupabaseClient } from '@/lib/auth/auth-supabase'
 
 // GET - Obtener todos los gastos recurrentes del usuario
-export async function GET() {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+export async function GET(request: Request) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request)
   if (authError) return authError
 
   const { data, error } = await supabase
@@ -22,7 +22,7 @@ export async function GET() {
 
 // POST - Crear un nuevo gasto recurrente
 export async function POST(request: Request) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request)
   if (authError) return authError
 
   try {

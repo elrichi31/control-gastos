@@ -4,7 +4,7 @@ import { getAuthenticatedSupabaseClient } from '@/lib/auth'
 // GET: Obtener los movimientos (gastos) de todas las categorías de un presupuesto mensual
 // /api/movimientos-categoria?presupuesto_mensual_id=123
 export async function GET(req: NextRequest) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(req)
   if (authError) return authError
 
   const { searchParams } = new URL(req.url)
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(req)
   if (authError) return authError
 
   const body = await req.json()
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(req)
   if (authError) return authError
 
   const body = await req.json()
@@ -96,7 +96,7 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(req)
   if (authError) return authError
 
   const body = await req.json()

@@ -6,7 +6,7 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request)
   if (authError) return authError
 
   try {
@@ -78,7 +78,7 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request)
   if (authError) return authError
 
   try {

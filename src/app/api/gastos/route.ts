@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedSupabaseClient } from '@/lib/auth';
 
-export async function GET() {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient();
+export async function GET(request: Request) {
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request);
   if (authError) return authError;
 
   const { data, error } = await supabase
@@ -31,7 +31,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient();
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request);
   if (authError) return authError;
 
   const body = await request.json();
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient();
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request);
   if (authError) return authError;
 
   const body = await request.json();
@@ -91,7 +91,7 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient();
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request);
   if (authError) return authError;
 
   const { searchParams } = new URL(request.url);

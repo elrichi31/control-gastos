@@ -3,7 +3,7 @@ import { getAuthenticatedSupabaseClient } from '@/lib/auth'
 
 // POST: Copiar categorías del mes anterior al presupuesto actual
 export async function POST(req: NextRequest) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(req)
   if (authError) return authError
 
   const body = await req.json()

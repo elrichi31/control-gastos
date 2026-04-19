@@ -4,7 +4,7 @@ import { getAuthenticatedSupabaseClient } from '@/lib/auth'
 // GET: Devuelve para un presupuesto mensual todas las categorías con su total, cantidad de gastos, nombre y movimientos
 // /api/presupuesto-mensual-detalle?presupuesto_mensual_id=123
 export async function GET(req: NextRequest) {
-  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient()
+  const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(req)
   if (authError) return authError
 
   const { searchParams } = new URL(req.url)
