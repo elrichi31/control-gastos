@@ -3,8 +3,9 @@ import { getServerSession } from 'next-auth'
 import { NextResponse } from 'next/server'
 import { authOptions } from './auth'
 import { createServerClient } from '../database'
+import { verifyMobileSessionToken } from './mobile-session'
 
-type AuthSource = 'nextauth' | 'bearer'
+type AuthSource = 'nextauth' | 'bearer' | 'mobile_session'
 
 function createTokenAuthClient() {
   return createClient(
@@ -35,6 +36,24 @@ async function getUserIdFromBearerToken(request?: Request) {
   if (scheme?.toLowerCase() !== 'bearer' || !token) {
     return {
       error: NextResponse.json({ error: 'Token Bearer inválido' }, { status: 401 }),
+      userId: null,
+      authSource: null as AuthSource | null,
+    }
+  }
+
+  const mobileSession = verifyMobileSessionToken(token)
+
+  if (mobileSession.valid) {
+    return {
+      error: null,
+      userId: mobileSession.payload.sub,
+      authSource: 'mobile_session' as AuthSource,
+    }
+  }
+
+  if (mobileSession.reason === 'expired') {
+    return {
+      error: NextResponse.json({ error: 'Sesión mobile expirada' }, { status: 401 }),
       userId: null,
       authSource: null as AuthSource | null,
     }

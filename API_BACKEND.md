@@ -8,7 +8,8 @@ Este documento resume los endpoints que existen hoy en el backend de este proyec
 - Todos los endpoints devuelven JSON.
 - Los endpoints protegidos ahora aceptan dos formas de autenticación:
   - sesión web de `NextAuth` (cookies)
-  - header `Authorization: Bearer <access_token>` con token válido de Supabase
+  - header `Authorization: Bearer <access_token>` con token de sesión mobile válido
+  - header `Authorization: Bearer <access_token>` con token válido de Supabase, por compatibilidad
 - La mayoría de errores siguen este formato:
 
 ```json
@@ -29,6 +30,7 @@ con status `401`.
 
 - `POST /api/auth/register`
 - `POST /api/mobile/login`
+- `POST /api/mobile/refresh`
 - `GET /api/categorias`
 - `GET /api/metodos_pago`
 - `GET /api/transactions`
@@ -59,7 +61,9 @@ con status `401`.
 **Qué hace**
 
 - Inicia sesión para la app mobile usando email/password contra `Supabase Auth`.
-- Devuelve tokens para usar luego en `Authorization: Bearer <access_token>`.
+- Devuelve un token de sesión mobile firmado por el backend.
+- Ese token dura 3 días desde el login.
+- Para extender la sesión otros 3 días, la app debe llamar `POST /api/mobile/refresh` antes de que expire.
 
 **Auth requerida**
 
@@ -79,8 +83,7 @@ con status `401`.
 ```json
 {
   "access_token": "eyJ...",
-  "refresh_token": "eyJ...",
-  "expires_in": 3600,
+  "expires_in": 259200,
   "expires_at": 1770000000,
   "token_type": "bearer",
   "user": {
@@ -102,6 +105,61 @@ con status `401`.
 ```http
 Authorization: Bearer <access_token>
 ```
+
+---
+
+### `POST /api/mobile/refresh`
+
+**Qué hace**
+
+- Renueva una sesión mobile vigente.
+- Implementa la expiración deslizante: si el usuario vuelve a entrar antes de que pasen 3 días, recibe un nuevo `access_token` válido por otros 3 días.
+- Si el usuario no entra durante 3 días y el token expira, responde `401` y la app debe enviarlo al login.
+
+**Auth requerida**
+
+- Sí, con el token mobile actual.
+
+**Headers**
+
+```http
+Authorization: Bearer <access_token_actual>
+```
+
+**Body JSON**
+
+- No requiere body.
+
+**Respuesta exitosa (`200`)**
+
+```json
+{
+  "access_token": "eyJ...",
+  "expires_in": 259200,
+  "expires_at": 1770259200,
+  "token_type": "bearer",
+  "user": {
+    "id": "uuid",
+    "email": "nico@mail.com",
+    "name": "Nicolas Moina"
+  }
+}
+```
+
+**Errores comunes**
+
+- `401` si falta el header `Authorization`.
+- `401` si el token es inválido.
+- `401` con `{ "error": "Sesión mobile expirada" }` si ya pasaron más de 3 días desde la última renovación/login.
+- `500` si ocurre un error interno.
+
+**Uso recomendado en mobile**
+
+- Guardar `access_token` y `expires_at` en almacenamiento seguro.
+- Enviar `Authorization: Bearer <access_token>` en todos los endpoints protegidos.
+- Llamar `POST /api/mobile/refresh` cuando la app se abre o vuelve del background.
+- Si el refresh responde `200`, reemplazar el token guardado por el nuevo `access_token`.
+- Si el refresh responde `401`, borrar el token local y mostrar la pantalla de login.
 
 ---
 
@@ -1328,8 +1386,10 @@ Se puede enviar cualquier subconjunto de estos campos:
 ## Recomendaciones para la app mobile
 
 - Ya no hace falta reutilizar la sesión web de `NextAuth` desde mobile.
-- La opción más simple ahora es hacer `POST /api/mobile/login`, guardar `access_token` y mandar `Authorization: Bearer <token>` en cada request.
-- Como alternativa, podés iniciar sesión directo con el SDK nativo de Supabase en iOS y usar ese mismo `access_token` contra este backend.
+- La opción más simple ahora es hacer `POST /api/mobile/login`, guardar `access_token` y mandar `Authorization: Bearer <token>` en cada request protegido.
+- La sesión mobile dura 3 días de inactividad. Si el usuario abre la app antes de que expire, llamen `POST /api/mobile/refresh` y guarden el nuevo token; desde ese momento vuelve a tener 3 días.
+- Si `POST /api/mobile/refresh` o cualquier endpoint protegido responde `401`, borren el token local y manden al usuario al login.
+- Como alternativa, el backend todavía acepta tokens válidos de Supabase en `Authorization: Bearer <access_token>`, pero el flujo recomendado para la app es usar el token mobile del backend.
 - Prestá atención a que algunos endpoints usan `query params` para borrar (`/api/gastos`, `/api/presupuestos`, `/api/presupuesto-categoria`) y otros usan `body` (`/api/movimientos-categoria`).
 - `PUT /api/gastos` espera `id` dentro del body.
 - `POST /api/presupuestos` devuelve un array, no un objeto simple.

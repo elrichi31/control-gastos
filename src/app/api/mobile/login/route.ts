@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { createMobileSessionToken } from '@/lib/auth/mobile-session'
 
 function createMobileAuthClient() {
   return createClient(
@@ -38,22 +39,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const userName =
+      data.user.user_metadata?.full_name ||
+      [data.user.user_metadata?.first_name, data.user.user_metadata?.last_name]
+        .filter(Boolean)
+        .join(' ') ||
+      data.user.email?.split('@')[0] ||
+      'Usuario'
+    const mobileSession = createMobileSessionToken({
+      id: data.user.id,
+      email: data.user.email,
+      name: userName,
+    })
+
     return NextResponse.json({
-      access_token: data.session.access_token,
-      refresh_token: data.session.refresh_token,
-      expires_in: data.session.expires_in,
-      expires_at: data.session.expires_at,
-      token_type: data.session.token_type,
+      access_token: mobileSession.token,
+      expires_in: mobileSession.expiresIn,
+      expires_at: mobileSession.expiresAt,
+      token_type: 'bearer',
       user: {
         id: data.user.id,
         email: data.user.email,
-        name:
-          data.user.user_metadata?.full_name ||
-          [data.user.user_metadata?.first_name, data.user.user_metadata?.last_name]
-            .filter(Boolean)
-            .join(' ') ||
-          data.user.email?.split('@')[0] ||
-          'Usuario',
+        name: userName,
       },
     })
   } catch (error) {
