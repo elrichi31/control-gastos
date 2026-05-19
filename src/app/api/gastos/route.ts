@@ -70,19 +70,52 @@ export async function PUT(request: Request) {
   const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request);
   if (authError) return authError;
 
-  const body = await request.json();
-  const { id, descripcion, monto, fecha, categoria_id, metodo_pago_id } = body;
+  const { searchParams } = new URL(request.url);
+  const queryId = searchParams.get('id');
 
-  if (!id || !descripcion || !monto || !fecha || !categoria_id || !metodo_pago_id) {
-    return NextResponse.json({ error: 'Faltan datos requeridos para la actualización.' }, { status: 400 });
+  const body = await request.json();
+  const { id: bodyId, descripcion, monto, fecha, categoria_id, metodo_pago_id, is_recurrent } = body;
+
+  const id = queryId ?? bodyId;
+
+  if (!id) {
+    return NextResponse.json({ error: 'ID de gasto requerido para actualizar.' }, { status: 400 });
+  }
+
+  const updates: Record<string, unknown> = {};
+  if (descripcion !== undefined) updates.descripcion = descripcion;
+  if (monto !== undefined) updates.monto = monto;
+  if (fecha !== undefined) updates.fecha = fecha;
+  if (categoria_id !== undefined) updates.categoria_id = categoria_id;
+  if (metodo_pago_id !== undefined) updates.metodo_pago_id = metodo_pago_id;
+  if (typeof is_recurrent === 'boolean') updates.is_recurrent = is_recurrent;
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'No hay campos para actualizar.' }, { status: 400 });
   }
 
   const { data, error } = await supabase.from('gasto')
-    .update({ descripcion, monto, fecha, categoria_id, metodo_pago_id })
+    .update(updates)
     .eq('id', id)
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .select(`
+      id,
+      descripcion,
+      monto,
+      fecha,
+      categoria_id,
+      metodo_pago_id,
+      user_id,
+      is_recurrent,
+      categoria (id, nombre),
+      metodo_pago (id, nombre)
+    `)
+    .single();
 
   if (error) {
+    if (error.code === 'PGRST116') {
+      return NextResponse.json({ error: 'Gasto no encontrado.' }, { status: 404 });
+    }
     console.error('Error al actualizar gasto:', error);
     return NextResponse.json({ error: 'Error al actualizar el gasto' }, { status: 500 });
   }

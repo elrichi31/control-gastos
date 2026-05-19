@@ -6,7 +6,8 @@
       "Bash(npm install:*)",
       "Bash(ls:*)",
       "Bash(node scripts/generate-icons.js:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(npx tsc *)"
     ]
   }
 }
