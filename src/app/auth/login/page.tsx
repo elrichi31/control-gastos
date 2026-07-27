@@ -42,7 +42,9 @@ export default function LoginPage() {
         redirect: false,
       })
 
-      if (result?.error) {
+      if (result?.error === 'EMAIL_NOT_CONFIRMED') {
+        setError('Debes confirmar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada.')
+      } else if (result?.error) {
         setError('Credenciales incorrectas')
       } else {
         const session = await getSession()

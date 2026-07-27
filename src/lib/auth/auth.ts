@@ -46,6 +46,9 @@ export const authOptions: NextAuthOptions = {
 
           if (error || !data?.user) {
             console.error('Error en autenticación:', error)
+            if (error?.message?.toLowerCase().includes('email not confirmed')) {
+              throw new Error('EMAIL_NOT_CONFIRMED')
+            }
             return null
           }
 
@@ -58,6 +61,9 @@ export const authOptions: NextAuthOptions = {
             email: data.user.email!,
           }
         } catch (error) {
+          if (error instanceof Error && error.message === 'EMAIL_NOT_CONFIRMED') {
+            throw error
+          }
           console.error('Error durante autenticación:', error)
           return null
         }

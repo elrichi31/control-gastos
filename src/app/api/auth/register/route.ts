@@ -34,7 +34,11 @@ export async function POST(request: NextRequest) {
           full_name: `${firstName} ${lastName}`,
           first_name: firstName,
           last_name: lastName,
-        }
+        },
+        // Usa el origen real de la petición para que el link del correo
+        // apunte al dominio correcto (local o producción), no al Site URL
+        // por defecto configurado en el dashboard de Supabase.
+        emailRedirectTo: `${request.nextUrl.origin}/auth/login`,
       }
     })
 
