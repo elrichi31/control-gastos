@@ -69,6 +69,12 @@ export default function RegisterPage() {
         throw new Error(data.error || 'Error al crear la cuenta')
       }
 
+      if (data.needsEmailConfirmation) {
+        setError('Cuenta creada. Revisa tu correo para confirmar tu cuenta antes de iniciar sesión.')
+        setIsLoading(false)
+        return
+      }
+
       const result = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
