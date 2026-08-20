@@ -1,7 +1,5 @@
-import { Plus, Calendar } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Plus } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import React from "react"
 
 interface AddMonthCardProps {
@@ -15,28 +13,25 @@ export function AddMonthCard({ availableMonths, isOpen, setIsOpen, onAdd }: AddM
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Card className="bg-gray-50 dark:bg-neutral-900/50 border-2 border-dashed border-gray-300 dark:border-neutral-600 hover:border-gray-400 dark:hover:border-neutral-500 transition-colors cursor-pointer">
-          <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-            <Plus className="w-8 h-8 text-gray-400 dark:text-gray-500 mb-3" />
-            <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300 mb-1">Agregar mes</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Selecciona un mes para crear su presupuesto</p>
-          </CardContent>
-        </Card>
+        {/* Misma altura que una MonthCard para que la cuadrícula no se descuadre */}
+        <button className="flex flex-col items-center justify-center gap-2 min-h-[124px] w-full rounded-xl border border-dashed border-border bg-muted/30 p-4 text-center transition-colors hover:bg-muted/60 hover:border-muted-foreground/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <Plus className="w-5 h-5 text-muted-foreground" />
+          <span className="text-sm font-medium text-muted-foreground">Agregar mes</span>
+        </button>
       </DialogTrigger>
-      <DialogContent className="bg-white dark:bg-neutral-900 mx-4 max-w-md">
+      <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Seleccionar mes</DialogTitle>
+          <DialogTitle className="text-base font-semibold">Seleccionar mes</DialogTitle>
         </DialogHeader>
-        <div className="space-y-2 max-h-96 overflow-y-auto">
+        <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto -mx-1 px-1">
           {availableMonths.map((month) => (
             <button
               key={month.value}
-              className="w-full justify-start bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-700 border border-gray-200 dark:border-neutral-600 rounded-md p-3 text-left flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-md border border-border px-3 py-2.5 text-sm text-foreground text-left transition-colors hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
               onClick={() => onAdd(month.value)}
               disabled={month.disabled}
             >
-              <Calendar className="w-5 h-5 mr-3 text-gray-600 dark:text-gray-400" />
-              <span className="text-gray-900 dark:text-gray-100">{month.name}</span>
+              {month.name}
             </button>
           ))}
         </div>

@@ -32,18 +32,14 @@ export function YearSelector({ selectedYear, setSelectedYear }: YearSelectorProp
 
   if (loading) {
     return (
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Año</label>
-        <div className="w-full sm:w-48 h-10 bg-gray-100 dark:bg-neutral-800 rounded-md animate-pulse" />
-      </div>
+      <div className="w-full sm:w-36 h-10 bg-muted rounded-md animate-pulse" />
     )
   }
 
   return (
-    <div className="mb-6">
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Año</label>
+    <div>
       <Select value={selectedYear} onValueChange={setSelectedYear}>
-        <SelectTrigger className="w-full sm:w-48 bg-white dark:bg-neutral-950 dark:border-neutral-700">
+        <SelectTrigger className="w-full sm:w-36 bg-card border-border" aria-label="Año">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

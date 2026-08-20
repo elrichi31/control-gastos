@@ -28,11 +28,11 @@ export function GastoTableRow({
       'Salud': 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-400 border border-red-200 dark:border-red-500/40',
       'Hogar': 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400 border border-green-200 dark:border-green-500/40',
       'Educación': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/40',
-      'Trabajo': 'bg-gray-100 text-gray-800 dark:bg-gray-500/20 dark:text-gray-400 border border-gray-200 dark:border-gray-500/40',
+      'Trabajo': 'bg-muted text-foreground border border-border',
       'Suscripciones': 'bg-pink-100 text-pink-800 dark:bg-pink-500/20 dark:text-pink-400 border border-pink-200 dark:border-pink-500/40',
       'Otros': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/40',
     }
-    return colors[categoria as keyof typeof colors] || 'bg-gray-100 text-gray-800 dark:bg-gray-500/20 dark:text-gray-400 border border-gray-200 dark:border-gray-500/40'
+    return colors[categoria as keyof typeof colors] || 'bg-muted text-foreground border border-border'
   }
 
   const getPaymentMethodIcon = (metodo: string) => {
@@ -50,10 +50,10 @@ export function GastoTableRow({
   }
 
   return (
-    <TableRow className="hover:bg-gray-50 dark:hover:bg-neutral-900/50">
+    <TableRow className="hover:bg-muted/60">
       <TableCell className="font-medium px-4 py-4 w-[180px] min-w-[180px]">
         <div 
-          className="text-sm truncate pr-2 dark:text-white" 
+          className="text-sm truncate pr-2 text-foreground" 
           title={gasto.descripcion}
         >
           {gasto.descripcion}
@@ -68,7 +68,7 @@ export function GastoTableRow({
         </Badge>
       </TableCell>
       <TableCell className="px-3 py-4 w-[150px] min-w-[150px]">
-        <div className="flex items-center gap-2 min-w-0 dark:text-gray-300">
+        <div className="flex items-center gap-2 min-w-0 text-muted-foreground">
           <div className="flex-shrink-0">
             {getPaymentMethodIcon(gasto.metodo_pago?.nombre || '')}
           </div>
@@ -78,7 +78,7 @@ export function GastoTableRow({
         </div>
       </TableCell>
       <TableCell className="px-3 py-4 w-[100px] min-w-[100px]">
-        <span className="text-xs whitespace-nowrap dark:text-gray-300">
+        <span className="text-xs whitespace-nowrap text-muted-foreground">
           {formatDate(gasto.fecha)}
         </span>
       </TableCell>
@@ -91,7 +91,7 @@ export function GastoTableRow({
         <Button
           size="sm"
           onClick={() => onDeleteGasto(gasto.id.toString())}
-          className="text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 p-2 h-8 w-8 bg-transparent border-0 shadow-none"
+          className="text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 p-2 h-8 w-8 bg-transparent border-0"
         >
           <Trash2 className="h-4 w-4" />
         </Button>

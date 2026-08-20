@@ -32,7 +32,7 @@ export function DeleteRecurringExpenseModal({
         </DialogHeader>
         
         <div className="py-4">
-          <p className="text-gray-700 mb-4">
+          <p className="text-foreground mb-4">
             Este gasto es parte de un gasto recurrente. ¿Qué deseas hacer?
           </p>
           
@@ -76,7 +76,7 @@ export function DeleteRecurringExpenseModal({
             variant="outline"
             onClick={onCancel}
             disabled={isDeleting}
-            className="w-full h-11 border-2 border-gray-300 hover:bg-gray-50 font-medium"
+            className="w-full h-11 border-2 border-border hover:bg-muted font-medium"
           >
             Cancelar
           </Button>

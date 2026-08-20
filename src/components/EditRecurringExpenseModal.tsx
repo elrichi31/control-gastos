@@ -110,10 +110,10 @@ export function EditRecurringExpenseModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-900">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-card">
         <DialogHeader>
-          <DialogTitle className="dark:text-white">Editar Gasto Recurrente</DialogTitle>
-          <DialogDescription className="dark:text-gray-400">
+          <DialogTitle className="text-foreground">Editar Gasto Recurrente</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Modifica los detalles del gasto recurrente
           </DialogDescription>
         </DialogHeader>
@@ -121,20 +121,20 @@ export function EditRecurringExpenseModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Descripción */}
           <div className="space-y-2">
-            <Label htmlFor="descripcion" className="dark:text-gray-200">Descripción</Label>
+            <Label htmlFor="descripcion" className="text-foreground">Descripción</Label>
             <Input
               id="descripcion"
               value={formData.descripcion}
               onChange={(e) => handleChange("descripcion", e.target.value)}
               placeholder="Ej: Netflix, Gym, etc."
               required
-              className="dark:bg-neutral-800 dark:text-white dark:border-neutral-700"
+              className="bg-muted text-foreground border-border"
             />
           </div>
 
           {/* Monto */}
           <div className="space-y-2">
-            <Label htmlFor="monto" className="dark:text-gray-200">Monto</Label>
+            <Label htmlFor="monto" className="text-foreground">Monto</Label>
             <Input
               id="monto"
               type="number"
@@ -144,23 +144,23 @@ export function EditRecurringExpenseModal({
               onChange={(e) => handleChange("monto", e.target.value)}
               placeholder="0.00"
               required
-              className="dark:bg-neutral-800 dark:text-white dark:border-neutral-700"
+              className="bg-muted text-foreground border-border"
             />
           </div>
 
           {/* Categoría */}
           <div className="space-y-2">
-            <Label htmlFor="categoria" className="dark:text-gray-200">Categoría</Label>
+            <Label htmlFor="categoria" className="text-foreground">Categoría</Label>
             <Select
               value={formData.categoria_id}
               onValueChange={(value) => handleChange("categoria_id", value)}
             >
-              <SelectTrigger className="dark:bg-neutral-800 dark:text-white dark:border-neutral-700">
+              <SelectTrigger className="bg-muted text-foreground border-border">
                 <SelectValue placeholder="Selecciona una categoría" />
               </SelectTrigger>
-              <SelectContent className="dark:bg-neutral-800 dark:border-neutral-700">
+              <SelectContent className="bg-muted border-border">
                 {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id.toString()} className="dark:text-white">
+                  <SelectItem key={cat.id} value={cat.id.toString()} className="text-foreground">
                     {cat.nombre}
                   </SelectItem>
                 ))}
@@ -170,17 +170,17 @@ export function EditRecurringExpenseModal({
 
           {/* Método de pago */}
           <div className="space-y-2">
-            <Label htmlFor="metodo" className="dark:text-gray-200">Método de Pago</Label>
+            <Label htmlFor="metodo" className="text-foreground">Método de Pago</Label>
             <Select
               value={formData.metodo_pago_id}
               onValueChange={(value) => handleChange("metodo_pago_id", value)}
             >
-              <SelectTrigger className="dark:bg-neutral-800 dark:text-white dark:border-neutral-700">
+              <SelectTrigger className="bg-muted text-foreground border-border">
                 <SelectValue placeholder="Selecciona un método" />
               </SelectTrigger>
-              <SelectContent className="dark:bg-neutral-800 dark:border-neutral-700">
+              <SelectContent className="bg-muted border-border">
                 {paymentMethods.map((method) => (
-                  <SelectItem key={method.id} value={method.id.toString()} className="dark:text-white">
+                  <SelectItem key={method.id} value={method.id.toString()} className="text-foreground">
                     {method.nombre}
                   </SelectItem>
                 ))}
@@ -190,17 +190,17 @@ export function EditRecurringExpenseModal({
 
           {/* Frecuencia */}
           <div className="space-y-2">
-            <Label htmlFor="frecuencia" className="dark:text-gray-200">Frecuencia</Label>
+            <Label htmlFor="frecuencia" className="text-foreground">Frecuencia</Label>
             <Select
               value={formData.frecuencia}
               onValueChange={(value) => handleChange("frecuencia", value as Frecuencia)}
             >
-              <SelectTrigger className="dark:bg-neutral-800 dark:text-white dark:border-neutral-700">
+              <SelectTrigger className="bg-muted text-foreground border-border">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="dark:bg-neutral-800 dark:border-neutral-700">
-                <SelectItem value="semanal" className="dark:text-white">Semanal</SelectItem>
-                <SelectItem value="mensual" className="dark:text-white">Mensual</SelectItem>
+              <SelectContent className="bg-muted border-border">
+                <SelectItem value="semanal" className="text-foreground">Semanal</SelectItem>
+                <SelectItem value="mensual" className="text-foreground">Mensual</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -208,17 +208,17 @@ export function EditRecurringExpenseModal({
           {/* Día de la semana (solo si es semanal) */}
           {formData.frecuencia === "semanal" && (
             <div className="space-y-2">
-              <Label htmlFor="dia_semana" className="dark:text-gray-200">Día de la semana</Label>
+              <Label htmlFor="dia_semana" className="text-foreground">Día de la semana</Label>
               <Select
                 value={formData.dia_semana}
                 onValueChange={(value) => handleChange("dia_semana", value)}
               >
-                <SelectTrigger className="dark:bg-neutral-800 dark:text-white dark:border-neutral-700">
+                <SelectTrigger className="bg-muted text-foreground border-border">
                   <SelectValue placeholder="Selecciona un día" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-neutral-800 dark:border-neutral-700">
+                <SelectContent className="bg-muted border-border">
                   {DIAS_SEMANA.map((dia) => (
-                    <SelectItem key={dia.value} value={dia.value.toString()} className="dark:text-white">
+                    <SelectItem key={dia.value} value={dia.value.toString()} className="text-foreground">
                       {dia.label}
                     </SelectItem>
                   ))}
@@ -230,7 +230,7 @@ export function EditRecurringExpenseModal({
           {/* Día del mes (solo si es mensual) */}
           {formData.frecuencia === "mensual" && (
             <div className="space-y-2">
-              <Label htmlFor="dia_mes" className="dark:text-gray-200">Día del mes (1-28)</Label>
+              <Label htmlFor="dia_mes" className="text-foreground">Día del mes (1-28)</Label>
               <Input
                 id="dia_mes"
                 type="number"
@@ -240,21 +240,21 @@ export function EditRecurringExpenseModal({
                 onChange={(e) => handleChange("dia_mes", e.target.value)}
                 placeholder="1"
                 required
-                className="dark:bg-neutral-800 dark:text-white dark:border-neutral-700"
+                className="bg-muted text-foreground border-border"
               />
             </div>
           )}
 
           {/* Fecha de inicio */}
           <div className="space-y-2">
-            <Label htmlFor="fecha_inicio" className="dark:text-gray-200">Fecha de inicio</Label>
+            <Label htmlFor="fecha_inicio" className="text-foreground">Fecha de inicio</Label>
             <Input
               id="fecha_inicio"
               type="date"
               value={formData.fecha_inicio}
               onChange={(e) => handleChange("fecha_inicio", e.target.value)}
               required
-              className="dark:bg-neutral-800 dark:text-white dark:border-neutral-700"
+              className="bg-muted text-foreground border-border"
             />
           </div>
 
@@ -266,9 +266,9 @@ export function EditRecurringExpenseModal({
                 id="usar_fecha_fin"
                 checked={formData.usarFechaFin}
                 onChange={(e) => handleChange("usarFechaFin", e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 dark:border-neutral-600"
+                className="w-4 h-4 rounded border-border"
               />
-              <Label htmlFor="usar_fecha_fin" className="dark:text-gray-200">
+              <Label htmlFor="usar_fecha_fin" className="text-foreground">
                 Establecer fecha de fin
               </Label>
             </div>
@@ -279,7 +279,7 @@ export function EditRecurringExpenseModal({
                 value={formData.fecha_fin}
                 onChange={(e) => handleChange("fecha_fin", e.target.value)}
                 min={formData.fecha_inicio}
-                className="dark:bg-neutral-800 dark:text-white dark:border-neutral-700"
+                className="bg-muted text-foreground border-border"
               />
             )}
           </div>
@@ -290,7 +290,7 @@ export function EditRecurringExpenseModal({
               variant="outline"
               onClick={onClose}
               disabled={saving}
-              className="dark:bg-neutral-800 dark:text-white dark:border-neutral-700 dark:hover:bg-neutral-700"
+              className="bg-muted text-foreground border-border hover:bg-muted"
             >
               Cancelar
             </Button>

@@ -1,8 +1,8 @@
 "use client"
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Suspense, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DollarSign, RepeatIcon } from "lucide-react"
 import { useGastosFiltrados, Gasto } from "@/hooks/useGastosFiltrados"
 import { ExpenseForm } from "./../../components/ExpenseForm"
 import { RecurringExpenseForm } from "./../../components/RecurringExpenseForm"
@@ -29,8 +29,11 @@ function gastoToExpense(gasto: Gasto): Expense {
   }
 }
 
-export default function ExpenseTracker() {
+function ExpenseTracker() {
   const { gastos, loading, deleteGasto } = useGastosFiltrados()
+  // /form?tipo=recurrente abre directo la pestaña de recurrentes
+  const searchParams = useSearchParams()
+  const tabInicial = searchParams.get("tipo") === "recurrente" ? "recurrente" : "normal"
 
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: "", to: "" })
   const [groupBy, setGroupBy] = useState<"dia" | "semana" | "mes">("dia")
@@ -75,84 +78,74 @@ export default function ExpenseTracker() {
     window.location.reload()
   }
 
-
   return (
-    <div className="min-h-screen bg-white dark:bg-neutral-950">
-      <div className="max-w-md mx-auto lg:max-w-7xl p-4 lg:p-6 space-y-6">
-        <PageTitle customTitle="Nuevo Gasto - BethaSpend" />
-        
-        {/* Header optimizado para móvil */}
-        <div className="text-center py-4">
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">💰 Nuevo Gasto</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm lg:text-base">Registra tu gasto de forma rápida y sencilla</p>
+    <div className="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <PageTitle customTitle="Nuevo Gasto - BethaSpend" />
+
+      {/* Encabezado alineado a la izquierda, al estilo de una página de Notion */}
+      <header className="mb-8">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Nuevo gasto</h1>
+        <p className="text-muted-foreground mt-1">Registra tu gasto de forma rápida y sencilla.</p>
+      </header>
+
+      {/* Columna principal + riel lateral: el formulario manda, lo demás acompaña */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="lg:col-span-7">
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-semibold">Registrar gasto</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue={tabInicial} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-5">
+                  <TabsTrigger value="normal">Normal</TabsTrigger>
+                  <TabsTrigger value="recurrente">Recurrente</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="normal">
+                  <ExpenseForm fetchExpenses={fetchExpenses} />
+                </TabsContent>
+
+                <TabsContent value="recurrente">
+                  <RecurringExpenseForm onSuccess={fetchExpenses} />
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Layout responsive: móvil (columna) / desktop (grid) */}
-        <div className="lg:grid lg:grid-cols-3 lg:gap-6 lg:items-start space-y-6 lg:space-y-0">
-          {/* Formulario principal - Prioridad en móvil */}
-          <div className="lg:order-1">
-            <Card className="shadow-lg rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg lg:text-xl">
-                  <DollarSign className="h-5 w-5 text-green-600" />
-                  Registrar Gasto
-                </CardTitle>
-                <CardDescription className="text-sm">Completa la información del gasto</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="normal" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
-                    <TabsTrigger value="normal" className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4" />
-                      Gasto Normal
-                    </TabsTrigger>
-                    <TabsTrigger value="recurrente" className="flex items-center gap-2">
-                      <RepeatIcon className="h-4 w-4" />
-                      Gasto Recurrente
-                    </TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="normal">
-                    <ExpenseForm fetchExpenses={fetchExpenses} />
-                  </TabsContent>
-                  
-                  <TabsContent value="recurrente">
-                    <RecurringExpenseForm onSuccess={fetchExpenses} />
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          </div>
+        <aside className="lg:col-span-5 space-y-6">
+          <ExpenseSummary
+            expenses={filteredExpensesAsExpense}
+            onDateRangeChange={handleFilterChange}
+            groupBy={groupBy}
+            setGroupBy={setGroupBy}
+          />
 
-          {/* Resumen - Segundo en móvil */}
-          <div className="lg:order-2">
-            <ExpenseSummary
-              expenses={filteredExpensesAsExpense}
-              onDateRangeChange={handleFilterChange}
-              groupBy={groupBy}
-              setGroupBy={setGroupBy}
-            />
-          </div>
-
-          {/* Lista de gastos - Último en móvil */}
-          <div className="lg:order-3">
-            <Card className="shadow-lg rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg lg:text-xl">📝 Gastos Recientes</CardTitle>
-                <CardDescription className="text-sm">Últimos gastos agrupados por {groupBy}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ExpenseList
-                  groupedExpenses={groupedExpenses}
-                  isLoading={loading}
-                  onDelete={handleDeleteExpense}
-                  groupBy={groupBy}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+          <Card>
+            {/* px-5 para alinear con el padding de las filas de ExpenseItem */}
+            <CardHeader className="px-5 pt-5 pb-3">
+              <CardTitle className="text-base font-semibold">Gastos recientes</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 pb-2">
+              <ExpenseList
+                groupedExpenses={groupedExpenses}
+                isLoading={loading}
+                onDelete={handleDeleteExpense}
+                groupBy={groupBy}
+              />
+            </CardContent>
+          </Card>
+        </aside>
       </div>
     </div>
+  )
+}
+
+export default function FormPage() {
+  return (
+    <Suspense fallback={null}>
+      <ExpenseTracker />
+    </Suspense>
   )
 }

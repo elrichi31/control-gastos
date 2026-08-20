@@ -63,21 +63,21 @@ export function ExpenseList({ groupedExpenses, isLoading, onDelete, groupBy }: P
   })
 
   if (isLoading) {
-    return <p className="text-center text-gray-500 dark:text-gray-400 py-8">Cargando gastos...</p>
+    return <p className="text-center text-sm text-muted-foreground px-5 py-10">Cargando gastos...</p>
   }
 
   if (!groupedExpenses || groupKeys.length === 0) {
-    return <p className="text-center text-gray-500 dark:text-gray-400 py-8">No hay gastos registrados aún</p>
+    return <p className="text-center text-sm text-muted-foreground px-5 py-10">No hay gastos registrados aún</p>
   }
 
   return (
-    <div className="space-y-6 max-h-96 overflow-y-auto pr-2">
+    <div className="max-h-[26rem] overflow-y-auto overflow-x-hidden">
       {groupKeys.map((groupTitle) => (
-        <div key={groupTitle}>
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+        <div key={groupTitle} className="mb-4 last:mb-0">
+          <h3 className="sticky top-0 z-10 bg-card px-5 pt-3 pb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {formatGroupTitle(groupTitle, groupBy)}
           </h3>
-          <div className="space-y-2">
+          <div>
             {groupedExpenses[groupTitle].map((expense) => (
               <ExpenseItem
                 key={expense.id}

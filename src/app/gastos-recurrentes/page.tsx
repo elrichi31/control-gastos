@@ -4,7 +4,8 @@ import { RecurringExpenseList } from "@/components/RecurringExpenseList"
 import { PageTitle } from "@/components/PageTitle"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { X } from "lucide-react"
+import { X, Plus } from "lucide-react"
+import Link from "next/link"
 import { useState, useEffect } from "react"
 
 export default function GastosRecurrentesPage() {
@@ -24,32 +25,40 @@ export default function GastosRecurrentesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-950 dark:to-neutral-900 p-4 sm:p-6 lg:p-8">
+    <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
       <PageTitle customTitle="Gastos Recurrentes - BethaSpend" />
       
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Gastos Recurrentes</h1>
-          <p className="text-gray-600 dark:text-gray-400">Gestiona tus gastos que se repiten automáticamente</p>
-        </div>
+      <div className="space-y-6">
+        <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Gastos recurrentes</h1>
+            <p className="text-muted-foreground mt-1">Gestiona tus gastos que se repiten automáticamente.</p>
+          </div>
+          <Link href="/form?tipo=recurrente" className="shrink-0">
+            <Button size="sm">
+              <Plus className="w-4 h-4 mr-1.5" />
+              Nuevo recurrente
+            </Button>
+          </Link>
+        </header>
 
         <RecurringExpenseList />
 
         {/* Información de cómo funcionan */}
         {showInfo && (
-          <Card className="shadow-lg border-2 border-blue-100 dark:border-neutral-700 bg-blue-50 dark:bg-neutral-900 relative">
+          <Card className="relative bg-muted/40">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleCloseInfo}
-              className="absolute top-3 right-3 h-8 w-8 p-0 hover:bg-blue-100 dark:hover:bg-neutral-800"
+              className="absolute top-3 right-3 h-8 w-8 p-0 hover:bg-muted"
             >
-              <X className="w-4 h-4 dark:text-gray-400" />
+              <X className="w-4 h-4 text-muted-foreground" />
             </Button>
             <CardHeader>
-              <CardTitle className="text-lg text-blue-900 dark:text-gray-100">💡 ¿Cómo funcionan los gastos recurrentes?</CardTitle>
+              <CardTitle className="text-base font-semibold">¿Cómo funcionan los gastos recurrentes?</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm text-blue-800 dark:text-gray-300 pr-12">
+            <CardContent className="space-y-3 text-sm text-muted-foreground pr-12">
               <p>
                 <strong>Semanal:</strong> El gasto se creará automáticamente cada semana en el día que especifiques.
               </p>

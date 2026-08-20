@@ -126,8 +126,8 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Descripción */}
       <div className="space-y-2">
-        <Label htmlFor="description" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Descripción <span className="text-red-500">*</span>
+        <Label htmlFor="description" className="text-sm font-medium text-foreground">
+          Descripción <span className="text-destructive">*</span>
         </Label>
         <Textarea
           id="description"
@@ -137,19 +137,19 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
             setFormData({ ...formData, description: e.target.value })
             if (errors.description) setErrors({ ...errors, description: "" })
           }}
-          className={`min-h-[80px] text-base border-2 transition-colors rounded-lg ${errors.description ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-neutral-700 focus:border-blue-500 dark:focus:border-gray-500'}`}
+          className={`min-h-[72px] text-sm border transition-colors rounded-md focus-visible:ring-1 focus-visible:ring-ring ${errors.description ? 'border-destructive' : 'border-border'}`}
           rows={3}
         />
-        {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+        {errors.description && <p className="text-destructive text-sm">{errors.description}</p>}
       </div>
 
       {/* Monto - Más prominente en móvil */}
       <div className="space-y-2">
-        <Label htmlFor="amount" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Monto (USD) <span className="text-red-500">*</span>
+        <Label htmlFor="amount" className="text-sm font-medium text-foreground">
+          Monto (USD) <span className="text-destructive">*</span>
         </Label>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg font-semibold">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
             $
           </span>
           <Input
@@ -162,16 +162,16 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
               setFormData({ ...formData, amount: e.target.value })
               if (errors.amount) setErrors({ ...errors, amount: "" })
             }}
-            className={`pl-8 text-lg font-semibold border-2 transition-colors h-14 rounded-lg ${errors.amount ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-neutral-700 focus:border-green-500 dark:focus:border-emerald-500'}`}
+            className={`pl-7 text-sm border transition-colors h-10 rounded-md focus-visible:ring-1 focus-visible:ring-ring ${errors.amount ? 'border-destructive' : 'border-border'}`}
           />
         </div>
-        {errors.amount && <p className="text-red-500 text-sm">{errors.amount}</p>}
+        {errors.amount && <p className="text-destructive text-sm">{errors.amount}</p>}
       </div>
 
       {/* Fecha */}
       <div className="space-y-2">
-        <Label htmlFor="date" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Fecha <span className="text-red-500">*</span>
+        <Label htmlFor="date" className="text-sm font-medium text-foreground">
+          Fecha <span className="text-destructive">*</span>
         </Label>
         <Input
           id="date"
@@ -181,15 +181,15 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
             setFormData({ ...formData, date: e.target.value })
             if (errors.date) setErrors({ ...errors, date: "" })
           }}
-          className={`text-base border-2 transition-colors h-12 rounded-lg ${errors.date ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-neutral-700 focus:border-blue-500 dark:focus:border-gray-500'}`}
+          className={`text-sm border transition-colors h-10 rounded-md focus-visible:ring-1 focus-visible:ring-ring ${errors.date ? 'border-destructive' : 'border-border'}`}
         />
-        {errors.date && <p className="text-red-500 text-sm">{errors.date}</p>}
+        {errors.date && <p className="text-destructive text-sm">{errors.date}</p>}
       </div>
 
       {/* Categoría */}
       <div className="space-y-2">
-        <Label htmlFor="category" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Categoría <span className="text-red-500">*</span>
+        <Label htmlFor="category" className="text-sm font-medium text-foreground">
+          Categoría <span className="text-destructive">*</span>
         </Label>
         <Select
           value={formData.categoryId}
@@ -198,24 +198,24 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
             if (errors.categoryId) setErrors({ ...errors, categoryId: "" })
           }}
         >
-          <SelectTrigger className={`h-12 text-base border-2 rounded-lg ${errors.categoryId ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-neutral-700 focus:border-blue-500 dark:focus:border-gray-500'}`}>
+          <SelectTrigger className={`h-10 text-sm border rounded-md focus-visible:ring-1 focus-visible:ring-ring ${errors.categoryId ? 'border-destructive' : 'border-border'}`}>
             <SelectValue placeholder="Selecciona una categoría" />
           </SelectTrigger>
           <SelectContent>
             {categories.map((cat) => (
-              <SelectItem key={cat.id} value={String(cat.id)} className="text-base py-3">
+              <SelectItem key={cat.id} value={String(cat.id)} className="text-sm">
                 {cat.nombre}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {errors.categoryId && <p className="text-red-500 text-sm">{errors.categoryId}</p>}
+        {errors.categoryId && <p className="text-destructive text-sm">{errors.categoryId}</p>}
       </div>
 
       {/* Método de Pago */}
       <div className="space-y-2">
-        <Label htmlFor="paymentMethod" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Método de Pago <span className="text-red-500">*</span>
+        <Label htmlFor="paymentMethod" className="text-sm font-medium text-foreground">
+          Método de Pago <span className="text-destructive">*</span>
         </Label>
         <Select
           value={formData.paymentMethodId}
@@ -224,24 +224,24 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
             if (errors.paymentMethodId) setErrors({ ...errors, paymentMethodId: "" })
           }}
         >
-          <SelectTrigger className={`h-12 text-base border-2 rounded-lg ${errors.paymentMethodId ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-neutral-700 focus:border-blue-500 dark:focus:border-gray-500'}`}>
+          <SelectTrigger className={`h-10 text-sm border rounded-md focus-visible:ring-1 focus-visible:ring-ring ${errors.paymentMethodId ? 'border-destructive' : 'border-border'}`}>
             <SelectValue placeholder="¿Cómo pagaste?" />
           </SelectTrigger>
           <SelectContent>
             {paymentMethods.map((m) => (
-              <SelectItem key={m.id} value={String(m.id)} className="text-base py-3">
+              <SelectItem key={m.id} value={String(m.id)} className="text-sm">
                 {m.nombre}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {errors.paymentMethodId && <p className="text-red-500 text-sm">{errors.paymentMethodId}</p>}
+        {errors.paymentMethodId && <p className="text-destructive text-sm">{errors.paymentMethodId}</p>}
       </div>
 
       {/* Botón de envío - Más prominente */}
       <Button 
         type="submit" 
-        className="w-full h-14 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none rounded-xl" 
+        className="w-full h-10 text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md" 
         disabled={isSubmitting}
       >
         {isSubmitting ? (

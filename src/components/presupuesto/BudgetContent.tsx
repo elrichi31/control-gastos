@@ -58,7 +58,7 @@ export function BudgetContent({
     } else {
       return (
         <div className="text-center py-8">
-          <p className="text-gray-500 dark:text-gray-400">No puedes crear presupuestos para años anteriores.</p>
+          <p className="text-muted-foreground">No puedes crear presupuestos para años anteriores.</p>
         </div>
       )
     }
@@ -78,12 +78,13 @@ export function BudgetContent({
         setIsMonthDialogOpen={setIsMonthDialogOpen}
         onAddMonth={canAddMonth ? handleAddMonth : () => {}}
         canAddMonth={canAddMonth}
+        selectedYear={selectedYear}
       />
       
       {/* Mensaje cuando todos los meses están siendo utilizados */}
       {areAllMonthsUsed && (
         <div className="text-center py-8">
-          <p className="text-gray-500 dark:text-gray-400">Todos los meses del año están siendo utilizados</p>
+          <p className="text-muted-foreground">Todos los meses del año están siendo utilizados</p>
         </div>
       )}
     </>

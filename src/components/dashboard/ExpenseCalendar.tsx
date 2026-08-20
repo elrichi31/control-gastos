@@ -1,7 +1,6 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar } from "lucide-react"
 import { format, isToday, getDay, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from "date-fns"
 import { es } from "date-fns/locale"
 import { useMemo } from "react"
@@ -17,98 +16,92 @@ export function ExpenseCalendar({ currentDate, expenses }: ExpenseCalendarProps)
   const currentMonth = startOfMonth(currentDate)
   const currentMonthEnd = endOfMonth(currentDate)
 
-  const dailyExpenses = useMemo(() => {
+  const { dias, maximo } = useMemo(() => {
     const daysInMonth = eachDayOfInterval({ start: currentMonth, end: currentMonthEnd })
-    
-    // Filter expenses for current month
+
     const monthExpenses = expenses.filter(g => {
       const fecha = toDateWithTime(g.fecha)
       return fecha >= currentMonth && fecha <= currentMonthEnd
     })
 
-    return daysInMonth.map(day => {
-      const dayExpenses = monthExpenses.filter(g => {
-        const fecha = toDateWithTime(g.fecha)
-        return isSameDay(fecha, day)
-      })
-      const totalDay = dayExpenses.reduce((sum, g) => sum + g.monto, 0)
+    const dias = daysInMonth.map(day => {
+      const dayExpenses = monthExpenses.filter(g => isSameDay(toDateWithTime(g.fecha), day))
       return {
         date: day,
-        total: totalDay,
-        count: dayExpenses.length
+        total: dayExpenses.reduce((sum, g) => sum + g.monto, 0),
+        count: dayExpenses.length,
       }
     })
+
+    return { dias, maximo: Math.max(...dias.map(d => d.total), 0) }
   }, [expenses, currentMonth, currentMonthEnd])
 
-  const weekDays = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa']
+  const weekDays = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"]
+
+  /**
+   * Mapa de calor en vez de "rojo si hay gastos": la intensidad dice cuánto,
+   * no solo si hubo. Cuatro escalones se distinguen mejor que un degradado.
+   */
+  const intensidad = (total: number) => {
+    if (total === 0 || maximo === 0) return "bg-muted/40"
+    const r = total / maximo
+    if (r > 0.66) return "bg-chart-1/70"
+    if (r > 0.33) return "bg-chart-1/45"
+    return "bg-chart-1/20"
+  }
 
   return (
-    <Card className="dark:bg-neutral-900 dark:border-neutral-700">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 dark:text-white">
-          <Calendar className="w-5 h-5" />
-          Calendario de Gastos - {format(currentDate, "MMMM yyyy", { locale: es })}
+    <Card className="h-full">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold">
+          {format(currentDate, "MMMM yyyy", { locale: es }).replace(/^./, c => c.toUpperCase())}
         </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          {dias.filter(d => d.count > 0).length} días con gasto este mes
+        </p>
       </CardHeader>
       <CardContent>
-        {/* Días de la semana */}
-        <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 sm:mb-3">
+        <div className="grid grid-cols-7 gap-1 mb-1.5">
           {weekDays.map(day => (
-            <div key={day} className="text-center text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 p-1 sm:p-2">
+            <div key={day} className="text-center text-[11px] font-medium text-muted-foreground">
               {day}
             </div>
           ))}
         </div>
-        
-        {/* Grid del calendario */}
-        <div className="grid grid-cols-7 gap-1 sm:gap-2">
-          {/* Espacios vacíos para los días anteriores al inicio del mes */}
+
+        <div className="grid grid-cols-7 gap-1">
           {Array.from({ length: getDay(currentMonth) }).map((_, index) => (
-            <div key={`empty-${index}`} className="h-12 sm:h-16"></div>
+            <div key={`empty-${index}`} className="aspect-square" />
           ))}
-          
-          {/* Días del mes */}
-          {dailyExpenses.map(({ date, total }) => {
-            const dayNumber = format(date, 'd')
-            const isCurrentDay = isToday(date)
-            const hasExpenses = total > 0
-            
+
+          {dias.map(({ date, total, count }) => {
+            const esHoy = isToday(date)
             return (
               <div
                 key={date.toISOString()}
-                className={`
-                  h-12 sm:h-16 p-1 sm:p-2 rounded-lg text-center text-xs sm:text-sm cursor-pointer transition-colors flex flex-col justify-center
-                  ${isCurrentDay
-                    ? 'bg-blue-100 dark:bg-neutral-900 border border-blue-500 dark:border-neutral-600 sm:border-2'
-                    : hasExpenses
-                      ? 'bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800'
-                      : 'bg-gray-50 dark:bg-neutral-900 hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-800'
-                  }
-                `}
+                title={
+                  count > 0
+                    ? `${format(date, "d 'de' MMMM", { locale: es })}: ${formatMoney(total)} en ${count} ${count === 1 ? "gasto" : "gastos"}`
+                    : format(date, "d 'de' MMMM", { locale: es })
+                }
+                className={`aspect-square rounded-md flex items-center justify-center text-xs transition-colors ${intensidad(total)} ${
+                  esHoy ? "ring-1 ring-primary ring-inset font-semibold text-foreground" : "text-muted-foreground"
+                }`}
               >
-                <div className={`font-medium leading-none ${isCurrentDay ? 'text-blue-700 dark:text-gray-300' : 'text-gray-900 dark:text-gray-100'}`}>
-                  {dayNumber}
-                </div>
-                {hasExpenses && (
-                  <div className="text-[10px] sm:text-xs text-red-600 dark:text-red-400 font-medium leading-tight mt-0.5 sm:mt-1">
-                    {total > 999 ? formatMoney(Math.round(total/1000) * 1000).replace('.00', '') + 'k' : formatMoney(total)}
-                  </div>
-                )}
+                {format(date, "d")}
               </div>
             )
           })}
         </div>
-        
-        {/* Leyenda */}
-        <div className="mt-4 flex justify-center gap-6 text-sm text-gray-500 dark:text-gray-400">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-blue-100 dark:bg-neutral-900 border border-blue-500 dark:border-neutral-600 rounded"></div>
-            <span>Hoy</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded"></div>
-            <span>Días con gastos</span>
-          </div>
+
+        {/* Leyenda de intensidad, como en un heatmap de contribuciones */}
+        <div className="flex items-center justify-end gap-1.5 mt-4 text-[11px] text-muted-foreground">
+          <span>Menos</span>
+          <span className="w-3 h-3 rounded-sm bg-muted/40" />
+          <span className="w-3 h-3 rounded-sm bg-chart-1/20" />
+          <span className="w-3 h-3 rounded-sm bg-chart-1/45" />
+          <span className="w-3 h-3 rounded-sm bg-chart-1/70" />
+          <span>Más</span>
         </div>
       </CardContent>
     </Card>

@@ -8,14 +8,14 @@ import { toDateWithTime } from "@/lib/utils"
 import { PageTitle } from "@/components/PageTitle"
 import {
   DashboardHeader,
-  SummaryCards,
   ExpenseCalendar,
   RecentExpenses,
-  QuickActions,
-  MonthlyComparison,
-  DaySummary,
   BudgetCategoryProgress
 } from "@/components/dashboard"
+import { StatTile, StatTileRow } from "@/components/stats/stat-tile"
+import { BudgetSummary } from "@/components/presupuesto/BudgetSummary"
+import { formatMoney } from "@/lib/utils"
+import { getDaysInMonth, differenceInCalendarDays } from "date-fns"
 
 const currentDate = new Date()
 const currentMonth = startOfMonth(currentDate)
@@ -26,7 +26,6 @@ const lastMonthEnd = endOfMonth(subMonths(currentDate, 1))
 export default function DashboardPage() {
     const { gastos, loading } = useGastosFiltrados()
     const [budgetTotal, setBudgetTotal] = useState<number | undefined>(undefined)
-    const [budgetId, setBudgetId] = useState<string | undefined>(undefined)
     const [budgetCategories, setBudgetCategories] = useState<any[]>([])
     const [loadingBudget, setLoadingBudget] = useState(true)
 
@@ -44,7 +43,6 @@ export default function DashboardPage() {
 
                     if (currentMonthBudget) {
                         setBudgetTotal(currentMonthBudget.total)
-                        setBudgetId(currentMonthBudget.id)
 
                         // Obtener categorías del presupuesto
                         const categoriesResponse = await fetch(`/api/presupuesto-mensual-detalle?presupuesto_mensual_id=${currentMonthBudget.id}`)
@@ -115,22 +113,13 @@ export default function DashboardPage() {
     const monthlyChange = currentMonthTotal - lastMonthTotal
     const monthlyChangePercentage = lastMonthTotal > 0 ? ((monthlyChange / lastMonthTotal) * 100) : 0
 
-    // Calcular ahorro del mes (presupuesto - gasto)
-    const savingsAmount = budgetTotal !== undefined ? budgetTotal - currentMonthTotal : undefined
+    const ayerTotal = yesterdayExpenses.reduce((sum, g) => sum + g.monto, 0)
 
-    // Categoría con más gasto este mes
-    const topCategory = useMemo(() => {
-        const categoryTotals: Record<string, { name: string; total: number }> = {}
-        currentMonthExpenses.forEach(g => {
-            if (!categoryTotals[g.categoria_id]) {
-                categoryTotals[g.categoria_id] = { name: g.categoria.nombre, total: 0 }
-            }
-            categoryTotals[g.categoria_id].total += g.monto
-        })
-
-        const topCat = Object.values(categoryTotals).sort((a, b) => b.total - a.total)[0]
-        return topCat || { name: "N/A", total: 0 }
-    }, [currentMonthExpenses])
+    // Proyeccion de cierre: mismo criterio que en Estadisticas (ritmo diario
+    // sobre los dias ya transcurridos, extrapolado al mes completo).
+    const diasTranscurridos = differenceInCalendarDays(currentDate, currentMonth) + 1
+    const ritmoDiario = diasTranscurridos > 0 ? currentMonthTotal / diasTranscurridos : 0
+    const proyeccionMes = ritmoDiario * getDaysInMonth(currentDate)
 
     // Calcular progreso de categorías del presupuesto
     const categoryProgress = useMemo(() => {
@@ -160,66 +149,65 @@ export default function DashboardPage() {
 
     if (loading) {
         return (
-            <div className="max-w-7xl mx-auto p-6 bg-gray-50 dark:bg-neutral-950 min-h-screen">
-                <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-4">
+                <div className="h-16 rounded-xl bg-card border border-border animate-pulse" />
+                <div className="h-24 rounded-xl bg-card border border-border animate-pulse" />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="h-80 rounded-xl bg-card border border-border animate-pulse" />
+                    <div className="h-80 rounded-xl bg-card border border-border animate-pulse" />
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-gray-50 dark:bg-neutral-950 min-h-screen">
+        <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
             <PageTitle customTitle={`Dashboard - ${format(currentDate, "MMMM yyyy", { locale: es })} - BethaSpend`} />
             
-            {/* Header */}
             <DashboardHeader currentDate={currentDate} />
 
-            {/* Cards de resumen */}
-            <SummaryCards
-                currentMonthTotal={currentMonthTotal}
-                todayTotal={todayTotal}
-                todayCount={todayExpenses.length}
-                topCategory={topCategory}
-                totalExpenses={gastos.length}
-                currentMonthCount={currentMonthExpenses.length}
-                monthlyChange={monthlyChange}
-                monthlyChangePercentage={monthlyChangePercentage}
-                budgetTotal={budgetTotal}
-                savingsAmount={savingsAmount}
-            />
+            <div className="space-y-4">
+                {/* Misma fila de KPIs que en Estadisticas, para que ambas pantallas se lean igual */}
+                <StatTileRow>
+                    <StatTile
+                        etiqueta="Gasto del mes"
+                        valor={formatMoney(currentMonthTotal)}
+                        delta={lastMonthTotal > 0 ? monthlyChangePercentage : null}
+                        ayuda="sin mes anterior"
+                    />
+                    <StatTile
+                        etiqueta="Hoy"
+                        valor={formatMoney(todayTotal)}
+                        delta={ayerTotal > 0 ? ((todayTotal - ayerTotal) / ayerTotal) * 100 : null}
+                        ayuda={`${todayExpenses.length} ${todayExpenses.length === 1 ? "transaccion" : "transacciones"}`}
+                    />
+                    <StatTile
+                        etiqueta="Proyeccion de cierre"
+                        valor={formatMoney(proyeccionMes)}
+                        delta={lastMonthTotal > 0 ? ((proyeccionMes - lastMonthTotal) / lastMonthTotal) * 100 : null}
+                        ayuda={`ritmo de ${formatMoney(ritmoDiario)}/dia`}
+                    />
+                    <StatTile
+                        etiqueta="Transacciones"
+                        valor={String(currentMonthExpenses.length)}
+                        delta={lastMonthExpenses.length > 0
+                            ? ((currentMonthExpenses.length - lastMonthExpenses.length) / lastMonthExpenses.length) * 100
+                            : null}
+                        invertirColor={false}
+                        ayuda="sin mes anterior"
+                    />
+                </StatTileRow>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Calendario mensual */}
-                <ExpenseCalendar currentDate={currentDate} expenses={currentMonthExpenses} />
+                {/* El bloque de presupuesto solo aparece si el mes tiene uno cargado */}
+                {budgetTotal !== undefined && budgetTotal > 0 && (
+                    <BudgetSummary presupuestado={budgetTotal} gastado={currentMonthTotal} />
+                )}
 
-                {/* Gastos recientes */}
-                <RecentExpenses expenses={recentExpenses} totalCount={gastos.length} />
-            </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                    <ExpenseCalendar currentDate={currentDate} expenses={currentMonthExpenses} />
+                    <RecentExpenses expenses={recentExpenses} totalCount={gastos.length} />
+                </div>
 
-            {/* Acciones rápidas y comparación mensual */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                {/* Acciones rápidas */}
-                <QuickActions />
-
-                {/* Comparación mensual */}
-                <MonthlyComparison
-                    lastMonthTotal={lastMonthTotal}
-                    currentMonthTotal={currentMonthTotal}
-                    monthlyChange={monthlyChange}
-                />
-                
-                {/* Widget de resumen del día */}
-                <DaySummary
-                    todayTotal={todayTotal}
-                    todayCount={todayExpenses.length}
-                    yesterdayTotal={yesterdayExpenses.reduce((sum, g) => sum + g.monto, 0)}
-                    hasYesterdayExpenses={yesterdayExpenses.length > 0}
-                />
-            </div>
-
-            {/* Gráfico de progreso de categorías vs presupuesto */}
-            <div className="mt-6">
                 <BudgetCategoryProgress categories={categoryProgress} />
             </div>
         </div>

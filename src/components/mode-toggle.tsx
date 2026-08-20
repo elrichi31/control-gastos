@@ -16,7 +16,7 @@ export function ModeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="dark:hover:bg-neutral-800">
+      <Button variant="ghost" size="icon" className="hover:bg-muted">
         <Sun className="h-5 w-5" />
       </Button>
     )
@@ -29,13 +29,13 @@ export function ModeToggle() {
       variant="ghost"
       size="icon"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="dark:hover:bg-neutral-800"
+      className="hover:bg-muted"
       title={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
     >
       {isDark ? (
         <Sun className="h-5 w-5 text-yellow-500" />
       ) : (
-        <Moon className="h-5 w-5 text-gray-700" />
+        <Moon className="h-5 w-5 text-foreground" />
       )}
       <span className="sr-only">Cambiar tema</span>
     </Button>

@@ -112,7 +112,7 @@ export default function RegisterPage() {
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center items-center p-12 w-full">
           <div className="text-center max-w-md">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl mb-8 border border-white/20">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-lg mb-8 border border-white/20">
               <Wallet className="w-8 h-8 text-white" />
             </div>
             
@@ -125,7 +125,7 @@ export default function RegisterPage() {
             </p>
 
             {/* Tips */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 text-left">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20 text-left">
               <p className="text-white/60 text-xs uppercase tracking-wider mb-4">💡 Tip para empezar</p>
               <p className="text-white text-sm leading-relaxed">
                 Comienza registrando tus gastos del día a día. No necesitas ser perfecto, solo constante. Con el tiempo verás patrones que te ayudarán a ahorrar.
@@ -136,14 +136,14 @@ export default function RegisterPage() {
       </div>
 
       {/* Right Panel - Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-12 lg:px-16 xl:px-24 bg-white dark:bg-neutral-950 relative">
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-12 lg:px-16 xl:px-24 bg-card relative">
         {/* Logo and Theme Toggle */}
         <div className="absolute top-6 left-6 sm:left-8 lg:left-16 xl:left-24 flex items-center gap-4">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="p-2 rounded-xl bg-blue-500 text-white group-hover:bg-blue-600 transition-colors">
+            <div className="p-2 rounded-lg bg-blue-500 text-white group-hover:bg-blue-600 transition-colors">
               <Wallet className="w-5 h-5" />
             </div>
-            <span className="text-lg font-semibold text-gray-900 dark:text-white">
+            <span className="text-lg font-semibold text-foreground">
               BethaSpend
             </span>
           </Link>
@@ -155,10 +155,10 @@ export default function RegisterPage() {
 
         <div className="max-w-md w-full mx-auto mt-16 lg:mt-0">
           <div className="mb-6">
-            <h1 className="text-4xl font-light text-gray-900 dark:text-white mb-3">
+            <h1 className="text-4xl font-light text-foreground mb-3">
               Crear cuenta
             </h1>
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className="text-muted-foreground">
               Ingresa tus datos para comenzar a gestionar tus finanzas
             </p>
           </div>
@@ -166,7 +166,7 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-gray-700 dark:text-gray-300">
+                <Label htmlFor="firstName" className="text-foreground">
                   Nombre
                 </Label>
                 <Input
@@ -176,12 +176,12 @@ export default function RegisterPage() {
                   placeholder="Tu nombre"
                   value={formData.firstName}
                   onChange={handleChange}
-                  className="h-12 px-4 bg-gray-50 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
+                  className="h-12 px-4 bg-muted border-border rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-gray-700 dark:text-gray-300">
+                <Label htmlFor="lastName" className="text-foreground">
                   Apellido
                 </Label>
                 <Input
@@ -191,14 +191,14 @@ export default function RegisterPage() {
                   placeholder="Tu apellido"
                   value={formData.lastName}
                   onChange={handleChange}
-                  className="h-12 px-4 bg-gray-50 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
+                  className="h-12 px-4 bg-muted border-border rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">
+              <Label htmlFor="email" className="text-foreground">
                 Correo electrónico
               </Label>
               <Input
@@ -208,13 +208,13 @@ export default function RegisterPage() {
                 placeholder="tu@email.com"
                 value={formData.email}
                 onChange={handleChange}
-                className="h-12 px-4 bg-gray-50 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
+                className="h-12 px-4 bg-muted border-border rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-700 dark:text-gray-300">
+              <Label htmlFor="password" className="text-foreground">
                 Contraseña
               </Label>
               <div className="relative">
@@ -225,13 +225,13 @@ export default function RegisterPage() {
                   placeholder="Mínimo 6 caracteres"
                   value={formData.password}
                   onChange={handleChange}
-                  className="h-12 px-4 pr-12 bg-gray-50 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
+                  className="h-12 px-4 pr-12 bg-muted border-border rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -239,7 +239,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-gray-700 dark:text-gray-300">
+              <Label htmlFor="confirmPassword" className="text-foreground">
                 Confirmar contraseña
               </Label>
               <div className="relative">
@@ -250,13 +250,13 @@ export default function RegisterPage() {
                   placeholder="Confirma tu contraseña"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="h-12 px-4 pr-12 bg-gray-50 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
+                  className="h-12 px-4 pr-12 bg-muted border-border rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                 >
                   {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -264,14 +264,14 @@ export default function RegisterPage() {
             </div>
 
             {error && (
-              <div className="text-red-500 dark:text-red-400 text-sm text-center bg-red-50 dark:bg-red-900/20 p-3 rounded-xl">
+              <div className="text-red-500 dark:text-red-400 text-sm text-center bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
                 {error}
               </div>
             )}
 
             <Button 
               type="submit" 
-              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all"
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md font-medium transition-colors"
               disabled={isLoading}
             >
               {isLoading ? 'Creando cuenta...' : 'Crear cuenta'}
@@ -280,10 +280,10 @@ export default function RegisterPage() {
 
           <div className="relative my-5">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200 dark:border-neutral-800"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white dark:bg-neutral-950 text-gray-500 dark:text-gray-400">
+              <span className="px-4 bg-card text-muted-foreground">
                 O continúa con
               </span>
             </div>
@@ -292,7 +292,7 @@ export default function RegisterPage() {
           <Button
             type="button"
             variant="outline"
-            className="w-full h-12 bg-gray-50 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-xl font-medium transition-all"
+            className="w-full h-12 bg-transparent border-border hover:bg-muted rounded-md font-medium transition-colors"
             onClick={handleGoogleSignIn}
           >
             <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
@@ -304,7 +304,7 @@ export default function RegisterPage() {
             Registrarse con Google
           </Button>
 
-          <p className="mt-6 text-center text-gray-600 dark:text-gray-400">
+          <p className="mt-6 text-center text-muted-foreground">
             ¿Ya tienes una cuenta?{' '}
             <Link href="/auth/login" className="text-blue-500 hover:text-blue-600 font-medium">
               Inicia sesión

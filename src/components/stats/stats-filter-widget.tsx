@@ -97,9 +97,9 @@ export function StatsFilterWidget({ onFiltersChange }: StatsFilterWidgetProps) {
   const activeLabel = getActiveFilterLabel()
 
   return (
-    <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700 p-4">
+    <div className="bg-card rounded-lg border border-border p-4">
       <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 font-medium min-w-fit">
+        <div className="flex items-center gap-2 text-foreground font-medium min-w-fit">
           <Filter className="h-4 w-4" />
           <span>Filtrar por:</span>
         </div>
@@ -109,10 +109,10 @@ export function StatsFilterWidget({ onFiltersChange }: StatsFilterWidgetProps) {
             value={filters.filterType}
             onValueChange={handleFilterTypeChange}
           >
-            <SelectTrigger className="w-[180px] bg-gray-50 dark:bg-neutral-900 border-gray-200 dark:border-neutral-700">
+            <SelectTrigger className="w-[180px] bg-muted border-border">
               <SelectValue placeholder="Seleccionar filtro" />
             </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-neutral-900">
+            <SelectContent className="bg-card">
               <SelectItem value="all">Todo el historial</SelectItem>
               <SelectItem value="year-month">Año y mes</SelectItem>
               <SelectItem value="year">Solo año</SelectItem>
@@ -166,7 +166,7 @@ export function StatsFilterWidget({ onFiltersChange }: StatsFilterWidgetProps) {
                 onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
                 className="w-auto"
               />
-              <span className="text-gray-500">-</span>
+              <span className="text-muted-foreground">-</span>
               <Input
                 type="date"
                 value={filters.dateTo}

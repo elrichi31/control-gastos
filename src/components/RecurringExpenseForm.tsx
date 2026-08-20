@@ -157,7 +157,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Descripción */}
       <div className="space-y-2">
-        <Label htmlFor="rec-description" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <Label htmlFor="rec-description" className="text-sm font-semibold text-foreground">
           Descripción <span className="text-red-500">*</span>
         </Label>
         <Textarea
@@ -168,7 +168,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
             setFormData({ ...formData, description: e.target.value })
             if (errors.description) setErrors({ ...errors, description: "" })
           }}
-          className={`min-h-[80px] text-base border-2 transition-colors rounded-lg ${errors.description ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-neutral-700 focus:border-blue-500 dark:focus:border-gray-500'}`}
+          className={`min-h-[80px] text-base border-2 transition-colors rounded-lg ${errors.description ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}
           rows={3}
         />
         {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
@@ -177,11 +177,11 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
       {/* Monto y Frecuencia en una línea */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="rec-amount" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <Label htmlFor="rec-amount" className="text-sm font-semibold text-foreground">
             Monto (USD) <span className="text-red-500">*</span>
           </Label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg font-semibold">
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-lg font-semibold">
               $
             </span>
             <Input
@@ -194,14 +194,14 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
                 setFormData({ ...formData, amount: e.target.value })
                 if (errors.amount) setErrors({ ...errors, amount: "" })
               }}
-              className={`pl-8 text-lg font-semibold border-2 transition-colors h-12 rounded-lg ${errors.amount ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-neutral-700 focus:border-green-500 dark:focus:border-emerald-500'}`}
+              className={`pl-8 text-lg font-semibold border-2 transition-colors h-12 rounded-lg ${errors.amount ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-green-500 dark:focus:border-emerald-500'}`}
             />
           </div>
           {errors.amount && <p className="text-red-500 text-sm">{errors.amount}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="frecuencia" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <Label htmlFor="frecuencia" className="text-sm font-semibold text-foreground">
             Frecuencia <span className="text-red-500">*</span>
           </Label>
           <Select
@@ -211,7 +211,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
               if (errors.frecuencia) setErrors({ ...errors, frecuencia: "" })
             }}
           >
-            <SelectTrigger className={`h-12 text-base border-2 rounded-lg ${errors.frecuencia ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-neutral-700 focus:border-blue-500 dark:focus:border-gray-500'}`}>
+            <SelectTrigger className={`h-12 text-base border-2 rounded-lg ${errors.frecuencia ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}>
               <SelectValue placeholder="Frecuencia" />
             </SelectTrigger>
             <SelectContent>
@@ -226,7 +226,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
       {/* Día de la semana (solo si es semanal) */}
       {formData.frecuencia === 'semanal' && (
         <div className="space-y-2">
-          <Label htmlFor="dia-semana" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <Label htmlFor="dia-semana" className="text-sm font-semibold text-foreground">
             Día de la Semana <span className="text-red-500">*</span>
           </Label>
           <Select
@@ -236,7 +236,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
               if (errors.diaSemana) setErrors({ ...errors, diaSemana: "" })
             }}
           >
-            <SelectTrigger className={`h-12 text-base border-2 rounded-lg ${errors.diaSemana ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-neutral-700 focus:border-blue-500 dark:focus:border-gray-500'}`}>
+            <SelectTrigger className={`h-12 text-base border-2 rounded-lg ${errors.diaSemana ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}>
               <SelectValue placeholder="Selecciona el día" />
             </SelectTrigger>
             <SelectContent>
@@ -254,7 +254,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
       {/* Día del mes (solo si es mensual) */}
       {formData.frecuencia === 'mensual' && (
         <div className="space-y-2">
-          <Label htmlFor="dia-mes" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <Label htmlFor="dia-mes" className="text-sm font-semibold text-foreground">
             Día del Mes <span className="text-red-500">*</span>
           </Label>
           <Input
@@ -268,9 +268,9 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
               setFormData({ ...formData, diaMes: e.target.value })
               if (errors.diaMes) setErrors({ ...errors, diaMes: "" })
             }}
-            className={`text-base border-2 transition-colors h-12 rounded-lg ${errors.diaMes ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-neutral-700 focus:border-blue-500 dark:focus:border-gray-500'}`}
+            className={`text-base border-2 transition-colors h-12 rounded-lg ${errors.diaMes ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400">Máximo día 28 (compatible con todos los meses)</p>
+          <p className="text-xs text-muted-foreground">Máximo día 28 (compatible con todos los meses)</p>
           {errors.diaMes && <p className="text-red-500 text-sm">{errors.diaMes}</p>}
         </div>
       )}
@@ -279,26 +279,26 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
       <div className="space-y-4">
         {/* Fecha de Inicio */}
         <div className="space-y-2">
-          <Label htmlFor="fecha-inicio" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <Label htmlFor="fecha-inicio" className="text-sm font-semibold text-foreground">
             Fecha de Inicio *
           </Label>
           <Input
             id="fecha-inicio"
             type="date"
             value={formData.fechaInicio}
-            className="text-base border-2 border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 transition-colors h-12 rounded-lg cursor-not-allowed"
+            className="text-base border-2 border-border bg-muted transition-colors h-12 rounded-lg cursor-not-allowed"
             readOnly
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400">Inicia desde el 1° del mes actual</p>
+          <p className="text-xs text-muted-foreground">Inicia desde el 1° del mes actual</p>
         </div>
 
         {/* Switch para mostrar fecha fin */}
-        <div className="flex items-center justify-between space-x-3 p-3 bg-gray-50 dark:bg-neutral-900 rounded-lg border border-gray-200 dark:border-neutral-700">
+        <div className="flex items-center justify-between space-x-3 p-3 bg-muted rounded-lg border border-border">
           <div className="flex-1">
-            <Label htmlFor="switch-fecha-fin" className="text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">
+            <Label htmlFor="switch-fecha-fin" className="text-sm font-semibold text-foreground cursor-pointer">
               ¿Tiene fecha de finalización?
             </Label>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Deja desactivado si el gasto es indefinido
             </p>
           </div>
@@ -317,7 +317,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
         {/* Fecha de Fin - solo se muestra si el switch está activo */}
         {mostrarFechaFin && (
           <div className="space-y-2">
-            <Label htmlFor="fecha-fin" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <Label htmlFor="fecha-fin" className="text-sm font-semibold text-foreground">
               Fecha de Fin
             </Label>
             <Input
@@ -326,7 +326,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
               value={formData.fechaFin}
               min={formData.fechaInicio}
               onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
-              className="text-base border-2 border-gray-200 dark:border-neutral-700 focus:border-blue-500 dark:focus:border-gray-500 transition-colors h-12 rounded-lg"
+              className="text-base border-2 border-border focus:border-blue-500 focus:border-border transition-colors h-12 rounded-lg"
             />
           </div>
         )}
@@ -334,7 +334,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
 
       {/* Categoría */}
       <div className="space-y-2">
-        <Label htmlFor="rec-category" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <Label htmlFor="rec-category" className="text-sm font-semibold text-foreground">
           Categoría <span className="text-red-500">*</span>
         </Label>
         <Select
@@ -344,7 +344,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
             if (errors.categoryId) setErrors({ ...errors, categoryId: "" })
           }}
         >
-          <SelectTrigger className={`h-12 text-base border-2 rounded-lg ${errors.categoryId ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-neutral-700 focus:border-blue-500 dark:focus:border-gray-500'}`}>
+          <SelectTrigger className={`h-12 text-base border-2 rounded-lg ${errors.categoryId ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}>
             <SelectValue placeholder="Selecciona una categoría" />
           </SelectTrigger>
           <SelectContent>
@@ -360,7 +360,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
 
       {/* Método de Pago */}
       <div className="space-y-2">
-        <Label htmlFor="rec-paymentMethod" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <Label htmlFor="rec-paymentMethod" className="text-sm font-semibold text-foreground">
           Método de Pago <span className="text-red-500">*</span>
         </Label>
         <Select
@@ -370,7 +370,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
             if (errors.paymentMethodId) setErrors({ ...errors, paymentMethodId: "" })
           }}
         >
-          <SelectTrigger className={`h-12 text-base border-2 rounded-lg ${errors.paymentMethodId ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-neutral-700 focus:border-blue-500 dark:focus:border-gray-500'}`}>
+          <SelectTrigger className={`h-12 text-base border-2 rounded-lg ${errors.paymentMethodId ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}>
             <SelectValue placeholder="¿Cómo pagarás?" />
           </SelectTrigger>
           <SelectContent>
@@ -387,7 +387,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
       {/* Botón de envío */}
       <Button 
         type="submit" 
-        className="w-full h-14 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none rounded-xl" 
+        className="w-full h-14 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none rounded-lg" 
         disabled={isSubmitting}
       >
         {isSubmitting ? (

@@ -1,10 +1,9 @@
 // Componente para manejo del contenido principal del detalle de presupuesto
 import React from "react"
-import { Plus } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { CopyPlus, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import CategoriaCard from "@/components/presupuesto/CategoriaCard"
+import CategoriaRow from "@/components/presupuesto/CategoriaRow"
 import { PresupuestoCategoriaDetalle, CategoriaDB } from "@/lib/constants"
 
 interface BudgetDetailsContentProps {
@@ -50,95 +49,106 @@ export const BudgetDetailsContent: React.FC<BudgetDetailsContentProps> = ({
   onAddExpenseClick,
   getCategoryTotal,
   getBudgetByCategory,
-  mes,
-  anio
 }) => {
   if (loading) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-500 dark:text-gray-400">Cargando información...</p>
+      <div className="space-y-3">
+        {[0, 1, 2].map(i => (
+          <div key={i} className="h-16 rounded-xl border border-border bg-card animate-pulse" />
+        ))}
+      </div>
+    )
+  }
+
+  const hayCategorias = Array.isArray(presupuestoCategorias) && presupuestoCategorias.length > 0
+
+  // Estado vacío: las dos formas de arrancar un mes, una al lado de la otra
+  if (!hayCategorias) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-muted/30 px-6 py-12 text-center">
+        <h3 className="text-base font-semibold text-foreground">Este mes aún no tiene categorías</h3>
+        <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+          Agrega categorías una por una o copia la estructura del mes anterior.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2 justify-center mt-5">
+          {availableCategories.length > 0 && (
+            <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  Agregar categoría
+                </Button>
+              </DialogTrigger>
+              <SelectorCategorias categories={availableCategories} onAdd={onAddCategory} />
+            </Dialog>
+          )}
+          <Button size="sm" variant="outline" onClick={onCopyFromPreviousMonth}>
+            <CopyPlus className="w-4 h-4 mr-1.5" />
+            Copiar mes anterior
+          </Button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
-      {/* Categorías activas */}
-      {Array.isArray(presupuestoCategorias) && presupuestoCategorias.length > 0 ? (
-        presupuestoCategorias.map((cat) => (
-          <CategoriaCard
-            key={cat.id}
-            categoria={cat}
-            onDeleteCategory={onDeleteCategory}
-            onEditExpense={onEditExpense}
-            onDeleteExpense={onDeleteExpense}
-            getCategoryTotal={() => getCategoryTotal(cat.categoria_id)}
-            getBudgetByCategory={getBudgetByCategory}
-            mes={mes}
-            anio={anio}
-            onAddExpenseClick={() => onAddExpenseClick(cat.id)}
-          />
-        ))
-      ) : (
-        <div className="text-center py-8 col-span-full">
-          <p className="text-gray-500 dark:text-gray-400 mb-4">No hay categorías para este presupuesto</p>
-          <p className="text-sm text-gray-400 dark:text-gray-500">Puedes agregar categorías manualmente o copiar del mes anterior</p>
-        </div>
-      )}
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      {presupuestoCategorias.map(cat => (
+        <CategoriaRow
+          key={cat.id}
+          categoria={cat}
+          presupuestado={getBudgetByCategory(cat.categoria_id)}
+          gastado={getCategoryTotal(cat.categoria_id)}
+          onDeleteCategory={onDeleteCategory}
+          onEditExpense={onEditExpense}
+          onDeleteExpense={onDeleteExpense}
+          onAddExpenseClick={() => onAddExpenseClick(cat.id)}
+        />
+      ))}
 
-      {/* Botón para agregar categoría */}
-      {availableCategories.length > 0 && (
+      {availableCategories.length > 0 ? (
         <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
           <DialogTrigger asChild>
-            <Card className="bg-gray-50 dark:bg-neutral-900/50 border-2 border-dashed border-gray-300 dark:border-neutral-600 hover:border-gray-400 dark:hover:border-gray-500 transition-colors cursor-pointer">
-              <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-                <Plus className="w-8 h-8 text-gray-400 dark:text-gray-500 mb-3" />
-                <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300 mb-1">Agregar categoría</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Selecciona una categoría para organizar tus gastos</p>
-              </CardContent>
-            </Card>
+            <button className="w-full flex items-center gap-2 px-4 sm:px-5 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-t border-border">
+              <Plus className="w-4 h-4" />
+              Agregar categoría
+            </button>
           </DialogTrigger>
-          <DialogContent className="bg-white dark:bg-neutral-900 dark:border-neutral-700 mx-4 max-w-md">
-            <DialogHeader>
-              <DialogTitle className="dark:text-white">Seleccionar categoría</DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {availableCategories.map((category) => (
-                <Button
-                  key={category.id}
-                  className="w-full justify-start bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-700 border border-gray-200 dark:border-neutral-600 dark:text-white"
-                  onClick={() => onAddCategory(category.id)}
-                >
-                  <span className="text-xl mr-3">{category.icono}</span>
-                  {category.nombre}
-                </Button>
-              ))}
-            </div>
-          </DialogContent>
+          <SelectorCategorias categories={availableCategories} onAdd={onAddCategory} />
         </Dialog>
-      )}
-
-      {/* Botón para copiar del mes anterior - solo mostrar si no hay categorías */}
-      {presupuestoCategorias.length === 0 && (
-        <Card 
-          className="bg-blue-50 dark:bg-neutral-900 border-2 border-dashed border-blue-300 dark:border-neutral-600 hover:border-blue-400 dark:hover:border-gray-500 transition-colors cursor-pointer"
-          onClick={onCopyFromPreviousMonth}
-        >
-          <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-            <Plus className="w-8 h-8 text-blue-400 dark:text-gray-400 mb-3" />
-            <h3 className="text-lg font-medium text-blue-600 dark:text-gray-300 mb-1">Copiar mes anterior</h3>
-            <p className="text-sm text-blue-500 dark:text-gray-400">Copia las categorías y montos del mes anterior</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Mensaje cuando no hay categorías disponibles */}
-      {availableCategories.length === 0 && presupuestoCategorias.length > 0 && (
-        <div className="text-center py-8 col-span-full">
-          <p className="text-gray-500 dark:text-gray-400">Todas las categorías están siendo utilizadas</p>
-        </div>
+      ) : (
+        <p className="px-5 py-3 text-xs text-muted-foreground border-t border-border">
+          Todas las categorías están en uso en este mes.
+        </p>
       )}
     </div>
+  )
+}
+
+function SelectorCategorias({
+  categories,
+  onAdd,
+}: {
+  categories: CategoriaDB[]
+  onAdd: (id: number) => void
+}) {
+  return (
+    <DialogContent className="max-w-sm">
+      <DialogHeader>
+        <DialogTitle className="text-base font-semibold">Seleccionar categoría</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-1.5 max-h-96 overflow-y-auto -mx-1 px-1">
+        {categories.map(category => (
+          <button
+            key={category.id}
+            className="w-full flex items-center gap-3 rounded-md border border-border px-3 py-2.5 text-sm text-foreground text-left transition-colors hover:bg-muted"
+            onClick={() => onAdd(category.id)}
+          >
+            {category.icono && <span className="text-base">{category.icono}</span>}
+            {category.nombre}
+          </button>
+        ))}
+      </div>
+    </DialogContent>
   )
 }

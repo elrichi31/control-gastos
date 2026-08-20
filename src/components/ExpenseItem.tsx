@@ -2,7 +2,7 @@ import { Tag, Calendar, CreditCard, Trash2, Repeat } from "lucide-react"
 import { Gasto } from "@/hooks/useGastosFiltrados"
 import { Badge } from "@/components/ui/badge"
 import { formatDisplayDate } from "@/lib/utils"
-import { COLORES_CATEGORIA } from "@/lib/constants"
+import { getCategoriaColor } from "@/lib/constants"
 import { useState } from "react"
 import { ConfirmModal } from "./ConfirmModal"
 import { DeleteRecurringExpenseModal } from "./DeleteRecurringExpenseModal"
@@ -84,49 +84,49 @@ export function ExpenseItem({ expense, onDelete, showDeleteIcon = false }: Props
 
   return (
     <>
-      <div className={`border dark:border-neutral-700 rounded-lg p-3 space-y-2 ${
-        expense.is_recurrent 
-          ? 'border-2 border-blue-400 dark:border-neutral-600 bg-blue-50 dark:bg-neutral-900' 
-          : ''
-      }`}>
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <p className="font-medium text-sm dark:text-white">{expense.descripcion}</p>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <Badge className={COLORES_CATEGORIA[expense.categoria?.nombre as keyof typeof COLORES_CATEGORIA] || "bg-gray-100 text-gray-800 dark:bg-neutral-900 dark:text-gray-200"}>
+      {/* Fila tipo database de Notion: sin caja, separada por una linea y con
+          hover sutil. El boton de borrar solo aparece al pasar el mouse. */}
+      <div className="group px-5 py-3 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-sm text-foreground truncate">{expense.descripcion}</p>
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              <Badge className={`border font-normal ${getCategoriaColor(expense.categoria?.nombre)}`}>
                 <Tag className="h-3 w-3 mr-1" />
                 {expense.categoria?.nombre}
               </Badge>
               {expense.is_recurrent && (
-                <Badge className="bg-blue-600 text-white border-blue-700 dark:bg-neutral-700 dark:border-neutral-600">
-                  <Repeat className="h-3 w-3 mr-1 font-bold" />
+                <Badge variant="outline" className="font-normal text-muted-foreground">
+                  <Repeat className="h-3 w-3 mr-1" />
                   Recurrente
                 </Badge>
               )}
             </div>
           </div>
-          <div className="text-right flex flex-col items-end gap-1">
-            <p className="font-bold text-red-600 dark:text-red-400">${expense.monto.toFixed(2)}</p>
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="font-medium text-sm text-foreground tabular-nums">
+              ${expense.monto.toFixed(2)}
+            </span>
             {showDeleteIcon && (
               <button
                 onClick={handleDeleteClick}
-                className="h-6 w-6 p-0 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                className="h-6 w-6 grid place-items-center rounded text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 hover:text-destructive hover:bg-muted transition-all"
                 title="Eliminar"
               >
-                <Trash2 className="h-3 w-3" />
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
         </div>
-        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-          <div className="flex items-center gap-1">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2">
+          <span className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             {formatDisplayDate(expense.fecha)}
-          </div>
-          <div className="flex items-center gap-1">
-            <CreditCard className="h-3 w-3" />
+          </span>
+          <span className="flex items-center gap-1 truncate">
+            <CreditCard className="h-3 w-3 shrink-0" />
             {expense.metodo_pago?.nombre || "Sin método"}
-          </div>
+          </span>
         </div>
       </div>
 

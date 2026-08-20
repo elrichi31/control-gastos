@@ -1,41 +1,31 @@
 "use client"
 
 import { useState } from "react"
-import { Breadcrumb } from "@/components/Breadcrumb"
-import { StatsGrid } from "@/components/stats/stats-grid"
-import { PieChartWidget } from "@/components/stats/pie-chart-widget"
-import { LineChartWidget } from "@/components/stats/line-chart-widget"
-import { RadarChartWidget } from "@/components/stats/radar-chart-widget"
 import { StatsFilterWidget } from "@/components/stats/stats-filter-widget"
-import { QuickAnalysisWidget } from "@/components/stats/quick-analysis-widget"
-import { PeriodSummaryWidget } from "@/components/stats/period-summary-widget"
-import { InsightsCards } from "@/components/stats/insights-cards"
-import { CategoryComparison } from "@/components/stats/category-comparison"
+import { StatTile, StatTileRow } from "@/components/stats/stat-tile"
+import { EvolutionChart } from "@/components/stats/evolution-chart"
+import { CategoryRanking } from "@/components/stats/category-ranking"
+import { PaymentMethodChart, WeekdayChart, FixedVsVariable } from "@/components/stats/breakdown-charts"
+import { ProjectionCard } from "@/components/stats/projection-card"
+import { TopExpenses } from "@/components/stats/top-expenses"
 import { PageTitle } from "@/components/PageTitle"
 import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
 import { useDataProcessing } from "@/hooks/useDataProcessing"
-
-interface FilterOptions {
-  filterType: "year-month" | "year" | "month" | "custom" | "all"
-  year: string
-  month: string
-  dateFrom: string
-  dateTo: string
-}
+import { useStatsAnalytics, type FilterOptions } from "@/hooks/useStatsAnalytics"
+import { formatMoney } from "@/lib/utils"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 
 export default function EstadisticasPage() {
   const { gastos, loading, error } = useGastosFiltrados()
-  
-  // Obtener mes y año actuales
+
   const getCurrentDate = () => {
     const now = new Date()
-    const year = now.getFullYear().toString()
     const monthNames = [
       "enero", "febrero", "marzo", "abril", "mayo", "junio",
-      "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+      "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
     ]
-    const month = monthNames[now.getMonth()]
-    return { year, month }
+    return { year: now.getFullYear().toString(), month: monthNames[now.getMonth()] }
   }
 
   const { year: currentYear, month: currentMonth } = getCurrentDate()
@@ -48,41 +38,10 @@ export default function EstadisticasPage() {
     dateTo: "",
   })
 
-  const {
-    filteredGastos,
-    categoryData,
-    monthlyData,
-    radarData,
-    totalExpenses,
-    monthlyAverage,
-    totalTransactions,
-    averagePerCategory,
-    maxMonth,
-    minMonth,
-    topCategory,
-    categoryPercentage,
-    currentMonthStats,
-    categoryComparisonStats
-  } = useDataProcessing({ gastos, currentFilters })
+  const { filteredGastos } = useDataProcessing({ gastos, currentFilters })
+  const a = useStatsAnalytics(gastos, currentFilters, filteredGastos)
 
-  const handleFiltersChange = (filters: FilterOptions) => {
-    setCurrentFilters(filters)
-    console.log("Filtros aplicados:", filters)
-  }
-
-  const getChartTitle = () => {
-    switch (currentFilters.filterType) {
-      case "year-month":
-        return "Evolución Diaria de Gastos"
-      case "year":
-      case "all":
-        return "Evolución Mensual de Gastos"
-      default:
-        return "Evolución de Gastos"
-    }
-  }
-
-  const getFilterDescription = () => {
+  const descripcionPeriodo = () => {
     switch (currentFilters.filterType) {
       case "year-month":
         return `${currentFilters.month.charAt(0).toUpperCase() + currentFilters.month.slice(1)} ${currentFilters.year}`
@@ -91,7 +50,7 @@ export default function EstadisticasPage() {
       case "month":
         return currentFilters.month.charAt(0).toUpperCase() + currentFilters.month.slice(1)
       case "custom":
-        return `${currentFilters.dateFrom} - ${currentFilters.dateTo}`
+        return `${currentFilters.dateFrom} — ${currentFilters.dateTo}`
       case "all":
         return "Todo el historial"
       default:
@@ -99,143 +58,121 @@ export default function EstadisticasPage() {
     }
   }
 
-  const getPageTitle = () => {
-    const period = getFilterDescription()
-    switch (currentFilters.filterType) {
-      case "year-month":
-        return `Estadísticas ${period} - BethaSpend`
-      case "year":
-        return `Estadísticas ${period} - BethaSpend`
-      case "month":
-        return `Estadísticas de ${period} - BethaSpend`
-      case "custom":
-        return `Estadísticas ${period} - BethaSpend`
-      case "all":
-        return "Estadísticas Históricas - BethaSpend"
-      default:
-        return "Estadísticas Generales - BethaSpend"
-    }
-  }
+  const etiquetaPrevio = a.previo
+    ? format(a.previo.desde, currentFilters.filterType === "year" ? "yyyy" : "MMMM", { locale: es })
+    : undefined
+
+  const tituloEvolucion =
+    currentFilters.filterType === "year-month" ? "Evolución diaria" : "Evolución del período"
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-950 dark:to-neutral-900 p-4 lg:p-8">
-      <PageTitle customTitle={getPageTitle()} />
-      {/* Header mejorado */}
-      <div className="mb-8 bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6">
-        <div className="mt-4 flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard de Estadísticas</h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Análisis detallado de tus gastos y patrones financieros
-            </p>
-          </div>
-          <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-200 dark:border-blue-800">
-            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">{getFilterDescription()}</p>
-          </div>
-        </div>
-      </div>
+    <div className="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <PageTitle customTitle={`Estadísticas ${descripcionPeriodo()} - BethaSpend`} />
 
-      {/* Estados de loading y error */}
+      <header className="mb-6">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Estadísticas</h1>
+        <p className="text-muted-foreground mt-1">
+          Análisis de tus gastos en <span className="text-foreground font-medium">{descripcionPeriodo()}</span>
+          {a.kpis.hayComparacion && etiquetaPrevio ? `, comparado con ${etiquetaPrevio}.` : "."}
+        </p>
+      </header>
+
       {loading && (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="space-y-4">
+          <div className="h-24 rounded-xl border border-border bg-card animate-pulse" />
+          <div className="h-80 rounded-xl border border-border bg-card animate-pulse" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="h-64 rounded-xl border border-border bg-card animate-pulse" />
+            <div className="h-64 rounded-xl border border-border bg-card animate-pulse" />
+          </div>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <p className="text-red-800">Error al cargar los datos: {error}</p>
+        <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 mb-6">
+          <p className="text-sm text-destructive">Error al cargar los datos: {error}</p>
         </div>
       )}
 
       {!loading && !error && (
-        <>
-          {/* Layout responsivo mejorado */}
-          <div className="space-y-6">
-            {/* Filtros horizontal */}
-            <StatsFilterWidget onFiltersChange={handleFiltersChange} />
+        <div className="space-y-4">
+          <StatsFilterWidget onFiltersChange={setCurrentFilters} />
 
-            {/* Métricas principales */}
-            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6">
-              <StatsGrid
-                totalExpenses={totalExpenses}
-                monthlyAverage={monthlyAverage}
-                totalTransactions={totalTransactions}
-                averagePerCategory={averagePerCategory}
-                currentMonthStats={currentMonthStats}
-                filterType={currentFilters.filterType}
-              />
+          {/* Fila de KPIs, cada uno con su variación contra el período anterior */}
+          <StatTileRow>
+            <StatTile etiqueta="Gasto total" valor={formatMoney(a.kpis.total)} delta={a.kpis.totalDelta} />
+            <StatTile
+              etiqueta={a.enCurso ? "Promedio diario (a hoy)" : "Promedio diario"}
+              valor={formatMoney(a.kpis.promedioDiario)}
+              delta={a.kpis.promedioDiarioDelta}
+            />
+            <StatTile
+              etiqueta="Transacciones"
+              valor={String(a.kpis.transacciones)}
+              delta={a.kpis.transaccionesDelta}
+              invertirColor={false}
+            />
+            <StatTile etiqueta="Ticket promedio" valor={formatMoney(a.kpis.ticket)} delta={a.kpis.ticketDelta} />
+          </StatTileRow>
+
+          {/* Solo aparece si el período elegido está en curso */}
+          {a.proyeccion && <ProjectionCard proyeccion={a.proyeccion} />}
+
+          <EvolutionChart
+            diario={a.evolucion}
+            acumulado={a.acumulado}
+            titulo={tituloEvolucion}
+            etiquetaPrevio={etiquetaPrevio}
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            <div className="lg:col-span-7">
+              <CategoryRanking categorias={a.porCategoria} concentracion={a.concentracion} />
             </div>
-
-            {/* Gráficos principales */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* Gráfico de líneas - más ancho */}
-              <div className="lg:col-span-8">
-                <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6 h-full">
-                  <LineChartWidget data={monthlyData} title={getChartTitle()} />
-                </div>
-              </div>
-
-              {/* Gráfico de pie */}
-              <div className="lg:col-span-4">
-                <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6 h-full">
-                  <PieChartWidget data={categoryData} title="Distribución por Categorías" />
-                </div>
-              </div>
-            </div>
-
-            {/* Radar y Comparación de Categorías */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* Radar Chart */}
-              <div className="lg:col-span-5">
-                <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6 h-full">
-                  <RadarChartWidget data={radarData} title="Análisis de Gastos por Categoría" />
-                </div>
-              </div>
-
-              {/* Comparación de categorías */}
-              <div className="lg:col-span-7">
-                <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6 h-full">
-                  <CategoryComparison categoryComparisonStats={categoryComparisonStats} />
-                </div>
-              </div>
-            </div>
-
-            {/* Resumen del período */}
-            <div className="grid grid-cols-1">
-              <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6">
-                <PeriodSummaryWidget
-                  maxMonth={maxMonth}
-                  minMonth={minMonth}
-                  topCategory={topCategory}
-                  categoryPercentage={categoryPercentage}
-                  totalExpenses={totalExpenses}
-                  filteredGastos={filteredGastos}
-                  totalTransactions={totalTransactions}
-                />
-              </div>
-            </div>
-
-            {/* Insights adicionales */}
-            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6">
-              <InsightsCards
-                filteredGastos={filteredGastos}
-                categoryData={categoryData}
-                totalExpenses={totalExpenses}
-              />
-            </div>
-
-            {/* Widget de análisis rápido - Moved to bottom */}
-            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm p-6">
-              <QuickAnalysisWidget
-                filteredGastos={filteredGastos}
-                totalExpenses={totalExpenses}
-                monthlyAverage={monthlyAverage}
-                categoryData={categoryData}
-              />
+            <div className="lg:col-span-5">
+              <PaymentMethodChart metodos={a.porMetodoPago} />
             </div>
           </div>
-        </>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <WeekdayChart dias={a.porDiaSemana} />
+            <FixedVsVariable composicion={a.composicion} />
+          </div>
+
+          <TopExpenses gastos={a.topGastos} />
+
+          {/* Cierre con datos de hábito, que no dan para un gráfico */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-border rounded-xl border border-border bg-card overflow-hidden">
+            <div className="px-5 py-4">
+              <p className="text-xs font-medium text-muted-foreground">Días con gasto</p>
+              <p className="text-2xl font-semibold text-foreground tabular-nums mt-1">{a.diasConGasto}</p>
+              <p className="text-xs text-muted-foreground mt-1.5">de {a.diasTranscurridos} días</p>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-xs font-medium text-muted-foreground">Días sin gastar</p>
+              <p className="text-2xl font-semibold text-foreground tabular-nums mt-1">{a.diasSinGasto}</p>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                {a.diasTranscurridos > 0
+                  ? `${((a.diasSinGasto / a.diasTranscurridos) * 100).toFixed(0)}% del período`
+                  : "—"}
+              </p>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-xs font-medium text-muted-foreground">Categorías activas</p>
+              <p className="text-2xl font-semibold text-foreground tabular-nums mt-1">{a.porCategoria.length}</p>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                {a.porCategoria[0] ? `Mayor: ${a.porCategoria[0].nombre}` : "—"}
+              </p>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-xs font-medium text-muted-foreground">Concentración</p>
+              <p className="text-2xl font-semibold text-foreground tabular-nums mt-1">
+                {a.concentracion.toFixed(0)}%
+              </p>
+              <p className="text-xs text-muted-foreground mt-1.5">en las 3 principales</p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

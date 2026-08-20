@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Breadcrumb } from "@/components/Breadcrumb"
 import { PageTitle } from "@/components/PageTitle"
 import { YearSelector } from "@/components/presupuesto/YearSelector"
 import { BudgetContent } from "@/components/presupuesto/BudgetContent"
@@ -36,23 +35,34 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 p-4 lg:p-8">
+    <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
       <PageTitle customTitle={`Presupuestos ${selectedYear} - BethaSpend`} />
-      <Breadcrumb items={[{ label: "Presupuesto" }]} large />
-      
-      <div className="mb-8 mt-8">
-        <YearSelector selectedYear={selectedYear} setSelectedYear={handleYearChange} />
-      </div>
-      
+
+      {/* Título y selector de año en la misma línea; en móvil se apilan */}
+      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Presupuesto</h1>
+          <p className="text-muted-foreground mt-1">Planifica y sigue tu gasto mes a mes.</p>
+        </div>
+        <div className="shrink-0">
+          <YearSelector selectedYear={selectedYear} setSelectedYear={handleYearChange} />
+        </div>
+      </header>
+
       {budgetData.errorMsg && (
-        <div className="text-center py-2">
-          <p className="text-red-500 font-medium">{budgetData.errorMsg}</p>
+        <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 mb-4">
+          <p className="text-sm text-destructive">{budgetData.errorMsg}</p>
         </div>
       )}
-      
+
       {budgetData.isLoading ? (
-        <div className="text-center py-8">
-          <p className="text-gray-500 dark:text-gray-400">Cargando presupuestos...</p>
+        <div className="space-y-6">
+          <div className="h-24 rounded-xl border border-border bg-card animate-pulse" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {[0, 1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="h-[124px] rounded-xl border border-border bg-card animate-pulse" />
+            ))}
+          </div>
         </div>
       ) : (
         <BudgetContent

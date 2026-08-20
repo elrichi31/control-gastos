@@ -16,90 +16,67 @@ interface BudgetCategoryProgressProps {
 }
 
 export function BudgetCategoryProgress({ categories }: BudgetCategoryProgressProps) {
-  // Filtrar categorías que tienen presupuesto asignado
-  const validCategories = categories.filter(cat => cat.presupuestado > 0)
+  const validCategories = categories
+    .filter(cat => cat.presupuestado > 0)
+    .sort((a, b) => b.gastado / b.presupuestado - a.gastado / a.presupuestado)
 
-  if (validCategories.length === 0) {
-    return null
-  }
+  if (validCategories.length === 0) return null
+
+  const excedidas = validCategories.filter(c => c.gastado > c.presupuestado).length
 
   return (
-    <Card className="col-span-full bg-white dark:bg-neutral-900 border dark:border-neutral-700">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold dark:text-white">
-          Progreso por Categoría
-        </CardTitle>
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold">Presupuesto por categoría</CardTitle>
+        <p className="text-xs text-muted-foreground">
+          {excedidas > 0
+            ? `${excedidas} ${excedidas === 1 ? "categoría excedida" : "categorías excedidas"} este mes`
+            : "Ninguna categoría excedida este mes"}
+        </p>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {validCategories.map((category) => {
-            const percentage = category.presupuestado > 0
-              ? (category.gastado / category.presupuestado) * 100
-              : 0
-            const isOverBudget = percentage > 100
+      <CardContent className="space-y-3.5">
+        {validCategories.map(category => {
+          const porcentaje = (category.gastado / category.presupuestado) * 100
+          const excedido = porcentaje > 100
+          const restante = category.presupuestado - category.gastado
 
-            return (
-              <div key={category.id} className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{category.icono}</span>
-                    <span className="font-medium dark:text-gray-200">{category.nombre}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className={`font-semibold ${
-                      isOverBudget
-                        ? 'text-red-600 dark:text-red-400'
-                        : 'text-gray-700 dark:text-gray-300'
-                    }`}>
-                      {formatMoney(category.gastado)}
-                    </span>
-                    <span className="text-gray-500 dark:text-gray-400 mx-1">/</span>
-                    <span className="text-gray-600 dark:text-gray-400">
-                      {formatMoney(category.presupuestado)}
-                    </span>
-                  </div>
-                </div>
-                <div className="relative w-full h-3 bg-gray-200 dark:bg-neutral-800 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${
-                      isOverBudget
-                        ? 'bg-red-500 dark:bg-red-600'
-                        : percentage >= 80
-                        ? 'bg-orange-500 dark:bg-orange-600'
-                        : 'bg-teal-500 dark:bg-teal-600'
-                    }`}
-                    style={{ width: `${Math.min(percentage, 100)}%` }}
-                  />
-                  {isOverBudget && (
-                    <div
-                      className="absolute top-0 h-full bg-red-700 dark:bg-red-800 opacity-50"
-                      style={{
-                        left: '100%',
-                        width: `${Math.min((percentage - 100), 100)}%`
-                      }}
-                    />
-                  )}
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className={`font-medium ${
-                    isOverBudget
-                      ? 'text-red-600 dark:text-red-400'
-                      : percentage >= 80
-                      ? 'text-orange-600 dark:text-orange-400'
-                      : 'text-teal-600 dark:text-teal-400'
-                  }`}>
-                    {percentage.toFixed(1)}%
+          // Mismos umbrales y colores que la vista de presupuesto
+          const colorBarra = excedido ? "bg-chart-5" : porcentaje >= 80 ? "bg-chart-3" : "bg-chart-2"
+
+          return (
+            <div key={category.id}>
+              <div className="flex items-baseline justify-between gap-3 mb-1.5">
+                <span className="text-sm text-foreground truncate">{category.nombre}</span>
+                <span className="text-sm tabular-nums shrink-0">
+                  <span className={excedido ? "text-chart-5 font-medium" : "text-foreground font-medium"}>
+                    {formatMoney(category.gastado)}
                   </span>
-                  {isOverBudget && (
-                    <span className="text-red-600 dark:text-red-400 font-medium">
-                      Excedido por {formatMoney(category.gastado - category.presupuestado)}
-                    </span>
-                  )}
-                </div>
+                  <span className="text-muted-foreground"> / {formatMoney(category.presupuestado)}</span>
+                </span>
               </div>
-            )
-          })}
-        </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${colorBarra}`}
+                    style={{ width: `${Math.min(100, porcentaje)}%` }}
+                  />
+                </div>
+                <span
+                  className={`text-xs tabular-nums shrink-0 text-right ${
+                    excedido ? "text-chart-5" : "text-muted-foreground"
+                  }`}
+                >
+                  <span className="sm:hidden">{Math.round(porcentaje)}%</span>
+                  <span className="hidden sm:inline w-28 inline-block">
+                    {excedido
+                      ? `${formatMoney(Math.abs(restante))} de más`
+                      : `${formatMoney(restante)} disponible`}
+                  </span>
+                </span>
+              </div>
+            </div>
+          )
+        })}
       </CardContent>
     </Card>
   )

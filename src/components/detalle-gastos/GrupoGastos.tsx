@@ -28,20 +28,20 @@ export function GrupoGastos({
   onDeleteGasto
 }: GrupoGastosProps) {
   return (
-    <div className="border dark:border-neutral-700 rounded-lg">
+    <div className="border border-border rounded-lg">
       <div 
-        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-neutral-900 cursor-pointer hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors rounded-t-lg"
+        className="flex items-center justify-between p-4 bg-muted cursor-pointer hover:bg-muted transition-colors rounded-t-lg"
         onClick={() => onToggle(index.toString())}
       >
         <div className="flex items-center gap-3">
           {isExpanded ? (
-            <ChevronDown className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <ChevronDown className="w-5 h-5 text-muted-foreground" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
           )}
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">{group.title}</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <h3 className="font-semibold text-foreground">{group.title}</h3>
+            <p className="text-sm text-muted-foreground">
               {group.gastos.length} gasto{group.gastos.length !== 1 ? 's' : ''}
             </p>
           </div>
@@ -54,18 +54,18 @@ export function GrupoGastos({
       </div>
       
       {isExpanded && (
-        <div className="border-t dark:border-neutral-700">
+        <div className="border-t border-border">
           {/* Vista de tabla para desktop */}
           <div className="hidden lg:block">
             <Table>
               <TableHeader>
-                <TableRow className="dark:border-neutral-800 hover:bg-transparent dark:hover:bg-transparent">
-                  <TableHead className="px-4 py-3 dark:text-gray-300">Descripción</TableHead>
-                  <TableHead className="px-3 py-3 dark:text-gray-300">Categoría</TableHead>
-                  <TableHead className="px-3 py-3 dark:text-gray-300">Método de Pago</TableHead>
-                  <TableHead className="px-3 py-3 dark:text-gray-300">Fecha</TableHead>
-                  <TableHead className="px-3 py-3 text-right dark:text-gray-300">Monto</TableHead>
-                  <TableHead className="px-3 py-3 text-center dark:text-gray-300">Acciones</TableHead>
+                <TableRow className="border-border hover:bg-transparent dark:hover:bg-transparent">
+                  <TableHead className="px-4 py-3 text-muted-foreground">Descripción</TableHead>
+                  <TableHead className="px-3 py-3 text-muted-foreground">Categoría</TableHead>
+                  <TableHead className="px-3 py-3 text-muted-foreground">Método de Pago</TableHead>
+                  <TableHead className="px-3 py-3 text-muted-foreground">Fecha</TableHead>
+                  <TableHead className="px-3 py-3 text-right text-muted-foreground">Monto</TableHead>
+                  <TableHead className="px-3 py-3 text-center text-muted-foreground">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

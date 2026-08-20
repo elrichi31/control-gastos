@@ -1,6 +1,7 @@
 
-import { MonthCard} from "./MonthCard"
+import { MonthCard } from "./MonthCard"
 import { AddMonthCard } from "./AddMonthCard"
+import { YearSummary } from "./YearSummary"
 import React from "react"
 
 interface MonthData {
@@ -27,6 +28,7 @@ interface PresupuestoGridProps {
   setIsMonthDialogOpen: (open: boolean) => void
   onAddMonth: (monthValue: string) => void
   canAddMonth: boolean
+  selectedYear: string
 }
 
 export function PresupuestoGrid({
@@ -40,14 +42,24 @@ export function PresupuestoGrid({
   setIsMonthDialogOpen,
   onAddMonth,
   canAddMonth,
+  selectedYear,
 }: PresupuestoGridProps) {
   const getActiveMonths = () =>
     allMonths.filter((month) => activeMonths.includes(month.value)).sort((a, b) => a.number - b.number)
 
+  const ordenados = getActiveMonths()
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+    <div className="space-y-6">
+      <YearSummary
+        monthlyData={monthlyData}
+        activeMonths={ordenados.map(m => m.value)}
+        anio={selectedYear}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
       {/* Meses activos */}
-      {getActiveMonths().map((month) => {
+      {ordenados.map((month) => {
         const data = monthlyData[month.value] || {
           total: 0,
           expenses: 0,
@@ -75,6 +87,7 @@ export function PresupuestoGrid({
           onAdd={onAddMonth}
         />
       )}
+      </div>
     </div>
   )
 }

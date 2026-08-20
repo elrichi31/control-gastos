@@ -29,20 +29,20 @@ export function VistaAgrupada({
   onToggleGroup
 }: VistaAgrupadaProps) {
   return (
-    <Card className="dark:bg-neutral-900 dark:border-neutral-700">
+    <Card className="bg-card border-border">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between dark:text-white">
+        <CardTitle className="flex items-center justify-between text-foreground">
           <span>Resultados ({gastos.length} gastos en {groupedGastos.length} grupos)</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         {groupedGastos.length === 0 ? (
           <div className="text-center py-12 px-6">
-            <Receipt className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            <Receipt className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               No se encontraron gastos
             </h3>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-muted-foreground">
               {activeFiltersCount > 0 
                 ? "Intenta ajustar los filtros para ver más resultados"
                 : "Aún no hay gastos registrados"

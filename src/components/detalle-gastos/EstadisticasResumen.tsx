@@ -22,11 +22,11 @@ interface EstadisticasResumenProps {
 export function EstadisticasResumen({ statistics, formatMoney }: EstadisticasResumenProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <Card className="dark:bg-neutral-900 dark:border-neutral-700">
+      <Card className="bg-card border-border">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Gastado</p>
+              <p className="text-sm text-muted-foreground">Total Gastado</p>
               <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                 {formatMoney(statistics.total)}
               </p>
@@ -36,26 +36,26 @@ export function EstadisticasResumen({ statistics, formatMoney }: EstadisticasRes
         </CardContent>
       </Card>
 
-      <Card className="dark:bg-neutral-900 dark:border-neutral-700">
+      <Card className="bg-card border-border">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Número de Gastos</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-sm text-muted-foreground">Número de Gastos</p>
+              <p className="text-2xl font-bold text-foreground">
                 {statistics.count}
               </p>
             </div>
-            <Receipt className="w-8 h-8 text-blue-600 dark:text-gray-400" />
+            <Receipt className="w-8 h-8 text-muted-foreground" />
           </div>
         </CardContent>
       </Card>
 
-      <Card className="dark:bg-neutral-900 dark:border-neutral-700">
+      <Card className="bg-card border-border">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Promedio por Gasto</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-sm text-muted-foreground">Promedio por Gasto</p>
+              <p className="text-2xl font-bold text-foreground">
                 {formatMoney(statistics.average)}
               </p>
             </div>
@@ -64,12 +64,12 @@ export function EstadisticasResumen({ statistics, formatMoney }: EstadisticasRes
         </CardContent>
       </Card>
 
-      <Card className="dark:bg-neutral-900 dark:border-neutral-700">
+      <Card className="bg-card border-border">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Categorías</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-sm text-muted-foreground">Categorías</p>
+              <p className="text-2xl font-bold text-foreground">
                 {statistics.categoryStats.length}
               </p>
             </div>

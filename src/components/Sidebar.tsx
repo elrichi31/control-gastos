@@ -112,7 +112,7 @@ export function Sidebar({
 				{/* Sidebar móvil */}
 				<div
 					className={cn(
-						"fixed left-0 top-0 h-screen bg-white dark:bg-neutral-950 border-r border-gray-200 dark:border-neutral-800 z-50 transition-transform duration-300 ease-in-out w-64 lg:hidden flex flex-col",
+						"fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border z-50 transition-transform duration-300 ease-in-out w-64 lg:hidden flex flex-col",
 						isOpen ? "translate-x-0" : "-translate-x-full",
 					)}
 				>
@@ -121,15 +121,15 @@ export function Sidebar({
 							<div className="p-1.5 rounded-lg bg-blue-500 text-white">
 								<Wallet className="w-5 h-5" />
 							</div>
-							<h1 className="text-xl font-bold text-gray-900 dark:text-white">BethaSpend</h1>
+							<h1 className="text-xl font-bold text-foreground">BethaSpend</h1>
 						</div>
 						<Button variant="ghost" size="sm" onClick={onClose}>
-							<X className="w-5 h-5 dark:text-white" />
+							<X className="w-5 h-5 text-foreground" />
 						</Button>
 					</div>
 
 					<div className="px-6 pb-4">
-						<p className="text-sm font-medium text-gray-600 dark:text-gray-400">Menu</p>
+						<p className="text-sm font-medium text-muted-foreground">Menu</p>
 					</div>
 
 					<nav className="px-3 flex-1">
@@ -147,8 +147,8 @@ export function Sidebar({
 									className={cn(
 										"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
 										isActive
-											? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
-											: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
+											? "bg-muted text-foreground"
+											: "text-muted-foreground hover:bg-muted hover:text-foreground",
 									)}
 								>
 									<Icon className="w-5 h-5" />
@@ -164,8 +164,8 @@ export function Sidebar({
 									className={cn(
 										"w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
 										isGastosActive
-											? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
-											: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
+											? "bg-muted text-foreground"
+											: "text-muted-foreground hover:bg-muted hover:text-foreground",
 									)}
 								>
 									<div className="flex items-center gap-3">
@@ -193,8 +193,8 @@ export function Sidebar({
 											className={cn(
 												"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
 												isActive
-													? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
-													: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
+													? "bg-muted text-foreground"
+													: "text-muted-foreground hover:bg-muted hover:text-foreground",
 											)}
 										>
 											<Icon className="w-4 h-4" />
@@ -207,14 +207,14 @@ export function Sidebar({
 					</nav>
 
 					{/* Sección de usuario en la parte inferior del móvil */}
-					<div className="mt-auto border-t border-gray-200 dark:border-neutral-800 p-3">
+					<div className="mt-auto border-t border-sidebar-border p-3">
 						{session?.user && (
 							<div className="px-3 py-2 mb-2">
 								<div className="flex items-center gap-2 mb-1">
-									<User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-									<p className="text-sm font-medium text-gray-900 dark:text-white">{session.user.name}</p>
+									<User className="w-4 h-4 text-muted-foreground" />
+									<p className="text-sm font-medium text-foreground">{session.user.name}</p>
 								</div>
-								<p className="text-xs text-gray-500 dark:text-gray-400 ml-6">{session.user.email}</p>
+								<p className="text-xs text-muted-foreground ml-6">{session.user.email}</p>
 							</div>
 						)}
 						
@@ -235,7 +235,7 @@ export function Sidebar({
 	return (
 		<div
 			className={cn(
-				"fixed left-0 top-0 h-screen bg-white dark:bg-neutral-950 border-r border-gray-200 dark:border-neutral-800 z-50 transition-all duration-300 ease-in-out hidden lg:block",
+				"fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border z-50 transition-all duration-300 ease-in-out hidden lg:flex lg:flex-col",
 				isCollapsed ? "w-16" : "w-64",
 			)}
 		>
@@ -254,7 +254,7 @@ export function Sidebar({
 						<div className="p-1.5 rounded-lg bg-blue-500 text-white">
 							<Wallet className="w-5 h-5" />
 						</div>
-						<h1 className="text-xl font-bold text-gray-900 dark:text-white">BethaSpend</h1>
+						<h1 className="text-xl font-bold text-foreground">BethaSpend</h1>
 					</div>
 				)}
 				<Button
@@ -265,7 +265,7 @@ export function Sidebar({
 				>
 					<ChevronLeft
 						className={cn(
-							"w-5 h-5 transition-transform dark:text-white",
+							"w-5 h-5 transition-transform text-foreground",
 							isCollapsed && "rotate-180",
 						)}
 					/>
@@ -274,7 +274,7 @@ export function Sidebar({
 
 			{!isCollapsed && (
 				<div className="px-6 pb-4">
-					<p className="text-sm font-medium text-gray-600 dark:text-gray-400">Menu</p>
+					<p className="text-sm font-medium text-muted-foreground">Menu</p>
 				</div>
 			)}
 
@@ -292,8 +292,8 @@ export function Sidebar({
 							className={cn(
 								"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1 group",
 								isActive
-									? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
-									: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
+									? "bg-muted text-foreground"
+									: "text-muted-foreground hover:bg-muted hover:text-foreground",
 								isCollapsed && "justify-center",
 							)}
 							title={isCollapsed ? item.name : undefined}
@@ -313,8 +313,8 @@ export function Sidebar({
 							className={cn(
 								"w-full flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
 								isGastosActive
-									? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
-									: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
+									? "bg-muted text-foreground"
+									: "text-muted-foreground hover:bg-muted hover:text-foreground",
 							)}
 							title="Gastos"
 						>
@@ -323,7 +323,7 @@ export function Sidebar({
 						
 						{/* Dropdown flotante cuando está colapsado */}
 						{gastosOpen && (
-							<div className="absolute left-full top-0 ml-2 bg-white dark:bg-neutral-950 border border-gray-200 dark:border-neutral-800 rounded-lg shadow-lg py-1 min-w-[180px] z-50">
+							<div className="absolute left-full top-0 ml-2 bg-popover border border-border rounded-lg shadow-md py-1 min-w-[180px] z-50">
 								{gastosSubmenu.map((item) => {
 									const Icon = item.icon
 									const isActive = pathname === item.href
@@ -335,8 +335,8 @@ export function Sidebar({
 											className={cn(
 												"flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors",
 												isActive
-													? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
-													: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
+													? "bg-muted text-foreground"
+													: "text-muted-foreground hover:bg-muted hover:text-foreground",
 											)}
 										>
 											<Icon className="w-4 h-4" />
@@ -355,8 +355,8 @@ export function Sidebar({
 								className={cn(
 									"w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
 									isGastosActive
-										? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
-										: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
+										? "bg-muted text-foreground"
+										: "text-muted-foreground hover:bg-muted hover:text-foreground",
 								)}
 							>
 								<div className="flex items-center gap-3">
@@ -383,8 +383,8 @@ export function Sidebar({
 										className={cn(
 											"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
 											isActive
-												? "bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-white"
-												: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-neutral-800 dark:hover:text-white",
+												? "bg-muted text-foreground"
+												: "text-muted-foreground hover:bg-muted hover:text-foreground",
 										)}
 									>
 										<Icon className="w-4 h-4" />
@@ -398,15 +398,15 @@ export function Sidebar({
 			</nav>
 
 			{/* Sección de usuario en la parte inferior */}
-			<div className="mt-auto border-t border-gray-200 dark:border-neutral-800 p-3">
+			<div className="mt-auto border-t border-sidebar-border p-3">
 				<div className={cn("mb-2 flex justify-center", !isCollapsed && "justify-start px-3")}>
 					<ModeToggle />
 				</div>
 				
 				{session?.user && !isCollapsed && (
 					<div className="px-3 py-2 mb-2">
-						<p className="text-sm font-medium text-gray-900 dark:text-white">{session.user.name}</p>
-						<p className="text-xs text-gray-500 dark:text-gray-400">{session.user.email}</p>
+						<p className="text-sm font-medium text-foreground">{session.user.name}</p>
+						<p className="text-xs text-muted-foreground">{session.user.email}</p>
 					</div>
 				)}
 				

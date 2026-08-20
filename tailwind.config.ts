@@ -3,9 +3,9 @@ import type { Config } from "tailwindcss";
 export default {
     darkMode: ["class"],
     content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    // Un solo glob sobre src/: las listas de clases tambien viven en
+    // src/lib/constants y src/types, que antes no se escaneaban.
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
   	extend: {
@@ -40,6 +40,13 @@ export default {
   				DEFAULT: 'hsl(var(--destructive))',
   				foreground: 'hsl(var(--destructive-foreground))'
   			},
+  			sidebar: {
+  				DEFAULT: 'hsl(var(--sidebar))',
+  				foreground: 'hsl(var(--sidebar-foreground))',
+  				muted: 'hsl(var(--sidebar-muted))',
+  				accent: 'hsl(var(--sidebar-accent))',
+  				border: 'hsl(var(--sidebar-border))'
+  			},
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
@@ -52,8 +59,9 @@ export default {
   			}
   		},
   		borderRadius: {
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
+  			xl: 'calc(var(--radius) + 8px)',
+  			lg: 'calc(var(--radius) + 4px)',
+  			md: 'var(--radius)',
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		keyframes: {
