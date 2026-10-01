@@ -101,7 +101,7 @@ function ExpenseTracker() {
                 </TabsList>
 
                 <TabsContent value="normal">
-                  <ExpenseForm fetchExpenses={fetchExpenses} />
+                  <ExpenseForm fetchExpenses={fetchExpenses} history={gastos} />
                 </TabsContent>
 
                 <TabsContent value="recurrente">

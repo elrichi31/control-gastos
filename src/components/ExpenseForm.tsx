@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -15,8 +15,9 @@ import {
 import { createExpense } from "@/services/expenses"
 import { fetchCategories, type Category } from "@/services/categories"
 import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
+import { predictExpenseSelection, resolveExpenseSelection, type SuggestionHistory } from "@/lib/expense-suggestions"
 
-export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
+export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: () => void; history?: readonly SuggestionHistory[] }) {
   const [formData, setFormData] = useState({
     description: "",
     amount: "",
@@ -32,6 +33,25 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
 
   const [categories, setCategories] = useState<Category[]>([])
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
+
+  const suggestion = useMemo(
+    () => predictExpenseSelection(formData.description, history, categories, paymentMethods),
+    [formData.description, history, categories, paymentMethods],
+  )
+  const selection = resolveExpenseSelection(formData, suggestion)
+  const suggestedCategory = !formData.categoryId && Boolean(suggestion.categoryId)
+  const suggestedPayment = !formData.paymentMethodId && Boolean(suggestion.paymentMethodId)
+
+  useEffect(() => {
+    setErrors(previous => {
+      if (!(selection.categoryId && previous.categoryId) && !(selection.paymentMethodId && previous.paymentMethodId)) return previous
+      return {
+        ...previous,
+        categoryId: selection.categoryId ? "" : previous.categoryId,
+        paymentMethodId: selection.paymentMethodId ? "" : previous.paymentMethodId,
+      }
+    })
+  }, [selection.categoryId, selection.paymentMethodId])
 
   const resetForm = () => {
     setFormData({
@@ -73,10 +93,10 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
       newErrors.amount = "El monto debe ser mayor a 0"
     }
-    if (!formData.categoryId) {
+    if (!selection.categoryId) {
       newErrors.categoryId = "Selecciona una categoría"
     }
-    if (!formData.paymentMethodId) {
+    if (!selection.paymentMethodId) {
       newErrors.paymentMethodId = "Selecciona un método de pago"
     }
     if (!formData.date) {
@@ -100,9 +120,9 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
       await createExpense({
         descripcion: formData.description,
         monto: parseFloat(formData.amount),
-        categoria_id: parseInt(formData.categoryId),
+        categoria_id: parseInt(selection.categoryId),
         fecha: formData.date,
-        metodo_pago_id: parseInt(formData.paymentMethodId),
+        metodo_pago_id: parseInt(selection.paymentMethodId),
         is_recurrent: false, // Gastos manuales siempre son NO recurrentes
       })
 
@@ -189,13 +209,13 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
           Categoría <span className="text-destructive">*</span>
         </Label>
         <Select
-          value={formData.categoryId}
+          value={selection.categoryId}
           onValueChange={(value) => {
             setFormData({ ...formData, categoryId: value })
             if (errors.categoryId) setErrors({ ...errors, categoryId: "" })
           }}
         >
-          <SelectTrigger className={`h-10 text-sm border rounded-md focus-visible:ring-1 focus-visible:ring-ring ${errors.categoryId ? 'border-destructive' : 'border-border'}`}>
+          <SelectTrigger id="category" className={`h-10 text-sm border rounded-md focus-visible:ring-1 focus-visible:ring-ring ${errors.categoryId ? 'border-destructive' : 'border-border'}`}>
             <SelectValue placeholder="Selecciona una categoría" />
           </SelectTrigger>
           <SelectContent>
@@ -206,6 +226,7 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
             ))}
           </SelectContent>
         </Select>
+        {suggestedCategory && <p className="text-muted-foreground text-xs" role="status">Sugerida según tus gastos anteriores. Puedes cambiarla.</p>}
         {errors.categoryId && <p className="text-destructive text-sm">{errors.categoryId}</p>}
       </div>
 
@@ -215,13 +236,13 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
           Método de Pago <span className="text-destructive">*</span>
         </Label>
         <Select
-          value={formData.paymentMethodId}
+          value={selection.paymentMethodId}
           onValueChange={(value) => {
             setFormData({ ...formData, paymentMethodId: value })
             if (errors.paymentMethodId) setErrors({ ...errors, paymentMethodId: "" })
           }}
         >
-          <SelectTrigger className={`h-10 text-sm border rounded-md focus-visible:ring-1 focus-visible:ring-ring ${errors.paymentMethodId ? 'border-destructive' : 'border-border'}`}>
+          <SelectTrigger id="paymentMethod" className={`h-10 text-sm border rounded-md focus-visible:ring-1 focus-visible:ring-ring ${errors.paymentMethodId ? 'border-destructive' : 'border-border'}`}>
             <SelectValue placeholder="¿Cómo pagaste?" />
           </SelectTrigger>
           <SelectContent>
@@ -232,6 +253,7 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
             ))}
           </SelectContent>
         </Select>
+        {suggestedPayment && <p className="text-muted-foreground text-xs" role="status">Sugerido según tus gastos anteriores. Puedes cambiarlo.</p>}
         {errors.paymentMethodId && <p className="text-destructive text-sm">{errors.paymentMethodId}</p>}
       </div>
 
