@@ -53,3 +53,23 @@ test('HTTP OAuth consent + actual PostgreSQL token exchange + real MCP protocol 
  assert.equal((await rpc('tools/list',{},5)).status,401)
  } finally {await sql.close()}
 })
+
+test('OAuth HTML forms preserve same-origin POSTs without weakening CSRF',async()=>{
+ let writes=0
+ const db={rpc:async()=>{writes++;return {data:null,error:null}},from(){const q={select(){return q},eq(){return q},is(){return q},gt(){return q},order(){return q},limit(){return Promise.resolve({data:[],error:null})}};return q}}
+ const oauth=createOAuthHandlers(config,db,async()=>({user:{id:user,email:'fixture@example.test'}}))
+ const params=new URLSearchParams({response_type:'code',client_id:config.clientId,redirect_uri:config.redirects[0],state:'fixture-state',code_challenge:challenge,code_challenge_method:'S256',resource:config.resource,scope:'expenses:read'})
+ const consent=await oauth.authorizeGet(new Request(config.origin+'/api/mcp/oauth/authorize?'+params))
+ assert.equal(consent.headers.get('referrer-policy'),'same-origin','No-referrer makes browser form POSTs send Origin: null')
+ const connections=await oauth.connectionsGet(new Request(config.origin+'/api/mcp/connections'))
+ assert.equal(connections.headers.get('referrer-policy'),'same-origin')
+ const html=await consent.text(),csrf=html.match(/name="csrf" value="([A-Za-z0-9_-]+)"/)[1],cookie=consent.headers.get('set-cookie').split(';')[0]
+ const values={...Object.fromEntries(params),csrf,decision:'approve'},url=config.origin+'/api/mcp/oauth/authorize'
+ for(const headers of [{origin:'null',cookie},{cookie},{origin:'https://evil.example',cookie},{origin:config.origin}]){
+  assert.equal((await oauth.authorizePost(request(url,values,headers))).status,403)
+ }
+ assert.equal((await oauth.authorizePost(request(url,{...values,csrf:'wrong'},{origin:config.origin,cookie}))).status,403)
+ assert.equal(writes,0)
+ assert.equal((await oauth.authorizePost(request(url,values,{origin:config.origin,cookie}))).status,303)
+ assert.equal(writes,1)
+})
