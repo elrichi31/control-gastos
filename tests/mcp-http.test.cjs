@@ -73,3 +73,17 @@ test('OAuth HTML forms preserve same-origin POSTs without weakening CSRF',async(
  assert.equal((await oauth.authorizePost(request(url,values,{origin:config.origin,cookie}))).status,303)
  assert.equal(writes,1)
 })
+
+test('RPC failures log only operation and safe code, preserving generic client errors',async()=>{
+ const logs=[],original=console.error
+ console.error=(...args)=>logs.push(args)
+ try {
+  const db={rpc:async()=>({data:null,error:{code:'42501',message:'secret-message',details:'secret-details',hint:'secret-hint'}})}
+  const oauth=createOAuthHandlers(config,db,async()=>null)
+  const response=await oauth.token(request(config.origin+'/api/mcp/oauth/token',{client_id:config.clientId,client_secret:config.clientSecret,grant_type:'authorization_code',code:'c'.repeat(43),code_verifier:verifier,redirect_uri:config.redirects[0],resource:config.resource}))
+  assert.equal(response.status,503)
+  assert.deepEqual(await response.json(),{error:'server_error',error_description:'No se pudo completar la operación. Verifica la migración y configuración MCP.'})
+  assert.deepEqual(logs,[['MCP database operation failed',{operation:'mcp_exchange_code',code:'42501'}]])
+  assert.ok(!JSON.stringify(logs).includes('secret-'))
+ } finally {console.error=original}
+})
