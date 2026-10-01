@@ -1,8 +1,6 @@
-import { useState } from "react"
 import { ExpenseItem } from "./ExpenseItem"
-// import { Expense } from "./../hooks/useExpenses"
 import { Gasto } from "./../hooks/useGastosFiltrados"
-import { format, parse, parseISO, addMinutes } from "date-fns"
+import { format, parse, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 type Props = {
   groupedExpenses: Record<string, Gasto[]>
@@ -50,8 +48,6 @@ function formatGroupTitle(key: string, groupBy: "dia" | "semana" | "mes"): strin
 }
 
 export function ExpenseList({ groupedExpenses, isLoading, onDelete, groupBy }: Props) {
-  console.log(groupedExpenses)
-
   const groupKeys = Object.keys(groupedExpenses).sort((a, b) => {
     const extractDate = (key: string) => {
       if (groupBy === "semana") return parseISO(key.split("::")[0])
@@ -92,8 +88,3 @@ export function ExpenseList({ groupedExpenses, isLoading, onDelete, groupBy }: P
     </div>
   )
 }
-
-function setExpenses(arg0: (prev: any) => any) {
-  throw new Error("Function not implemented.")
-}
-

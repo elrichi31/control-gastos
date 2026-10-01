@@ -44,7 +44,7 @@ export function HowItWorks() {
           <div className="hidden lg:block absolute top-12 left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-blue-100 via-blue-200 to-blue-100 dark:from-blue-900 dark:via-blue-800 dark:to-blue-900" />
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            {steps.map((step, index) => {
+            {steps.map((step) => {
               const Icon = step.icon
               
               return (

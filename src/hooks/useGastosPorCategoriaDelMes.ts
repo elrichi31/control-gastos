@@ -34,10 +34,10 @@ export function useGastosPorCategoriaDelMes(mes: number, anio: number) {
   const gastosPorCategoria: Record<number, { nombre: string; total: number }> = {}
   gastos.forEach((g) => {
     // Parsear fecha como local para evitar desfase
-    let year, month, day
+    let year, month
     if (/^\d{4}-\d{2}-\d{2}$/.test(g.fecha)) {
       // Formato yyyy-MM-dd
-      [year, month, day] = g.fecha.split("-").map(Number)
+      [year, month] = g.fecha.split("-").map(Number)
     } else {
       // Otro formato, usar Date
       const fechaObj = new Date(g.fecha)

@@ -1,7 +1,7 @@
 // src/hooks/useExpenseDetailsData.ts
 import { useState, useEffect, useCallback } from 'react'
 import { fetchExpenseDetailsData, deleteExpense, type ExpenseDetailsData } from '@/services/expense-details'
-import type { Expense } from '@/services/expenses'
+
 
 interface UseExpenseDetailsDataResult {
   data: ExpenseDetailsData | null

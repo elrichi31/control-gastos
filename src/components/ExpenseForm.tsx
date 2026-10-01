@@ -27,7 +27,7 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
     paymentMethodId: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitSuccess, setSubmitSuccess] = useState(false)
+
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
   const [categories, setCategories] = useState<Category[]>([])
@@ -63,9 +63,6 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
     fetchOptions()
   }, [])
 
-    const handleQuickAmount = (amount: number) => {
-    setFormData(prev => ({ ...prev, amount: amount.toString() }))
-  }
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {}
@@ -109,11 +106,11 @@ export function ExpenseForm({ fetchExpenses }: { fetchExpenses: () => void }) {
         is_recurrent: false, // Gastos manuales siempre son NO recurrentes
       })
 
-      setSubmitSuccess(true)
+
       resetForm()
       setErrors({})
       fetchExpenses()
-      setTimeout(() => setSubmitSuccess(false), 3000)
+
     } catch (error) {
       console.error("Error al agregar gasto:", error)
       alert("Ocurrió un error al agregar el gasto")

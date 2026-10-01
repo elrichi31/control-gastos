@@ -28,7 +28,7 @@ export default function DashboardPage() {
     const { gastos, loading } = useGastosFiltrados()
     const [budgetTotal, setBudgetTotal] = useState<number | undefined>(undefined)
     const [budgetCategories, setBudgetCategories] = useState<any[]>([])
-    const [loadingBudget, setLoadingBudget] = useState(true)
+
 
     // Obtener presupuesto del mes actual
     useEffect(() => {
@@ -55,8 +55,6 @@ export default function DashboardPage() {
                 }
             } catch (error) {
                 console.error('Error fetching budget:', error)
-            } finally {
-                setLoadingBudget(false)
             }
         }
 

@@ -1,5 +1,5 @@
 // src/services/budget.ts
-import { PresupuestoCategoriaDetalle, CategoriaDB, MetodoPagoDB, MovimientoPresupuesto } from "@/types/budget"
+import { PresupuestoCategoriaDetalle, CategoriaDB, MetodoPagoDB } from "@/types/budget"
 import { fetchCategories } from "./categories"
 import { fetchPaymentMethods } from "./paymentMethods"
 

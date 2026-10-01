@@ -52,7 +52,6 @@ export const authOptions: NextAuthOptions = {
             return null
           }
 
-          console.log("Usuario autenticado:", data.user)
 
           // Retornar el usuario autenticado
           return {

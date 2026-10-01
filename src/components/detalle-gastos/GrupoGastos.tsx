@@ -3,7 +3,7 @@
 import React from 'react'
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import type { Expense } from '@/services/expenses'
+
 import { GastoCard } from './GastoCard'
 import { GastoTableRow } from './GastoTableRow'
 import type { GastoGroup } from '../../hooks/useGastosGrouping'

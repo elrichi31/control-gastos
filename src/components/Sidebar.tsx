@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { Home, FileText, Calculator, X, ChevronLeft, BarChart3, Receipt, LogOut, User, ChevronDown, Repeat, Plus, Wallet } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -62,7 +62,7 @@ export function Sidebar({
 	onToggleCollapse,
 }: SidebarProps) {
 	const pathname = usePathname()
-	const router = useRouter()
+
 	const { data: session } = useSession()
 	const [gastosOpen, setGastosOpen] = useState(false)
 

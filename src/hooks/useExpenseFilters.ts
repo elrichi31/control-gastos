@@ -97,7 +97,7 @@ export function useExpenseFilters(gastos: Expense[]) {
     }
 
     // Filtro por rango de fechas
-    const now = new Date()
+
     let dateFrom: Date | null = null
     let dateTo: Date | null = null
 
