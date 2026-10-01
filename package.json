@@ -41,6 +41,7 @@
     "dotenv": "^16.4.6",
     "imap-simple": "^5.1.0",
     "imapflow": "^1.0.169",
+    "jose": "4.15.9",
     "lucide-react": "^0.465.0",
     "mailparser": "^3.7.2",
     "next": "15.3.9",

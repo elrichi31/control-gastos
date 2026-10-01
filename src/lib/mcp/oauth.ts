@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { type McpConfig, OAuthError, authenticateClient, equalSecret, hashSecret, privateHeaders, randomSecret, readForm, requireSameOrigin, validateAuthorization, oauthErrorResponse } from './security'
+import { type McpConfig, OAuthError, CHATGPT_CLIENT_ID, equalSecret, hashSecret, privateHeaders, randomSecret, readForm, requireSameOrigin, validateAuthorization, oauthErrorResponse } from './security'
+import { chatgptClient } from './cimd'
 
 type Session = { user?: { id?: string; email?: string | null } } | null
 const escape = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
@@ -22,7 +23,9 @@ function htmlPage(config: McpConfig, content: string, csrf: string) {
 function redirect(url: string, config: McpConfig, clearCsrf = false) {
   return new Response(null, { status: 303, headers: { ...privateHeaders, Location: url, ...(clearCsrf ? { 'Set-Cookie': cookie(config, '', true) } : {}) } })
 }
-export function createOAuthHandlers(config: McpConfig, db: SupabaseClient, getSession: () => Promise<Session>) {
+export function createOAuthHandlers(config: McpConfig, db: SupabaseClient, getSession: () => Promise<Session>, cimd = chatgptClient) {
+  const clientIds = [...new Set([CHATGPT_CLIENT_ID, config.clientId])]
+  const consumeAssertion = async (clientId: string, jtiHash: string, expiresAt: number) => (await rpc('mcp_consume_assertion', { p_client_id: clientId, p_jti_hash: jtiHash, p_expires_at: new Date(expiresAt * 1000).toISOString() })) === true
   async function owner() {
     const session = await getSession()
     // Existing Supabase-backed accounts only. Google subject IDs are not mapped to auth.users by this app.
@@ -41,7 +44,8 @@ export function createOAuthHandlers(config: McpConfig, db: SupabaseClient, getSe
   return {
     authorizeGet: guarded(async request => {
       const params = new URL(request.url).searchParams
-      const authorization = validateAuthorization(params, config)
+      const client = await cimd.resolve(params.get('client_id') || '', config)
+      const authorization = validateAuthorization(params, client)
       const user = await owner()
       if (!user) return redirect(`${config.origin}/auth/login?callbackUrl=${encodeURIComponent('/api/mcp/oauth/authorize?' + params)}`, config)
       const csrf = randomSecret()
@@ -52,7 +56,8 @@ export function createOAuthHandlers(config: McpConfig, db: SupabaseClient, getSe
     authorizePost: guarded(async request => {
       const params = await readForm(request)
       checkCsrf(request, params, config)
-      const auth = validateAuthorization(params, config)
+      const client = await cimd.resolve(params.get('client_id') || '', config)
+      const auth = validateAuthorization(params, client)
       const user = await owner()
       if (!user) throw new OAuthError('access_denied', 'Inicia sesión para autorizar', 401)
       const callback = new URL(auth.redirectUri)
@@ -63,43 +68,43 @@ export function createOAuthHandlers(config: McpConfig, db: SupabaseClient, getSe
       else {
         if (params.get('decision') !== 'approve') throw new OAuthError('invalid_request', 'Falta la aprobación')
         const code = randomSecret()
-        await rpc('mcp_create_authorization', { p_user_id: user.id, p_client_id: config.clientId, p_resource: config.resource, p_redirect_uri: auth.redirectUri, p_challenge: auth.challenge, p_code_hash: hashSecret(code), p_scopes: auth.scopes })
+        await rpc('mcp_create_authorization', { p_user_id: user.id, p_client_id: client.clientId, p_resource: config.resource, p_redirect_uri: auth.redirectUri, p_challenge: auth.challenge, p_code_hash: hashSecret(code), p_scopes: auth.scopes })
         callback.searchParams.set('code', code)
       }
       return redirect(callback.toString(), config, true)
     }),
     token: guarded(async request => {
       const params = await readForm(request)
-      authenticateClient(request, params, config)
+      const client = await cimd.authenticate(request, params, config, consumeAssertion)
       if (params.get('resource') !== config.resource) throw new OAuthError('invalid_target', 'Recurso inválido')
       const access = randomSecret(), refresh = randomSecret()
       let result
       if (params.get('grant_type') === 'authorization_code') {
         const verifier = params.get('code_verifier') || ''
         const code = params.get('code') || ''
-        if (!/^[A-Za-z0-9._~-]{43,128}$/.test(verifier) || !/^[A-Za-z0-9_-]{43}$/.test(code) || !config.redirects.includes(params.get('redirect_uri') || '')) throw new OAuthError('invalid_grant', 'Código o verificador inválido')
+        if (!/^[A-Za-z0-9._~-]{43,128}$/.test(verifier) || !/^[A-Za-z0-9_-]{43}$/.test(code) || !client.redirects.includes(params.get('redirect_uri') || '')) throw new OAuthError('invalid_grant', 'Código o verificador inválido')
         const challenge = createHash('sha256').update(verifier).digest('base64url')
-        result = await rpc('mcp_exchange_code', { p_code_hash: hashSecret(code), p_client_id: config.clientId, p_redirect_uri: params.get('redirect_uri'), p_resource: config.resource, p_challenge: challenge, p_access_hash: hashSecret(access), p_refresh_hash: hashSecret(refresh) })
+        result = await rpc('mcp_exchange_code', { p_code_hash: hashSecret(code), p_client_id: client.clientId, p_redirect_uri: params.get('redirect_uri'), p_resource: config.resource, p_challenge: challenge, p_access_hash: hashSecret(access), p_refresh_hash: hashSecret(refresh) })
       } else if (params.get('grant_type') === 'refresh_token') {
         const token = params.get('refresh_token') || ''
         if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw new OAuthError('invalid_grant', 'Refresh token inválido')
         const scopes = params.has('scope') ? (params.get('scope') || '').split(' ').filter(Boolean) : null
-        result = await rpc('mcp_refresh_tokens', { p_refresh_hash: hashSecret(token), p_client_id: config.clientId, p_resource: config.resource, p_access_hash: hashSecret(access), p_next_refresh_hash: hashSecret(refresh), p_scopes: scopes })
+        result = await rpc('mcp_refresh_tokens', { p_refresh_hash: hashSecret(token), p_client_id: client.clientId, p_resource: config.resource, p_access_hash: hashSecret(access), p_next_refresh_hash: hashSecret(refresh), p_scopes: scopes })
       } else throw new OAuthError('unsupported_grant_type', 'Flujo OAuth no soportado')
       if (!result) throw new OAuthError('invalid_grant', 'Credencial vencida, revocada o ya utilizada')
       return Response.json({ access_token: access, token_type: 'Bearer', expires_in: result.expires_in ?? 900, refresh_token: refresh, scope: result.scopes.join(' ') }, { headers: privateHeaders })
     }),
     revoke: guarded(async request => {
       const params = await readForm(request)
-      authenticateClient(request, params, config)
+      const client = await cimd.authenticate(request, params, config, consumeAssertion)
       const token = params.get('token') || ''
-      if (token && token.length <= 512) await rpc('mcp_revoke_token', { p_token_hash: hashSecret(token), p_client_id: config.clientId, p_resource: config.resource })
+      if (token && token.length <= 512) await rpc('mcp_revoke_token', { p_token_hash: hashSecret(token), p_client_id: client.clientId, p_resource: config.resource })
       return new Response(null, { status: 200, headers: privateHeaders })
     }),
     connectionsGet: guarded(async () => {
       const user = await owner()
       if (!user) return redirect(`${config.origin}/auth/login`, config)
-      const { data, error } = await db.from('mcp_oauth_grants').select('id,created_at,expires_at,revoked_at,scopes').eq('user_id', user.id).eq('client_id', config.clientId).is('revoked_at', null).gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false }).limit(50)
+      const { data, error } = await db.from('mcp_oauth_grants').select('id,created_at,expires_at,revoked_at,scopes').eq('user_id', user.id).in('client_id', clientIds).is('revoked_at', null).gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false }).limit(50)
       if (error) throw new OAuthError('server_error', 'No se pudieron consultar las conexiones', 503)
       const csrf = randomSecret()
       const rows = (data || []).map(g => `<li>ChatGPT · vence ${escape(g.expires_at)}<form method="post" action="/api/mcp/connections"><input type="hidden" name="grant_id" value="${escape(g.id)}"><input type="hidden" name="csrf" value="${csrf}"><button>Revocar acceso</button></form></li>`).join('')
@@ -112,7 +117,7 @@ export function createOAuthHandlers(config: McpConfig, db: SupabaseClient, getSe
       if (!user) throw new OAuthError('access_denied', 'Inicia sesión', 401)
       const grantId = params.get('grant_id') || ''
       if (!z.string().uuid().safeParse(grantId).success) throw new OAuthError('invalid_request', 'Conexión inválida')
-      const { data, error } = await db.from('mcp_oauth_grants').update({ revoked_at: new Date().toISOString() }).eq('id', grantId).eq('user_id', user.id).eq('client_id', config.clientId).select('id').maybeSingle()
+      const { data, error } = await db.from('mcp_oauth_grants').update({ revoked_at: new Date().toISOString() }).eq('id', grantId).eq('user_id', user.id).in('client_id', clientIds).select('id').maybeSingle()
       if (error) throw new OAuthError('server_error', 'No se pudo revocar el acceso', 503)
       if (!data) throw new OAuthError('invalid_request', 'Conexión no encontrada', 404)
       return redirect(`${config.origin}/api/mcp/connections`, config, true)

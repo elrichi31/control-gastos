@@ -1,5 +1,8 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 
+export const CHATGPT_CLIENT_ID = 'https://chatgpt.com/oauth/client.json'
+export const CHATGPT_REDIRECT_URI = 'https://chatgpt.com/connector_platform_oauth_redirect'
+
 export type McpConfig = { origin: string; resource: string; clientId: string; clientSecret: string; redirects: string[] }
 export const SCOPES = ['expenses:read', 'expenses:write'] as const
 export class OAuthError extends Error {
@@ -10,7 +13,8 @@ export function getMcpConfig(): McpConfig {
   const clientId = process.env.MCP_CLIENT_ID
   const clientSecret = process.env.MCP_CLIENT_SECRET
   const redirects = (process.env.MCP_REDIRECT_URIS || '').split(',').map(s => s.trim()).filter(Boolean)
-  if (!raw || !clientId || !clientSecret || clientSecret.length < 32 || redirects.length === 0) throw new OAuthError('server_error', 'MCP no está configurado', 503)
+  const legacyConfigured = Boolean(clientId || clientSecret || redirects.length)
+  if (!raw || (legacyConfigured && (!clientId || clientId === CHATGPT_CLIENT_ID || !clientSecret || clientSecret.length < 32 || redirects.length === 0))) throw new OAuthError('server_error', 'MCP no está configurado', 503)
   let origin: URL
   try { origin = new URL(raw) } catch { throw new OAuthError('server_error', 'Origen MCP inválido', 503) }
   const local = process.env.NODE_ENV !== 'production' && ['localhost', '127.0.0.1'].includes(origin.hostname)
@@ -20,7 +24,7 @@ export function getMcpConfig(): McpConfig {
     try { url = new URL(redirect) } catch { throw new OAuthError('server_error', 'Callback OAuth inválido', 503) }
     if (url.protocol !== 'https:' || url.hash || url.username || url.password) throw new OAuthError('server_error', 'Callback OAuth inseguro', 503)
   }
-  return { origin: origin.origin, resource: `${origin.origin}/api/mcp`, clientId, clientSecret, redirects }
+  return { origin: origin.origin, resource: `${origin.origin}/api/mcp`, clientId: clientId || CHATGPT_CLIENT_ID, clientSecret: clientSecret || '', redirects: redirects.length ? redirects : [CHATGPT_REDIRECT_URI] }
 }
 export function hashSecret(value: string) { return createHash('sha256').update(value).digest('hex') }
 export function randomSecret() { return randomBytes(32).toString('base64url') }
