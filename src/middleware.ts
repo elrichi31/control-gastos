@@ -49,6 +49,6 @@ export const config = {
      *   si pasan por el middleware se redirigen al login y no se instala)
      * - public files (public directory)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|manifest.json|sw.js|workbox-.*\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|json|webmanifest)$).*)',
+    '/((?!api|\\.well-known/oauth-protected-resource|\\.well-known/oauth-authorization-server|_next/static|_next/image|favicon.ico|manifest.json|sw.js|workbox-.*\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|json|webmanifest)$).*)',
   ],
 }

@@ -11,7 +11,7 @@ Module._resolveFilename = function (request, ...args) {
 for (const ext of ['.ts', '.tsx']) {
   require.extensions[ext] = (module, filename) => {
     const { outputText } = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
-      compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
+      compilerOptions: { target: ts.ScriptTarget.ES2017, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
       fileName: filename,
     })
     module._compile(outputText, filename)
