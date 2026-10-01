@@ -8,6 +8,7 @@ import { CategoryRanking } from "@/components/stats/category-ranking"
 import { PaymentMethodChart, WeekdayChart, FixedVsVariable } from "@/components/stats/breakdown-charts"
 import { ProjectionCard } from "@/components/stats/projection-card"
 import { TopExpenses } from "@/components/stats/top-expenses"
+import { PageShell, PageHeader } from "@/components/ui/page-layout"
 import { PageTitle } from "@/components/PageTitle"
 import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
 import { useDataProcessing } from "@/hooks/useDataProcessing"
@@ -66,16 +67,14 @@ export default function EstadisticasPage() {
     currentFilters.filterType === "year-month" ? "Evolución diaria" : "Evolución del período"
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <PageShell>
       <PageTitle customTitle={`Estadísticas ${descripcionPeriodo()} - BethaSpend`} />
 
-      <header className="mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Estadísticas</h1>
-        <p className="text-muted-foreground mt-1">
-          Análisis de tus gastos en <span className="text-foreground font-medium">{descripcionPeriodo()}</span>
-          {a.kpis.hayComparacion && etiquetaPrevio ? `, comparado con ${etiquetaPrevio}.` : "."}
-        </p>
-      </header>
+      <PageHeader
+        title="Estadísticas"
+        description={<>Análisis de tus gastos en <span className="text-foreground font-medium">{descripcionPeriodo()}</span>
+          {a.kpis.hayComparacion && etiquetaPrevio ? `, comparado con ${etiquetaPrevio}.` : "."}</>}
+      />
 
       {loading && (
         <div className="space-y-4">
@@ -174,6 +173,6 @@ export default function EstadisticasPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   )
 }

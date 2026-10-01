@@ -1,8 +1,8 @@
 "use client"
 
 import React from 'react'
-import { Receipt } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
+import { PageShell, PageHeader } from "@/components/ui/page-layout"
 import { PageTitle } from "@/components/PageTitle"
 import { ExportarDatos } from "@/components/detalle-gastos/ExportarDatos"
 import { EstadisticasResumen } from "@/components/detalle-gastos/EstadisticasResumen"
@@ -48,79 +48,68 @@ export default function DetalleGastosPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
+      <PageShell>
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-muted rounded w-1/4"></div>
           <div className="h-32 bg-muted rounded"></div>
           <div className="h-96 bg-muted rounded"></div>
         </div>
-      </div>
+      </PageShell>
     )
   }
 
   // Error state
   if (error) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
-        <Card className="border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20">
+      <PageShell>
+        <Card className="border-destructive/40 bg-destructive/10">
           <CardContent className="p-6 text-center">
-            <p className="text-red-600 dark:text-red-400">Error al cargar los gastos: {error}</p>
+            <p className="text-destructive">Error al cargar los gastos: {error}</p>
           </CardContent>
         </Card>
-      </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8 overflow-x-hidden">
+    <PageShell>
       <PageTitle customTitle="Detalle de Gastos - BethaSpend" />
       
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
-              <Receipt className="w-8 h-8" />
-              Detalle de Gastos
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Análisis detallado y filtrado de todos tus gastos
-            </p>
-          </div>
-          
-          <div className="flex gap-2">
-            <ExportarDatos gastos={filteredGastos} gastosOriginal={gastos} />
-          </div>
-        </div>
+      <PageHeader
+        title="Detalle de gastos"
+        description="Análisis detallado y filtrado de todos tus gastos."
+        actions={<ExportarDatos gastos={filteredGastos} gastosOriginal={gastos} />}
+      />
+
+      <div className="space-y-4">
+        {/* Estadísticas resumidas */}
+        <EstadisticasResumen
+          statistics={statistics}
+          formatMoney={formatMoney}
+        />
+
+        {/* Filtros */}
+        <FiltrosGastos
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={clearFilters}
+          categories={categories}
+          paymentMethods={paymentMethods}
+          activeFiltersCount={activeFiltersCount}
+          showAdvancedFilters={showAdvancedFilters}
+          setShowAdvancedFilters={setShowAdvancedFilters}
+        />
+
+        {/* Lista de gastos */}
+        <ListaGastosAgrupados
+          gastos={filteredGastos}
+          activeFiltersCount={activeFiltersCount}
+          formatMoney={formatMoney}
+          formatDate={formatDate}
+          onDeleteGasto={handleDeleteGasto}
+          groupBy={filters.groupBy}
+        />
       </div>
-
-      {/* Estadísticas resumidas */}
-      <EstadisticasResumen 
-        statistics={statistics} 
-        formatMoney={formatMoney} 
-      />
-
-      {/* Filtros */}
-      <FiltrosGastos
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onClearFilters={clearFilters}
-        categories={categories}
-        paymentMethods={paymentMethods}
-        activeFiltersCount={activeFiltersCount}
-        showAdvancedFilters={showAdvancedFilters}
-        setShowAdvancedFilters={setShowAdvancedFilters}
-      />
-
-      {/* Lista de gastos */}
-      <ListaGastosAgrupados
-        gastos={filteredGastos}
-        activeFiltersCount={activeFiltersCount}
-        formatMoney={formatMoney}
-        formatDate={formatDate}
-        onDeleteGasto={handleDeleteGasto}
-        groupBy={filters.groupBy}
-      />
-    </div>
+    </PageShell>
   )
 }

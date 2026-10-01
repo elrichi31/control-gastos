@@ -387,7 +387,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
       {/* Botón de envío */}
       <Button 
         type="submit" 
-        className="w-full h-14 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none rounded-lg" 
+        className="w-full"
         disabled={isSubmitting}
       >
         {isSubmitting ? (

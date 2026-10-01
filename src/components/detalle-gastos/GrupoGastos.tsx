@@ -28,7 +28,7 @@ export function GrupoGastos({
   onDeleteGasto
 }: GrupoGastosProps) {
   return (
-    <div className="border border-border rounded-lg">
+    <div className="border border-border rounded-xl overflow-hidden">
       <div 
         className="flex items-center justify-between p-4 bg-muted cursor-pointer hover:bg-muted transition-colors rounded-t-lg"
         onClick={() => onToggle(index.toString())}
@@ -47,7 +47,7 @@ export function GrupoGastos({
           </div>
         </div>
         <div className="text-right">
-          <p className="text-lg font-bold text-red-600 dark:text-red-400">
+          <p className="text-sm font-medium text-foreground tabular-nums">
             {formatMoney(group.total)}
           </p>
         </div>

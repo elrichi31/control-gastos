@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { PageShell, PageHeader } from "@/components/ui/page-layout"
 import { PageTitle } from "@/components/PageTitle"
 import { YearSelector } from "@/components/presupuesto/YearSelector"
 import { BudgetContent } from "@/components/presupuesto/BudgetContent"
@@ -35,19 +36,12 @@ export default function HomePage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
+    <PageShell>
       <PageTitle customTitle={`Presupuestos ${selectedYear} - BethaSpend`} />
 
       {/* Título y selector de año en la misma línea; en móvil se apilan */}
-      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Presupuesto</h1>
-          <p className="text-muted-foreground mt-1">Planifica y sigue tu gasto mes a mes.</p>
-        </div>
-        <div className="shrink-0">
-          <YearSelector selectedYear={selectedYear} setSelectedYear={handleYearChange} />
-        </div>
-      </header>
+      <PageHeader title="Presupuesto" description="Planifica y sigue tu gasto mes a mes."
+        actions={<YearSelector selectedYear={selectedYear} setSelectedYear={handleYearChange} />} />
 
       {budgetData.errorMsg && (
         <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 mb-4">
@@ -79,6 +73,6 @@ export default function HomePage() {
           areAllMonthsUsed={validation.areAllMonthsUsed}
         />
       )}
-    </div>
+    </PageShell>
   )
 }

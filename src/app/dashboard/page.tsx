@@ -5,6 +5,7 @@ import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
 import { format, startOfMonth, endOfMonth, isToday, isYesterday, subMonths } from "date-fns"
 import { es } from "date-fns/locale"
 import { toDateWithTime } from "@/lib/utils"
+import { PageShell } from "@/components/ui/page-layout"
 import { PageTitle } from "@/components/PageTitle"
 import {
   DashboardHeader,
@@ -149,19 +150,19 @@ export default function DashboardPage() {
 
     if (loading) {
         return (
-            <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-4">
+            <PageShell className="space-y-4">
                 <div className="h-16 rounded-xl bg-card border border-border animate-pulse" />
                 <div className="h-24 rounded-xl bg-card border border-border animate-pulse" />
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div className="h-80 rounded-xl bg-card border border-border animate-pulse" />
                     <div className="h-80 rounded-xl bg-card border border-border animate-pulse" />
                 </div>
-            </div>
+            </PageShell>
         )
     }
 
     return (
-        <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <PageShell>
             <PageTitle customTitle={`Dashboard - ${format(currentDate, "MMMM yyyy", { locale: es })} - BethaSpend`} />
             
             <DashboardHeader currentDate={currentDate} />
@@ -210,6 +211,6 @@ export default function DashboardPage() {
 
                 <BudgetCategoryProgress categories={categoryProgress} />
             </div>
-        </div>
+        </PageShell>
     )
 }
