@@ -12,6 +12,7 @@ import { groupExpenses } from "@/lib/utils"
 import { Expense } from "@/types"
 import { toDateWithTime } from "@/lib/utils"
 import { DEFAULT_METODO_PAGO } from "@/lib/constants"
+import { PageShell, PageHeader } from "@/components/ui/page-layout"
 import { PageTitle } from "@/components/PageTitle"
 
 // Helper function to convert Gasto to Expense
@@ -79,14 +80,11 @@ function ExpenseTracker() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <PageShell>
       <PageTitle customTitle="Nuevo Gasto - BethaSpend" />
 
       {/* Encabezado alineado a la izquierda, al estilo de una página de Notion */}
-      <header className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Nuevo gasto</h1>
-        <p className="text-muted-foreground mt-1">Registra tu gasto de forma rápida y sencilla.</p>
-      </header>
+      <PageHeader title="Nuevo gasto" description="Registra tu gasto de forma rápida y sencilla." />
 
       {/* Columna principal + riel lateral: el formulario manda, lo demás acompaña */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -138,7 +136,7 @@ function ExpenseTracker() {
           </Card>
         </aside>
       </div>
-    </div>
+    </PageShell>
   )
 }
 

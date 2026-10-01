@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
+import { getCategoriaColor } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
 import { TableCell, TableRow } from "@/components/ui/table"
 import { Trash2, Receipt, CreditCard, Calendar } from 'lucide-react'
@@ -20,21 +21,6 @@ export function GastoTableRow({
   formatMoney,
   formatDate
 }: GastoTableRowProps) {
-  const getCategoryColor = (categoria: string) => {
-    const colors = {
-      'Alimentación': 'bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-400 border border-orange-200 dark:border-orange-500/40',
-      'Transporte': 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/40',
-      'Entretenimiento': 'bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-400 border border-purple-200 dark:border-purple-500/40',
-      'Salud': 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-400 border border-red-200 dark:border-red-500/40',
-      'Hogar': 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400 border border-green-200 dark:border-green-500/40',
-      'Educación': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/40',
-      'Trabajo': 'bg-muted text-foreground border border-border',
-      'Suscripciones': 'bg-pink-100 text-pink-800 dark:bg-pink-500/20 dark:text-pink-400 border border-pink-200 dark:border-pink-500/40',
-      'Otros': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/40',
-    }
-    return colors[categoria as keyof typeof colors] || 'bg-muted text-foreground border border-border'
-  }
-
   const getPaymentMethodIcon = (metodo: string) => {
     switch (metodo?.toLowerCase()) {
       case 'tarjeta de débito':
@@ -62,7 +48,7 @@ export function GastoTableRow({
       <TableCell className="px-3 py-4 w-[140px] min-w-[140px]">
         <Badge 
           variant="secondary" 
-          className={`${getCategoryColor(gasto.categoria?.nombre || 'Otros')} text-xs px-2 py-1 truncate block max-w-full`}
+          className={`border font-normal ${getCategoriaColor(gasto.categoria?.nombre)} truncate max-w-full`}
         >
           {gasto.categoria?.nombre || 'Otros'}
         </Badge>
@@ -82,7 +68,7 @@ export function GastoTableRow({
           {formatDate(gasto.fecha)}
         </span>
       </TableCell>
-      <TableCell className="text-right font-semibold text-red-600 dark:text-red-400 px-3 py-4 w-[100px] min-w-[100px]">
+      <TableCell className="text-right font-medium text-foreground tabular-nums px-3 py-4 w-[100px] min-w-[100px]">
         <span className="text-sm whitespace-nowrap">
           {formatMoney(gasto.monto)}
         </span>
@@ -91,7 +77,9 @@ export function GastoTableRow({
         <Button
           size="sm"
           onClick={() => onDeleteGasto(gasto.id.toString())}
-          className="text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 p-2 h-8 w-8 bg-transparent border-0"
+          variant="ghost"
+          aria-label={`Eliminar gasto: ${gasto.descripcion}`}
+          className="text-destructive hover:text-destructive hover:bg-destructive/10 p-0 h-8 w-8"
         >
           <Trash2 className="h-4 w-4" />
         </Button>

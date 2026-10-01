@@ -88,7 +88,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({
             </div>
           </div>
           <div className="flex gap-2 pt-4">
-            <Button type="submit" className="flex-1 bg-blue-500 hover:bg-blue-600">
+            <Button type="submit" className="flex-1">
               {editingExpense ? "Guardar cambios" : "Agregar gasto"}
             </Button>
             <Button

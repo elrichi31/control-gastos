@@ -92,12 +92,12 @@ export function ExportarDatos({ gastos, gastosOriginal }: ExportarDatosProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2 bg-card border-border hover:bg-muted">
+        <Button variant="outline" size="sm" className="gap-2">
           <Download className="w-4 h-4" />
           Exportar
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md bg-card border-border">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
             <Download className="w-5 h-5" />
@@ -180,7 +180,7 @@ export function ExportarDatos({ gastos, gastosOriginal }: ExportarDatosProps) {
             </Button>
             <Button
               onClick={handleExportar}
-              className="flex-1 bg-green-600 hover:bg-green-700 dark:bg-emerald-600 dark:hover:bg-emerald-700"
+              className="flex-1"
               disabled={gastosAExportar.length === 0}
             >
               <Download className="w-4 h-4 mr-2" />

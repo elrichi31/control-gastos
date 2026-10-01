@@ -1,6 +1,7 @@
 "use client"
 
 import React, { use, useState } from "react"
+import { PageShell, PageHeader } from "@/components/ui/page-layout"
 import { Breadcrumb } from "@/components/Breadcrumb"
 import { useSearchParams } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -77,14 +78,10 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
+    <PageShell>
       <Breadcrumb items={[{ label: "Presupuesto", href: "/presupuesto" }, { label: monthName }]} />
 
-      <header className="mt-4 mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-          {monthName} {anioPresupuesto}
-        </h1>
-      </header>
+      <PageHeader className="mt-4" title={`${monthName} ${anioPresupuesto}`} />
 
       <div className="mb-6">
         <BudgetSummary
@@ -154,6 +151,6 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
         handleUpdateExpense={handleSubmitExpense}
         onCancel={handleCancelExpense}
       />
-    </div>
+    </PageShell>
   )
 }

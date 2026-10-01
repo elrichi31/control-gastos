@@ -45,7 +45,7 @@ export function FiltrosGastos({
   setShowAdvancedFilters
 }: FiltrosGastosProps) {
   return (
-    <Card className="mb-6 bg-card border-border">
+    <Card className="bg-card border-border">
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-foreground">
           <span className="flex items-center gap-2">
@@ -53,7 +53,7 @@ export function FiltrosGastos({
             Filtros
           </span>
           {activeFiltersCount > 0 && (
-            <Badge variant="secondary" className="bg-card text-foreground">
+            <Badge variant="secondary" className="font-normal">
               {activeFiltersCount} filtro{activeFiltersCount !== 1 ? 's' : ''} activo{activeFiltersCount !== 1 ? 's' : ''}
             </Badge>
           )}
@@ -124,7 +124,7 @@ export function FiltrosGastos({
         </div>
 
         {/* Botón de filtros avanzados */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <Button
             variant="outline"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
@@ -138,7 +138,7 @@ export function FiltrosGastos({
             <Button
               variant="ghost"
               onClick={onClearFilters}
-              className="flex items-center gap-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
             >
               <X className="w-4 h-4" />
               Limpiar filtros

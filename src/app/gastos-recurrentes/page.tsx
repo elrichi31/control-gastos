@@ -1,6 +1,7 @@
 "use client"
 
 import { RecurringExpenseList } from "@/components/RecurringExpenseList"
+import { PageShell, PageHeader } from "@/components/ui/page-layout"
 import { PageTitle } from "@/components/PageTitle"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -25,22 +26,12 @@ export default function GastosRecurrentesPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
+    <PageShell>
       <PageTitle customTitle="Gastos Recurrentes - BethaSpend" />
       
-      <div className="space-y-6">
-        <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Gastos recurrentes</h1>
-            <p className="text-muted-foreground mt-1">Gestiona tus gastos que se repiten automáticamente.</p>
-          </div>
-          <Link href="/form?tipo=recurrente" className="shrink-0">
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-1.5" />
-              Nuevo recurrente
-            </Button>
-          </Link>
-        </header>
+      <div className="space-y-4">
+        <PageHeader title="Gastos recurrentes" description="Gestiona tus gastos que se repiten automáticamente."
+          actions={<Button size="sm" asChild><Link href="/form?tipo=recurrente"><Plus className="w-4 h-4 mr-1.5" />Nuevo recurrente</Link></Button>} />
 
         <RecurringExpenseList />
 
@@ -75,6 +66,6 @@ export default function GastosRecurrentesPage() {
           </Card>
         )}
       </div>
-    </div>
+    </PageShell>
   )
 }
