@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PageTitle } from '@/components/PageTitle'
 import { ModeToggle } from '@/components/mode-toggle'
+import { safeLoginReturn } from '@/lib/mcp/login-return'
 import { Eye, EyeOff, Wallet } from 'lucide-react'
 
 export default function LoginPage() {
@@ -49,7 +50,7 @@ export default function LoginPage() {
       } else {
         const session = await getSession()
         if (session) {
-          router.push('/dashboard')
+          router.push(safeLoginReturn(new URLSearchParams(window.location.search).get('callbackUrl')))
         } else {
           setError('Error al iniciar sesión')
         }
@@ -62,7 +63,7 @@ export default function LoginPage() {
   }
 
   const handleGoogleSignIn = () => {
-    signIn('google', { callbackUrl: '/dashboard' })
+    signIn('google', { callbackUrl: safeLoginReturn(new URLSearchParams(window.location.search).get('callbackUrl')) })
   }
 
   return (
