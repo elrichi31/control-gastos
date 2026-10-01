@@ -58,6 +58,8 @@ NEXTAUTH_SECRET=tu_secret_generado
 CRON_SECRET=tu_cron_secret
 ```
 
+El único cron de recurrentes requiere también `SUPABASE_SERVICE_ROLE_KEY` privada y aplicar la migración SQL en Supabase. Guardar una regla no genera un gasto inmediatamente. Ver [modelo, compatibilidad y activación](docs/RECURRING_EXPENSES.md).
+
 ## 🤖 MCP para ChatGPT
 
 Servidor autenticado para consultar y gestionar gastos manuales propios desde ChatGPT. Configuración OAuth, migración y guía de conexión en [docs/MCP.md](docs/MCP.md).

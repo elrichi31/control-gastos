@@ -35,7 +35,6 @@ con status `401`.
 - `GET /api/metodos_pago`
 - `GET /api/transactions`
 - `GET /api/cron/process-recurring-expenses` (interno / cron)
-- `GET /api/cron/generate-monthly-instances` (interno / cron)
 - `GET|POST /api/auth/[...nextauth]` (manejado por NextAuth)
 
 ### Protegidos con sesión o bearer token
@@ -573,9 +572,9 @@ o, si no está asociado:
 
 **Qué hace**
 
-- Crea un gasto recurrente.
-- Además genera una primera instancia automática en `gasto_recurrente_instancia`.
-- En algunos casos también crea inmediatamente un gasto real en `gasto`.
+- Guarda únicamente la regla del gasto recurrente. SQL calcula su próxima fecha.
+- No crea instancias ni gastos al guardar; los genera el único cron diario cuando corresponda.
+- El contrato JSON público se mantiene: las fechas internas de procesamiento no se exponen a web/mobile.
 
 **Auth requerida**
 
@@ -1299,59 +1298,30 @@ Se puede enviar cualquier subconjunto de estos campos:
 
 ---
 
-## 9) Endpoints internos / cron
+## 9) Endpoint interno / cron
 
 ### `GET /api/cron/process-recurring-expenses`
 
-**Qué hace**
+- **Autenticación:** `Authorization: Bearer <CRON_SECRET>`; no usa la sesión web/mobile.
+- **Horario configurado:** `0 1 * * *`. El procesador usa fechas UTC.
+- Selecciona reglas activas cuya `proxima_fecha` venció y crea hasta 200 ocurrencias por invocación.
+- Una RPC transaccional crea gastos y avanza fechas, con bloqueo de filas e índice único para evitar duplicados.
+- Recupera fechas pendientes tras una interrupción. `pending: true` indica que queda trabajo para otra invocación.
+- `401` sin secreto válido; `503` si falta configuración/migración; `500` ante fallo del procesador, sin consumir las fechas.
 
-- Procesa las instancias pendientes de gastos recurrentes cuya `fecha_programada` es hoy o anterior.
-- Crea el gasto real en tabla `gasto`.
-- Marca la instancia como `generado` o `omitido`.
-
-**Uso esperado**
-
-- Interno.
-- En `vercel.json` está programado para correr todos los días a la `1:00 AM`.
-
-**Respuesta exitosa (`200`)**
+**Ejemplo ilustrativo de respuesta (`200`)**
 
 ```json
 {
-  "message": "Procesamiento completado",
-  "procesados": 4,
-  "errores": 0,
-  "omitidos": 1,
-  "total": 5
+  "created": 4,
+  "processed": 4,
+  "pending": false,
+  "date": "2026-10-01"
 }
 ```
 
----
-
-### `GET /api/cron/generate-monthly-instances`
-
-**Qué hace**
-
-- Genera instancias futuras para gastos recurrentes activos del mes siguiente.
-- Para gastos mensuales crea una instancia.
-- Para gastos semanales crea todas las instancias semanales del mes siguiente.
-
-**Uso esperado**
-
-- Interno.
-- En `vercel.json` está programado para correr el día `1` de cada mes a la `1:00 AM`.
-
-**Respuesta exitosa (`200`)**
-
-```json
-{
-  "message": "Generación de instancias completada",
-  "creadas": 8,
-  "errores": 0,
-  "omitidas": 2,
-  "mes": "2026-05"
-}
-```
+El generador mensual de instancias fue eliminado. La tabla antigua se conserva como historial, no como cola.
+Migración y activación: [`docs/RECURRING_EXPENSES.md`](docs/RECURRING_EXPENSES.md).
 
 ---
 

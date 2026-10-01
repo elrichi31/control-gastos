@@ -3,10 +3,6 @@
     {
       "path": "/api/cron/process-recurring-expenses",
       "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/cron/generate-monthly-instances",
-      "schedule": "0 1 1 * *"
     }
   ]
 }

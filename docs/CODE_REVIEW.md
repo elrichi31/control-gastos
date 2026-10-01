@@ -21,6 +21,8 @@ No se ejecutaron cron, migraciones, escrituras ni pruebas destructivas en produc
 
 ### P1 — Los cron no autentican la invocación
 
+**Estado actualizado:** resuelto en el procesador único de recurrentes: valida `CRON_SECRET` antes de acceder a Supabase, utiliza service role privada y la RPC está restringida a `service_role`. El cron mensual fue eliminado. Requiere [activar la migración y configuración](RECURRING_EXPENSES.md). El hallazgo siguiente describe el estado original revisado.
+
 Archivos: `src/app/api/cron/process-recurring-expenses/route.ts:9`, `generate-monthly-instances/route.ts:8` y `src/middleware.ts:52`.
 
 Los handlers no reciben/verifican `Authorization` ni `CRON_SECRET`; el middleware excluye las rutas API. En un probe aislado, invocaciones sin credenciales llegaron a la escritura y respondieron 200. La escritura efectiva en producción depende además de permisos de Supabase y protecciones externas, que no se comprobaron.

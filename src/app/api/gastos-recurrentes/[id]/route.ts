@@ -1,76 +1,38 @@
 import { NextResponse } from 'next/server'
 import { getAuthenticatedSupabaseClient } from '@/lib/auth/auth-supabase'
+import { validateRecurringRule, publicRecurringRule, RecurringValidationError, recurringDatabaseError, recurringRequestError } from '@/lib/recurring-rules'
 
-// PUT - Actualizar un gasto recurrente
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request)
   if (authError) return authError
-
   try {
     const { id: idParam } = await params
+    const id = Number(idParam)
+    if (!Number.isSafeInteger(id) || id <= 0) return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
     const body = await request.json()
-    const id = parseInt(idParam)
-
-    if (isNaN(id)) {
-      return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new RecurringValidationError('Datos recurrentes inválidos')
+    const { data: existing, error: fetchError } = await supabase.from('gasto_recurrente').select('*').eq('id', id).eq('user_id', userId).single()
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') return NextResponse.json({ error: 'Gasto recurrente no encontrado' }, { status: 404 })
+      return recurringDatabaseError(fetchError)
     }
-
-    // Verificar que el gasto recurrente pertenece al usuario
-    const { data: existing, error: fetchError } = await supabase
-      .from('gasto_recurrente')
-      .select('id')
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single()
-
-    if (fetchError || !existing) {
-      return NextResponse.json(
-        { error: 'Gasto recurrente no encontrado' },
-        { status: 404 }
-      )
+    if (!existing) return NextResponse.json({ error: 'Gasto recurrente no encontrado' }, { status: 404 })
+    if (!('proxima_fecha' in existing) || !('ultima_fecha_generada' in existing)) return recurringDatabaseError({ code: 'PGRST204' })
+    const validated = validateRecurringRule({ ...existing, ...body })
+    const updateData: Record<string, unknown> = {}
+    for (const key of Object.keys(validated) as (keyof typeof validated)[]) {
+      if (body[key] !== undefined) updateData[key] = validated[key]
     }
-
-    // Actualizar solo los campos permitidos
-    const updateData: any = {}
-    
-    if (body.descripcion !== undefined) updateData.descripcion = body.descripcion
-    if (body.monto !== undefined) updateData.monto = body.monto
-    if (body.categoria_id !== undefined) updateData.categoria_id = body.categoria_id
-    if (body.metodo_pago_id !== undefined) updateData.metodo_pago_id = body.metodo_pago_id
-    if (body.frecuencia !== undefined) updateData.frecuencia = body.frecuencia
-    if (body.dia_semana !== undefined) updateData.dia_semana = body.dia_semana
-    if (body.dia_mes !== undefined) updateData.dia_mes = body.dia_mes
-    if (body.fecha_inicio !== undefined) updateData.fecha_inicio = body.fecha_inicio
-    if (body.fecha_fin !== undefined) updateData.fecha_fin = body.fecha_fin
-    if (body.activo !== undefined) updateData.activo = body.activo
-
-    const { data, error } = await supabase
-      .from('gasto_recurrente')
-      .update(updateData)
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error updating recurring expense:', error)
-      return NextResponse.json(
-        { error: 'Error al actualizar gasto recurrente' },
-        { status: 500 }
-      )
+    if (body.frecuencia !== undefined) {
+      updateData.dia_semana = validated.dia_semana
+      updateData.dia_mes = validated.dia_mes
     }
-
-    return NextResponse.json(data)
-  } catch (error) {
-    console.error('Error in PUT /api/gastos-recurrentes/[id]:', error)
-    return NextResponse.json(
-      { error: 'Error al procesar la solicitud' },
-      { status: 500 }
-    )
-  }
+    if (!Object.keys(updateData).length) return NextResponse.json(publicRecurringRule(existing))
+    // Never write cursors from a stale read; SQL recalculates calendar edits atomically.
+    const { data, error } = await supabase.from('gasto_recurrente').update(updateData).eq('id', id).eq('user_id', userId).select().single()
+    if (error) return recurringDatabaseError(error)
+    return NextResponse.json(publicRecurringRule(data))
+  } catch (error) { return recurringRequestError(error) }
 }
 
 // DELETE - Eliminar un gasto recurrente
