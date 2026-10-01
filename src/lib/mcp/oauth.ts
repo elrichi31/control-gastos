@@ -35,7 +35,11 @@ export function createOAuthHandlers(config: McpConfig, db: SupabaseClient, getSe
   }
   async function rpc(name: string, params: Record<string, unknown>) {
     const { data, error } = await db.rpc(name, params)
-    if (error) throw new OAuthError('server_error', 'No se pudo completar la operación. Verifica la migración y configuración MCP.', 503)
+    if (error) {
+      const code = typeof error.code === 'string' && /^(?:[A-Z0-9]{5}|PGRST[0-9]{3})$/.test(error.code) ? error.code : 'unknown'
+      console.error('MCP database operation failed', { operation: name, code })
+      throw new OAuthError('server_error', 'No se pudo completar la operación. Verifica la migración y configuración MCP.', 503)
+    }
     return data
   }
   const guarded = (fn: (request: Request) => Promise<Response>) => async (request: Request) => {
