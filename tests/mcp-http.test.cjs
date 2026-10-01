@@ -61,8 +61,12 @@ test('OAuth HTML forms preserve same-origin POSTs without weakening CSRF',async(
  const params=new URLSearchParams({response_type:'code',client_id:config.clientId,redirect_uri:config.redirects[0],state:'fixture-state',code_challenge:challenge,code_challenge_method:'S256',resource:config.resource,scope:'expenses:read'})
  const consent=await oauth.authorizeGet(new Request(config.origin+'/api/mcp/oauth/authorize?'+params))
  assert.equal(consent.headers.get('referrer-policy'),'same-origin','No-referrer makes browser form POSTs send Origin: null')
+ assert.match(consent.headers.get('content-security-policy'),/form-action 'self' https:\/\/chatgpt\.com;/,'Chromium checks the OAuth callback redirect against form-action')
  const connections=await oauth.connectionsGet(new Request(config.origin+'/api/mcp/connections'))
  assert.equal(connections.headers.get('referrer-policy'),'same-origin')
+ assert.match(connections.headers.get('content-security-policy'),/form-action 'self';/,'Account management does not allow external form redirects')
+ const rejected=await oauth.authorizeGet(new Request(config.origin+'/api/mcp/oauth/authorize?'+new URLSearchParams({...Object.fromEntries(params),redirect_uri:'https://evil.example/callback'})))
+ assert.equal(rejected.status,400,'Unregistered callbacks remain rejected')
  const html=await consent.text(),csrf=html.match(/name="csrf" value="([A-Za-z0-9_-]+)"/)[1],cookie=consent.headers.get('set-cookie').split(';')[0]
  const values={...Object.fromEntries(params),csrf,decision:'approve'},url=config.origin+'/api/mcp/oauth/authorize'
  for(const headers of [{origin:'null',cookie},{cookie},{origin:'https://evil.example',cookie},{origin:config.origin}]){
