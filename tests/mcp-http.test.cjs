@@ -56,7 +56,7 @@ test('HTTP OAuth consent + actual PostgreSQL token exchange + real MCP protocol 
 
 test('OAuth HTML forms preserve same-origin POSTs without weakening CSRF',async()=>{
  let writes=0
- const db={rpc:async()=>{writes++;return {data:null,error:null}},from(){const q={select(){return q},eq(){return q},is(){return q},gt(){return q},order(){return q},limit(){return Promise.resolve({data:[],error:null})}};return q}}
+ const db={rpc:async()=>{writes++;return {data:null,error:null}},from(){const q={select(){return q},eq(){return q},in(){return q},is(){return q},gt(){return q},order(){return q},limit(){return Promise.resolve({data:[],error:null})}};return q}}
  const oauth=createOAuthHandlers(config,db,async()=>({user:{id:user,email:'fixture@example.test'}}))
  const params=new URLSearchParams({response_type:'code',client_id:config.clientId,redirect_uri:config.redirects[0],state:'fixture-state',code_challenge:challenge,code_challenge_method:'S256',resource:config.resource,scope:'expenses:read'})
  const consent=await oauth.authorizeGet(new Request(config.origin+'/api/mcp/oauth/authorize?'+params))
