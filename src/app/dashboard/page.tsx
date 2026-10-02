@@ -17,49 +17,64 @@ import { StatTile, StatTileRow } from "@/components/stats/stat-tile"
 import { BudgetSummary } from "@/components/presupuesto/BudgetSummary"
 import { formatMoney } from "@/lib/utils"
 import { getDaysInMonth, differenceInCalendarDays } from "date-fns"
-
-const currentDate = new Date()
-const currentMonth = startOfMonth(currentDate)
-const currentMonthEnd = endOfMonth(currentDate)
-const lastMonth = startOfMonth(subMonths(currentDate, 1))
-const lastMonthEnd = endOfMonth(subMonths(currentDate, 1))
+import { MonthPlanning } from "@/components/dashboard/MonthPlanning"
+import { buildMonthPlan } from "@/lib/month-planning"
+import type { PlanningRule } from "@/lib/month-planning"
 
 export default function DashboardPage() {
-    const { gastos, loading } = useGastosFiltrados()
+    const { gastos, loading, error: expensesError } = useGastosFiltrados()
+    const [currentDate] = useState(() => new Date())
+    const currentMonth = startOfMonth(currentDate)
+    const currentMonthEnd = endOfMonth(currentDate)
+    const lastMonth = startOfMonth(subMonths(currentDate, 1))
+    const lastMonthEnd = endOfMonth(subMonths(currentDate, 1))
+    const today = format(currentDate, 'yyyy-MM-dd')
+    const monthKey = today.slice(0, 7)
     const [budgetTotal, setBudgetTotal] = useState<number | undefined>(undefined)
     const [budgetCategories, setBudgetCategories] = useState<any[]>([])
+    const [rules, setRules] = useState<PlanningRule[]>([])
+    const [recurringLinks, setRecurringLinks] = useState<Record<number, number>>({})
+    const [planLoading, setPlanLoading] = useState(true)
+    const [planError, setPlanError] = useState<string | null>(null)
+    const [retry, setRetry] = useState(0)
 
-
-    // Obtener presupuesto del mes actual
     useEffect(() => {
-        const fetchCurrentMonthBudget = async () => {
+        const controller = new AbortController()
+        async function loadPlan() {
+            setPlanLoading(true)
+            setPlanError(null)
+            setBudgetTotal(undefined)
+            setBudgetCategories([])
+            setRules([])
+            setRecurringLinks({})
             try {
-                const year = currentDate.getFullYear()
-                const month = currentDate.getMonth() + 1
-
-                const response = await fetch(`/api/presupuestos?anio=${year}`)
-                if (response.ok) {
-                    const budgets = await response.json()
-                    const currentMonthBudget = budgets.find((b: any) => b.mes === month && b.anio === year)
-
-                    if (currentMonthBudget) {
-                        setBudgetTotal(currentMonthBudget.total)
-
-                        // Obtener categorías del presupuesto
-                        const categoriesResponse = await fetch(`/api/presupuesto-mensual-detalle?presupuesto_mensual_id=${currentMonthBudget.id}`)
-                        if (categoriesResponse.ok) {
-                            const categoriesData = await categoriesResponse.json()
-                            setBudgetCategories(categoriesData)
-                        }
-                    }
+                const read = async (url: string) => {
+                    const response = await fetch(url, { signal: controller.signal, cache: 'no-store' })
+                    if (!response.ok) throw new Error('No se pudo cargar el plan del mes. Verifica el presupuesto y la migración de recurrentes e intenta de nuevo.')
+                    return response.json()
                 }
+                const [budgets, recurring] = await Promise.all([
+                    read(`/api/presupuestos?anio=${currentDate.getFullYear()}`),
+                    read(`/api/dashboard/recurring-plan?month=${monthKey}`),
+                ])
+                if (!Array.isArray(budgets) || !Array.isArray(recurring.rules) || !Array.isArray(recurring.links)) throw new Error('La respuesta del plan del mes no es válida.')
+                const budget = budgets.find((b: any) => Number(b.mes) === currentDate.getMonth() + 1 && Number(b.anio) === currentDate.getFullYear())
+                const categories = budget ? await read(`/api/presupuesto-mensual-detalle?presupuesto_mensual_id=${budget.id}`) : []
+                if (!Array.isArray(categories) || (budget && !Number.isFinite(Number(budget.total)))) throw new Error('El presupuesto del mes no es válido.')
+                if (controller.signal.aborted) return
+                setBudgetTotal(budget ? Number(budget.total) : undefined)
+                setBudgetCategories(categories)
+                setRules(recurring.rules)
+                setRecurringLinks(Object.fromEntries(recurring.links.map((link: { id: number; gasto_recurrente_id: number }) => [link.id, link.gasto_recurrente_id])))
             } catch (error) {
-                console.error('Error fetching budget:', error)
+                if (!controller.signal.aborted) setPlanError(error instanceof Error ? error.message : 'No se pudo cargar el plan del mes.')
+            } finally {
+                if (!controller.signal.aborted) setPlanLoading(false)
             }
         }
-
-        fetchCurrentMonthBudget()
-    }, [])
+        loadPlan()
+        return () => controller.abort()
+    }, [currentDate, monthKey, retry])
 
     // Gastos del mes actual
     const currentMonthExpenses = useMemo(() => {
@@ -146,6 +161,20 @@ export default function DashboardPage() {
         })
     }, [budgetCategories, currentMonthExpenses])
 
+    const monthPlan = useMemo(() => buildMonthPlan({
+        today,
+        budget: budgetTotal,
+        expenses: gastos.map(g => ({ ...g, gasto_recurrente_id: recurringLinks[g.id] })),
+        rules,
+        categories: categoryProgress,
+    }), [today, budgetTotal, gastos, recurringLinks, rules, categoryProgress])
+
+    if (expensesError && !loading) return (
+        <PageShell><MonthPlanning plan={monthPlan} loading={false}
+            error="No se pudieron cargar tus gastos. No podemos calcular un disponible fiable."
+            onRetry={() => window.location.reload()} /></PageShell>
+    )
+
     if (loading) {
         return (
             <PageShell className="space-y-4">
@@ -201,6 +230,9 @@ export default function DashboardPage() {
                 {budgetTotal !== undefined && budgetTotal > 0 && (
                     <BudgetSummary presupuestado={budgetTotal} gastado={currentMonthTotal} />
                 )}
+
+                <MonthPlanning plan={monthPlan} loading={planLoading} error={planError}
+                    onRetry={() => setRetry(value => value + 1)} />
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                     <ExpenseCalendar currentDate={currentDate} expenses={currentMonthExpenses} />
