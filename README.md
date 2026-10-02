@@ -18,7 +18,7 @@ Sistema de gestión de gastos personales desarrollado por **Bethalabs**. Incluye
 - **Backend**: Next.js API Routes
 - **Base de Datos**: Supabase (PostgreSQL)
 - **Autenticación**: NextAuth.js + Supabase Auth
-- **Automatización**: Vercel Cron Jobs
+- **Automatización**: Schedule diario en Dokploy
 - **Utilidades**: date-fns, react-hot-toast
 
 ## 📦 Instalación
@@ -64,14 +64,13 @@ El único cron de recurrentes requiere también `SUPABASE_SERVICE_ROLE_KEY` priv
 
 Servidor autenticado para consultar y gestionar gastos manuales propios desde ChatGPT. Configuración OAuth, migración y guía de conexión en [docs/MCP.md](docs/MCP.md).
 
-## 🤖 Cron Jobs (Vercel)
+## 🤖 Cron Job (Dokploy)
 
-El sistema incluye dos cron jobs automatizados:
+Un Schedule diario de Dokploy (`0 1 * * *`, UTC, shell `sh`) dentro del contenedor genera los gastos recurrentes vencidos:
 
-- **Diario (1:00 AM)**: Procesa instancias pendientes y genera gastos recurrentes
-- **Mensual (Día 1, 1:00 AM)**: Genera instancias del próximo mes
-
-Configurados en `vercel.json`.
+```sh
+wget -qO- --header="Authorization: Bearer $CRON_SECRET" http://127.0.0.1:3000/api/cron/process-recurring-expenses
+```
 
 ## 📱 Estructura del Proyecto
 

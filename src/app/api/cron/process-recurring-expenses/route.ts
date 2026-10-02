@@ -5,7 +5,7 @@ import { timingSafeEqual } from 'node:crypto'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-// Vercel invokes one daily job. All scheduling and writes happen in one SQL transaction.
+// A daily Dokploy schedule invokes this job. All scheduling and writes happen in one SQL transaction.
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET
   if (!secret) return NextResponse.json({ error: 'Falta configurar CRON_SECRET' }, { status: 503 })

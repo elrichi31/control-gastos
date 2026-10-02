@@ -5,7 +5,7 @@
 - `gasto_recurrente`: regla y estado interno (`proxima_fecha`, `ultima_fecha_generada`).
 - `gasto`: gasto real, con enlace opcional `gasto_recurrente_id`.
 - `gasto_recurrente_instancia`: **historial heredado**, no se elimina ni se utiliza para generar nuevas ocurrencias.
-- Un único job en `vercel.json`: `/api/cron/process-recurring-expenses`, `0 1 * * *`. Las fechas del procesador son UTC.
+- Un único Schedule en Dokploy: `/api/cron/process-recurring-expenses`, `0 1 * * *`. Las fechas del procesador son UTC.
 
 Guardar una recurrente ya no genera inmediatamente un gasto. El trigger calcula la primera fecha válida a partir de `fecha_inicio`, y el cron genera las fechas vencidas. Una regla nueva con inicio pasado recuperará esas ocurrencias: usar inicio de hoy/futuro si no se desea recuperación histórica.
 
@@ -44,9 +44,9 @@ FROM (VALUES ('anon'), ('authenticated'), ('service_role')) roles(role_name);
 
 Resultado esperado de permisos: `anon=false`, `authenticated=false`, `service_role=true`.
 
-6. Verificar un acceso sin credenciales: debe responder 401. Para ejecutar el cron manualmente, usar el panel de Vercel o `Authorization: Bearer <CRON_SECRET>`: **esa llamada sí crea los gastos vencidos**. Revisar HTTP 200, `created`/`processed`/`pending` y logs de Vercel. No exponer el secreto en capturas o chats.
+6. Verificar un acceso sin credenciales: debe responder 401. Para ejecutar el cron manualmente, usar **Run** en el Schedule de Dokploy o `Authorization: Bearer <CRON_SECRET>`: **esa llamada sí crea los gastos vencidos**. Revisar HTTP 200, `created`/`processed`/`pending` y logs del Schedule. No exponer el secreto en capturas o chats.
 
-Vercel envía automáticamente el secreto configurado en la cabecera Authorization: [documentación oficial](https://vercel.com/docs/cron-jobs/manage-cron-jobs).
+El Schedule envía el secreto en la cabecera Authorization usando `$CRON_SECRET` del entorno del contenedor (ver README).
 
 Si una regla inválida o una restricción de la BD hace fallar la RPC, devuelve 500 y revierte todo el lote. Corregir la causa y reintentar; no marcar manualmente fechas como consumidas. Si una invocación se interrumpe tras confirmar SQL, repetirla es seguro por cursor/índice único.
 
