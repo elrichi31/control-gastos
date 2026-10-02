@@ -2,6 +2,27 @@ import { createClient } from '@supabase/supabase-js'
 import { createOAuthHandlers } from './oauth'
 import { createMcpHandler } from './http'
 import { getMcpConfig, OAuthError, oauthErrorResponse } from './security'
+import { createMcpStatusHandler } from './status'
+
+export async function handleMcpStatus() {
+  let db: ReturnType<typeof database> | undefined
+  return createMcpStatusHandler({
+    getSession: async () => {
+      const { getServerSession } = await import('next-auth')
+      const { authOptions } = await import('@/lib/auth/auth')
+      return getServerSession(authOptions)
+    },
+    getConfig: () => {
+      const config = getMcpConfig()
+      db = database() // Validate private server settings without exposing them or querying grants.
+      return config
+    },
+    database: () => {
+      if (!db) throw new Error('MCP database unavailable')
+      return db
+    },
+  })()
+}
 
 function database() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL

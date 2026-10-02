@@ -2,6 +2,7 @@
 import { MonthCard } from "./MonthCard"
 import { AddMonthCard } from "./AddMonthCard"
 import { YearSummary } from "./YearSummary"
+import { BudgetMonthlyChart } from "./BudgetMonthlyChart"
 import React from "react"
 
 interface MonthData {
@@ -56,6 +57,8 @@ export function PresupuestoGrid({
         activeMonths={ordenados.map(m => m.value)}
         anio={selectedYear}
       />
+
+      <BudgetMonthlyChart monthlyData={monthlyData} activeMonths={activeMonths} year={selectedYear} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
       {/* Meses activos */}
