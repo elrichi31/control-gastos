@@ -4,6 +4,8 @@ import React, { useState } from "react"
 import { ChevronRight, Edit2, Plus, Trash2, X } from "lucide-react"
 import { PresupuestoCategoriaDetalle, MovimientoPresupuesto } from "@/types/budget"
 import { formatMoney } from "@/lib/utils"
+import { getCategoriaColor } from "@/lib/constants/app"
+import { BudgetIndicator, getBudgetIndicator } from "./BudgetIndicator"
 
 interface Props {
   categoria: PresupuestoCategoriaDetalle
@@ -43,29 +45,25 @@ export const CategoriaRow: React.FC<Props> = ({
   const excedido = presupuestado > 0 && gastado > presupuestado
   const restante = presupuestado - gastado
 
-  const colorBarra = excedido
-    ? "bg-chart-5"
-    : porcentaje >= 80
-      ? "bg-chart-3"
-      : "bg-chart-2"
+  const colorBarra = getBudgetIndicator(presupuestado, gastado).bar
 
   return (
     <div className="border-b border-border last:border-b-0">
       <div className="group flex items-center gap-3 px-4 sm:px-5 py-3 hover:bg-muted/40 transition-colors">
         <button
           onClick={() => setAbierto(v => !v)}
-          className="flex-1 min-w-0 flex items-center gap-3 text-left focus-visible:outline-none"
+          className="flex-1 min-w-0 flex items-center gap-3 text-left rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-expanded={abierto}
         >
           <ChevronRight
             className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform ${abierto ? "rotate-90" : ""}`}
           />
           <div className="min-w-0 flex-1">
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-sm font-medium text-foreground truncate">
+            <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1.5 sm:gap-3">
+              <span className={`inline-flex self-start rounded-full border px-2 py-0.5 text-xs font-medium break-words ${getCategoriaColor(categoria.categoria.nombre)}`}>
                 {categoria.categoria.nombre}
               </span>
-              <span className="text-sm tabular-nums shrink-0">
+              <span className="text-sm tabular-nums break-words">
                 <span className={excedido ? "text-chart-5 font-medium" : "text-foreground font-medium"}>
                   {formatMoney(gastado)}
                 </span>
@@ -75,13 +73,14 @@ export const CategoriaRow: React.FC<Props> = ({
               </span>
             </div>
 
+            <div className="mt-2"><BudgetIndicator budget={presupuestado} spent={gastado} /></div>
             {/* Sin presupuesto asignado no hay progreso que mostrar */}
             {presupuestado > 0 ? (
               <div className="flex items-center gap-2 mt-1.5">
-                <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                <div role="progressbar" aria-label={`Consumo de ${categoria.categoria.nombre}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.max(0, Math.min(100, porcentaje))} aria-valuetext={`${Math.round(porcentaje)}% del presupuesto consumido`} className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${colorBarra}`}
-                    style={{ width: `${Math.min(100, porcentaje)}%` }}
+                    style={{ width: `${Math.max(0, Math.min(100, porcentaje))}%` }}
                   />
                 </div>
                 {/* En móvil solo el %, para no comerse el ancho de la barra */}
@@ -110,7 +109,8 @@ export const CategoriaRow: React.FC<Props> = ({
           <button
             onClick={() => onDeleteCategory(categoria.categoria_id)}
             title="Quitar categoría"
-            className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 hover:text-destructive hover:bg-muted transition-all shrink-0"
+            aria-label={`Quitar categoría ${categoria.categoria.nombre}`}
+            className="h-11 w-11 grid place-items-center rounded-md text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 hover:text-destructive hover:bg-muted transition-all shrink-0"
           >
             <X className="w-3.5 h-3.5" />
           </button>

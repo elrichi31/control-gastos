@@ -12,10 +12,10 @@ interface EmptyMonthsProps {
 
 export function EmptyMonths({ allMonths, isOpen, setIsOpen, onAdd }: EmptyMonthsProps) {
   return (
-    <div className="text-center py-12">
-      <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-      <h3 className="text-lg font-medium text-muted-foreground mb-2">No hay meses configurados</h3>
-      <p className="text-muted-foreground mb-6">Agrega tu primer mes para comenzar a gestionar tu presupuesto</p>
+    <div className="rounded-xl border border-dashed border-primary/25 bg-primary/5 px-5 py-10 text-center">
+      <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 mb-4"><Calendar aria-hidden="true" className="h-6 w-6 text-primary" /></span>
+      <h3 className="text-base font-semibold text-foreground mb-2">No hay meses configurados</h3>
+      <p className="text-sm text-muted-foreground mb-5 max-w-sm mx-auto">Agrega tu primer mes para comenzar a gestionar tu presupuesto</p>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">

@@ -1,6 +1,8 @@
 "use client"
 
 import { formatMoney } from "@/lib/utils"
+import { Wallet } from "lucide-react"
+import { BudgetIndicator, getBudgetIndicator } from "./BudgetIndicator"
 
 interface Props {
   presupuestado: number
@@ -18,13 +20,17 @@ export function BudgetSummary({ presupuestado, gastado, planning }: Props) {
   const disponibleExcedido = disponible < 0
   const excedido = diferencia < 0
   const porcentaje = presupuestado > 0 ? (gastado / presupuestado) * 100 : 0
-  const sinPresupuesto = presupuestado === 0
+  const sinPresupuesto = presupuestado <= 0
 
-  const colorBarra = excedido ? "bg-chart-5" : porcentaje >= 80 ? "bg-chart-3" : "bg-chart-2"
+  const colorBarra = getBudgetIndicator(presupuestado, gastado).bar
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <span className="inline-flex items-center gap-2 text-sm font-medium"><Wallet aria-hidden="true" className="h-4 w-4 text-primary" /> Estado del mes</span>
+        <BudgetIndicator budget={presupuestado} spent={gastado} forecastExceeded={disponibleExcedido} />
+      </div>
+      <div className="grid grid-cols-1 min-[360px]:grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
         <div>
           <p className="text-xs font-medium text-muted-foreground">Presupuestado</p>
           <p className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground tabular-nums mt-1">
@@ -37,26 +43,26 @@ export function BudgetSummary({ presupuestado, gastado, planning }: Props) {
             {formatMoney(gastado)}
           </p>
         </div>
-        <div className="col-span-2 sm:col-span-1">
+        {!sinPresupuesto && <div className={`min-[360px]:col-span-2 sm:col-span-1 rounded-lg p-3 -m-3 ${disponibleExcedido ? "bg-chart-5/5" : "bg-primary/5"}`}>
           <p className="text-xs font-medium text-muted-foreground">
             {planning ? (disponibleExcedido ? "Exceso previsto" : "Disponible para gastar") : (excedido ? "Excedido" : "Disponible")}
           </p>
           <p
             className={`text-xl sm:text-2xl font-semibold tracking-tight tabular-nums mt-1 ${
-              disponibleExcedido ? "text-chart-5" : "text-foreground"
+              disponibleExcedido ? "text-chart-5" : "text-primary"
             }`}
           >
             {formatMoney(Math.abs(disponible))}
           </p>
-        </div>
+        </div>}
       </div>
 
       {!sinPresupuesto && (
         <div className="mt-5">
-          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+          <div role="progressbar" aria-label="Consumo del presupuesto" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.max(0, Math.min(100, porcentaje))} aria-valuetext={`${porcentaje.toFixed(0)}% del presupuesto consumido`} className="h-2 rounded-full bg-muted overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${colorBarra}`}
-              style={{ width: `${Math.min(100, porcentaje)}%` }}
+              style={{ width: `${Math.max(0, Math.min(100, porcentaje))}%` }}
             />
           </div>
           <p className="text-xs text-muted-foreground mt-2 tabular-nums">
