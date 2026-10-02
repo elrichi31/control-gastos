@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
+import { clearPrivateCaches } from "@/lib/pwa/cache-policy"
 import { Home, FileText, Calculator, X, ChevronLeft, BarChart3, Receipt, LogOut, User, ChevronDown, Repeat, Plus, Wallet } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -92,6 +93,7 @@ export function Sidebar({
 	}, [gastosOpen, isCollapsed])
 
 	const handleLogout = async () => {
+		await clearPrivateCaches()
 		await signOut({ 
 			callbackUrl: '/auth/login',
 			redirect: true 

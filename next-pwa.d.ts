@@ -6,8 +6,10 @@ declare module 'next-pwa' {
     disable?: boolean
     register?: boolean
     skipWaiting?: boolean
+    cacheStartUrl?: boolean
+    dynamicStartUrl?: boolean
     runtimeCaching?: Array<{
-      urlPattern: RegExp
+      urlPattern: RegExp | ((context: { url: URL; request: Request }) => boolean)
       handler: string
       options?: {
         cacheName?: string

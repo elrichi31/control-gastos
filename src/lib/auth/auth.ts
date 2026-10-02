@@ -93,13 +93,11 @@ export const authOptions: NextAuthOptions = {
       return session
     },
     async redirect({ url, baseUrl }) {
-      // Si la URL es relativa, construir URL completa
-      if (url.startsWith('/')) {
-        return `${baseUrl}${url}`
-      }
-      // Si la URL es del mismo origen, permitir
-      if (url.startsWith(baseUrl)) {
-        return url
+      try {
+        const target = new URL(url, baseUrl)
+        if (target.origin === new URL(baseUrl).origin) return target.href
+      } catch {
+        // Malformed or foreign destinations fall back to a trusted local route.
       }
       // Por defecto, redirigir al dashboard
       return `${baseUrl}/dashboard`

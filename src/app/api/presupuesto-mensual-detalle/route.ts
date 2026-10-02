@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedSupabaseClient } from '@/lib/auth'
+import { requireOwnedBudget } from '@/lib/auth/budget-ownership'
 
 // GET: Devuelve para un presupuesto mensual todas las categorías con su total, cantidad de gastos, nombre y movimientos
 // /api/presupuesto-mensual-detalle?presupuesto_mensual_id=123
@@ -14,13 +15,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Falta el parámetro presupuesto_mensual_id' }, { status: 400 })
   }
 
+  const ownershipError = await requireOwnedBudget(supabase, userId, presupuestoMensualId)
+  if (ownershipError) return ownershipError
+
   // Traer todas las categorías del presupuesto mensual con nombre
   const { data: categorias, error: errorCategorias } = await supabase
     .from('presupuesto_categoria')
     .select('id, categoria_id, total_categoria, cantidad_gastos, categoria(nombre)')
     .eq('presupuesto_mensual_id', presupuestoMensualId)
+    .eq('user_id', userId)
 
-  if (errorCategorias) return NextResponse.json({ error: errorCategorias.message }, { status: 500 })
+  if (errorCategorias) return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
 
   // Para cada categoría, obtener los movimientos
   const resultado = []
@@ -29,8 +34,9 @@ export async function GET(req: NextRequest) {
       .from('movimiento_presupuesto')
       .select('id, descripcion, monto, fecha, metodo_pago_id')
       .eq('presupuesto_categoria_id', cat.id)
+      .eq('user_id', userId)
       .order('fecha', { ascending: false })
-    if (errorMov) return NextResponse.json({ error: errorMov.message }, { status: 500 })
+    if (errorMov) return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
     resultado.push({
       id: cat.id,
       categoria_id: cat.categoria_id,

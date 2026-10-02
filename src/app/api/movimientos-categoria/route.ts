@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedSupabaseClient } from '@/lib/auth'
+import { requireOwnedBudget, requireOwnedBudgetCategory, requireOwnedBudgetMovement } from '@/lib/auth/budget-ownership'
 
 // GET: Obtener los movimientos (gastos) de todas las categorías de un presupuesto mensual
 // /api/movimientos-categoria?presupuesto_mensual_id=123
@@ -14,13 +15,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Falta el parámetro presupuesto_mensual_id' }, { status: 400 })
   }
 
+  const ownershipError = await requireOwnedBudget(supabase, userId, presupuestoMensualId)
+  if (ownershipError) return ownershipError
+
   // Primero obtenemos todas las categorias de ese presupuesto mensual
   const { data: categorias, error: errorCategorias } = await supabase
     .from('presupuesto_categoria')
     .select('id, categoria_id, categoria(nombre)')
     .eq('presupuesto_mensual_id', presupuestoMensualId)
+    .eq('user_id', userId)
 
-  if (errorCategorias) return NextResponse.json({ error: errorCategorias.message }, { status: 500 })
+  if (errorCategorias) return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
 
   // Para cada categoria, obtenemos los movimientos
   const movimientosPorCategoria = []
@@ -29,11 +34,12 @@ export async function GET(req: NextRequest) {
       .from('movimiento_presupuesto')
       .select('id, descripcion, monto, fecha, metodo_pago_id')
       .eq('presupuesto_categoria_id', cat.id)
+      .eq('user_id', userId)
       .order('fecha', { ascending: false })
-    if (errorMov) return NextResponse.json({ error: errorMov.message }, { status: 500 })
+    if (errorMov) return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
     movimientosPorCategoria.push({
       categoria_id: cat.categoria_id,
-      categoria_nombre: (cat.categoria && Array.isArray(cat.categoria) && cat.categoria.length > 0) ? (cat.categoria[0] as any).nombre : undefined,
+      categoria_nombre: (Array.isArray(cat.categoria) ? cat.categoria[0] : cat.categoria)?.nombre,
       movimientos
     })
   }
@@ -52,6 +58,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Faltan parámetros requeridos' }, { status: 400 })
   }
 
+  const ownershipError = await requireOwnedBudgetCategory(supabase, userId, presupuesto_categoria_id)
+  if (ownershipError) return ownershipError
+
   // Crear el movimiento
   const { data, error } = await supabase
     .from('movimiento_presupuesto')
@@ -60,7 +69,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
   }
 
   // Actualizar el total y cantidad de gastos en la categoría (opcional, si tienes un trigger o función RPC)
@@ -80,6 +89,9 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Faltan parámetros requeridos' }, { status: 400 })
   }
 
+  const ownershipError = await requireOwnedBudgetMovement(supabase, userId, id)
+  if (ownershipError) return ownershipError
+
   const { data, error } = await supabase
     .from('movimiento_presupuesto')
     .update({ descripcion, monto, fecha, metodo_pago_id })
@@ -89,7 +101,7 @@ export async function PUT(req: NextRequest) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
   }
 
   return NextResponse.json(data)
@@ -106,6 +118,9 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'Falta el parámetro id' }, { status: 400 })
   }
 
+  const ownershipError = await requireOwnedBudgetMovement(supabase, userId, id)
+  if (ownershipError) return ownershipError
+
   const { error } = await supabase
     .from('movimiento_presupuesto')
     .delete()
@@ -113,7 +128,7 @@ export async function DELETE(req: NextRequest) {
     .eq('user_id', userId)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })
