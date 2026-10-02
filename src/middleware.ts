@@ -1,5 +1,6 @@
 import { withAuth } from "next-auth/middleware"
 import { NextResponse } from "next/server"
+import { sessionWithinPolicy } from "./lib/auth/session-policy"
 
 // Rutas públicas que no requieren autenticación
 const publicRoutes = ['/', '/auth/login', '/auth/register']
@@ -31,7 +32,7 @@ export default withAuth(
         }
         
         // Para otras rutas, requiere token (usuario autenticado)
-        return !!token
+        return Boolean(token?.id) && sessionWithinPolicy(token?.sessionStartedAt)
       },
     },
   }

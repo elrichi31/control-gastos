@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { authOptions } from './auth'
 import { createServerClient } from '../database'
 import { verifyMobileSessionToken } from './mobile-session'
+import { authSessionActive, sessionRegistryEnabled } from './session-registry'
 
 type AuthSource = 'nextauth' | 'bearer' | 'mobile_session'
 
@@ -44,6 +45,9 @@ async function getUserIdFromBearerToken(request?: Request) {
   const mobileSession = verifyMobileSessionToken(token)
 
   if (mobileSession.valid) {
+    if (!await authSessionActive(mobileSession.payload.sub, mobileSession.payload.sessionId, mobileSession.payload.sessionStartedAt)) {
+      return { error: NextResponse.json({ error: 'Sesión revocada o expirada' }, { status: 401 }), userId: null, authSource: null }
+    }
     return {
       error: null,
       userId: mobileSession.payload.sub,
@@ -59,6 +63,10 @@ async function getUserIdFromBearerToken(request?: Request) {
     }
   }
 
+  // Once registry enforcement is active, legacy provider tokens cannot bypass app revocation.
+  if (sessionRegistryEnabled()) {
+    return { error: NextResponse.json({ error: 'Inicia sesión nuevamente en la app' }, { status: 401 }), userId: null, authSource: null }
+  }
   const supabase = createTokenAuthClient()
   const { data, error } = await supabase.auth.getUser(token)
 

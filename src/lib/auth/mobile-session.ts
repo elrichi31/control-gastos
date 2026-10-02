@@ -1,4 +1,5 @@
-import { createHmac, timingSafeEqual } from 'crypto'
+import { createHmac, timingSafeEqual, randomUUID } from 'crypto'
+import { AUTH_SESSION_MAX_SECONDS, sessionWithinPolicy } from './session-policy'
 
 export const MOBILE_SESSION_DURATION_SECONDS = 60 * 60 * 24 * 3
 
@@ -9,6 +10,8 @@ type MobileSessionPayload = {
   iat: number
   exp: number
   type: 'mobile_session'
+  sessionStartedAt: number
+  sessionId: string
 }
 
 type VerifiedMobileSession =
@@ -54,9 +57,11 @@ export function createMobileSessionToken(user: {
   id: string
   email?: string
   name?: string
-}) {
+}, session?: { id: string; startedAt: number }) {
   const now = Math.floor(Date.now() / 1000)
-  const expiresAt = now + MOBILE_SESSION_DURATION_SECONDS
+  const startedAt = session?.startedAt ?? now
+  const sessionId = session?.id ?? randomUUID()
+  const expiresAt = Math.min(now + MOBILE_SESSION_DURATION_SECONDS, startedAt + AUTH_SESSION_MAX_SECONDS)
   const header = encodeBase64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
   const payload = encodeBase64Url(
     JSON.stringify({
@@ -66,6 +71,8 @@ export function createMobileSessionToken(user: {
       iat: now,
       exp: expiresAt,
       type: 'mobile_session',
+      sessionStartedAt: startedAt,
+      sessionId,
     } satisfies MobileSessionPayload)
   )
   const signature = sign(`${header}.${payload}`)
@@ -73,12 +80,14 @@ export function createMobileSessionToken(user: {
   return {
     token: `${header}.${payload}.${signature}`,
     expiresAt,
-    expiresIn: MOBILE_SESSION_DURATION_SECONDS,
+    expiresIn: Math.max(0, expiresAt - now),
   }
 }
 
 export function verifyMobileSessionToken(token: string): VerifiedMobileSession {
-  const [header, payload, signature] = token.split('.')
+  const parts = token.split('.')
+  if (parts.length !== 3) return { valid: false, reason: 'invalid' }
+  const [header, payload, signature] = parts
 
   if (!header || !payload || !signature) {
     return { valid: false, reason: 'invalid' }
@@ -102,13 +111,19 @@ export function verifyMobileSessionToken(token: string): VerifiedMobileSession {
     if (
       decodedHeader?.alg !== 'HS256' ||
       decodedPayload?.type !== 'mobile_session' ||
-      !decodedPayload.sub ||
-      !decodedPayload.exp
+      typeof decodedPayload.sub !== 'string' || !decodedPayload.sub ||
+      typeof decodedPayload.sessionId !== 'string' || !decodedPayload.sessionId ||
+      !Number.isSafeInteger(decodedPayload.iat) || !Number.isSafeInteger(decodedPayload.exp) ||
+      !Number.isSafeInteger(decodedPayload.sessionStartedAt) ||
+      decodedPayload.iat < decodedPayload.sessionStartedAt ||
+      decodedPayload.exp <= decodedPayload.iat ||
+      decodedPayload.exp > decodedPayload.sessionStartedAt + AUTH_SESSION_MAX_SECONDS ||
+      decodedPayload.exp > decodedPayload.iat + MOBILE_SESSION_DURATION_SECONDS
     ) {
       return { valid: false, reason: 'invalid' }
     }
 
-    if (decodedPayload.exp <= Math.floor(Date.now() / 1000)) {
+    if (decodedPayload.exp <= Math.floor(Date.now() / 1000) || !sessionWithinPolicy(decodedPayload.sessionStartedAt)) {
       return { valid: false, reason: 'expired' }
     }
 

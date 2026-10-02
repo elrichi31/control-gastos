@@ -3,6 +3,7 @@ import {
   createMobileSessionToken,
   verifyMobileSessionToken,
 } from '@/lib/auth/mobile-session'
+import { authSessionActive } from '@/lib/auth/session-registry'
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,11 +31,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!await authSessionActive(session.payload.sub, session.payload.sessionId, session.payload.sessionStartedAt)) {
+      return NextResponse.json({ error: 'Sesión revocada o expirada' }, { status: 401 })
+    }
     const mobileSession = createMobileSessionToken({
       id: session.payload.sub,
       email: session.payload.email,
       name: session.payload.name,
-    })
+    }, { id: session.payload.sessionId, startedAt: session.payload.sessionStartedAt })
 
     return NextResponse.json({
       access_token: mobileSession.token,

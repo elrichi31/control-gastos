@@ -1,0 +1,6 @@
+require('./helpers/register-ts.cjs')
+const {test}=require('node:test'),assert=require('node:assert/strict'),React=require('react'),{renderToStaticMarkup}=require('react-dom/server')
+const {SessionSecurityCard}=require('../src/components/conexiones/SessionSecurity.tsx'),Register=require('../src/app/auth/register/page.tsx').default
+const render=props=>renderToStaticMarkup(React.createElement(SessionSecurityCard,{busy:false,message:'',onRevoke(){},...props}))
+test('session security control only becomes usable when server confirms registry activation',()=>{for(const enabled of [null,false])assert.match(render({enabled}),/<button[^>]*\sdisabled(?:=|\s|>)/);assert.match(render({enabled:false}),/pendiente de activación/);assert.doesNotMatch(render({enabled:true}),/<button[^>]*\sdisabled(?:=|\s|>)/);assert.match(render({enabled:true,busy:true}),/Cerrando sesiones/);assert.match(render({enabled:true,message:'No disponible'}),/role="alert"/)})
+test('closed registration screen explains private access without public signup form',()=>{const html=renderToStaticMarkup(React.createElement(Register));assert.match(html,/registro público está cerrado/);assert.match(html,/href="\/auth\/login"/);assert.doesNotMatch(html,/<form|type="password"/)})

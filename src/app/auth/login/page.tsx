@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { signIn, getSession } from 'next-auth/react'
+import { useState, useEffect } from 'react'
+import { signIn, getSession, getProviders } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,12 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+  const [googleEnabled, setGoogleEnabled] = useState(false)
+  useEffect(() => {
+    let active = true
+    getProviders().then(providers => { if (active) setGoogleEnabled(Boolean(providers?.google)) }).catch(() => {})
+    return () => { active = false }
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -159,6 +165,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
+          {googleEnabled && <>
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border"></div>
@@ -184,12 +191,10 @@ export default function LoginPage() {
             </svg>
             Continuar con Google
           </Button>
+          </>}
 
           <p className="mt-8 text-center text-muted-foreground">
-            ¿Nuevo en nuestra plataforma?{' '}
-            <Link href="/auth/register" className="text-blue-500 hover:text-blue-600 font-medium">
-              Crear cuenta
-            </Link>
+            Acceso privado. Para una cuenta nueva, contacta al administrador.
           </p>
         </div>
       </div>

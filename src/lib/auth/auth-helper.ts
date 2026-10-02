@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 export async function checkAuth() {
   const session = await getServerSession(authOptions);
   
-  if (!session || !session.user) {
+  if (!session?.user?.id) {
     return {
       error: NextResponse.json({ error: 'No autorizado' }, { status: 401 }),
       user: null

@@ -2,6 +2,8 @@ import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import { createClient } from "@supabase/supabase-js"
+import { allowedGoogleAccount, googleAdmissionConfigured, AUTH_SESSION_MAX_SECONDS } from "./session-policy"
+import { authSessionActive, registerAuthSession, googleAccountActive } from "./session-registry"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -69,26 +71,38 @@ export const authOptions: NextAuthOptions = {
       },
     }),
 
-    GoogleProvider({
+    ...(googleAdmissionConfigured() && process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    })
+    })] : [])
   ],
 
   session: {
     strategy: "jwt" as const,
+    maxAge: AUTH_SESSION_MAX_SECONDS,
   },
 
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "credentials") return true
+      if (account?.provider !== "google") return false
+      const id = allowedGoogleAccount(profile)
+      if (!id || !await googleAccountActive(id, user.email)) return false
+      user.id = id
+      return true
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
+        token.sessionStartedAt = Math.floor(Date.now() / 1000)
+        token.sessionId = await registerAuthSession(user.id, token.sessionStartedAt as number)
       }
+      if (typeof token.id !== "string" || !await authSessionActive(token.id, token.sessionId, token.sessionStartedAt)) return {}
       return token
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id as string
+        session.user.id = typeof token.id === "string" ? token.id : ""
       }
       return session
     },

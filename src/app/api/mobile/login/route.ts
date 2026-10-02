@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { createMobileSessionToken } from '@/lib/auth/mobile-session'
+import { registerAuthSession } from '@/lib/auth/session-registry'
 
 function createMobileAuthClient() {
   return createClient(
@@ -46,11 +47,13 @@ export async function POST(request: NextRequest) {
         .join(' ') ||
       data.user.email?.split('@')[0] ||
       'Usuario'
+    const startedAt = Math.floor(Date.now() / 1000)
+    const sessionId = await registerAuthSession(data.user.id, startedAt)
     const mobileSession = createMobileSessionToken({
       id: data.user.id,
       email: data.user.email,
       name: userName,
-    })
+    }, { id: sessionId, startedAt })
 
     return NextResponse.json({
       access_token: mobileSession.token,
