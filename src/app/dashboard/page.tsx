@@ -14,10 +14,9 @@ import {
   BudgetCategoryProgress
 } from "@/components/dashboard"
 import { StatTile, StatTileRow } from "@/components/stats/stat-tile"
-import { BudgetSummary } from "@/components/presupuesto/BudgetSummary"
 import { formatMoney } from "@/lib/utils"
 import { getDaysInMonth, differenceInCalendarDays } from "date-fns"
-import { MonthPlanning } from "@/components/dashboard/MonthPlanning"
+import { MonthPlanning, MonthPlanningSummary } from "@/components/dashboard/MonthPlanning"
 import { buildMonthPlan } from "@/lib/month-planning"
 import type { PlanningRule } from "@/lib/month-planning"
 
@@ -170,7 +169,7 @@ export default function DashboardPage() {
     }), [today, budgetTotal, gastos, recurringLinks, rules, categoryProgress])
 
     if (expensesError && !loading) return (
-        <PageShell><MonthPlanning plan={monthPlan} loading={false}
+        <PageShell><MonthPlanningSummary plan={monthPlan} loading={false}
             error="No se pudieron cargar tus gastos. No podemos calcular un disponible fiable."
             onRetry={() => window.location.reload()} /></PageShell>
     )
@@ -226,18 +225,15 @@ export default function DashboardPage() {
                     />
                 </StatTileRow>
 
-                {/* El bloque de presupuesto solo aparece si el mes tiene uno cargado */}
-                {budgetTotal !== undefined && budgetTotal > 0 && (
-                    <BudgetSummary presupuestado={budgetTotal} gastado={currentMonthTotal} />
-                )}
-
-                <MonthPlanning plan={monthPlan} loading={planLoading} error={planError}
+                <MonthPlanningSummary plan={monthPlan} loading={planLoading} error={planError}
                     onRetry={() => setRetry(value => value + 1)} />
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                     <ExpenseCalendar currentDate={currentDate} expenses={currentMonthExpenses} />
                     <RecentExpenses expenses={recentExpenses} totalCount={gastos.length} />
                 </div>
+
+                <MonthPlanning plan={monthPlan} loading={planLoading} error={planError} />
 
                 <BudgetCategoryProgress categories={categoryProgress} />
             </div>
