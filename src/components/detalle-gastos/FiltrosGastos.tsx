@@ -131,21 +131,19 @@ export function FiltrosGastos({
                 <div className="space-y-2">
                   <label htmlFor="filter-dateFrom" className="text-sm font-medium text-foreground">Fecha desde</label>
                   <Input id="filter-dateFrom"
-                    className="dark:[color-scheme:dark]"
                     type="date"
                     value={filters.dateFrom}
                     onChange={(e) => onFilterChange("dateFrom", e.target.value)}
-                    className="bg-card border-border"
+                    className="bg-card border-border dark:[color-scheme:dark]"
                   />
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="filter-dateTo" className="text-sm font-medium text-foreground">Fecha hasta</label>
                   <Input id="filter-dateTo"
-                    className="dark:[color-scheme:dark]"
                     type="date"
                     value={filters.dateTo}
                     onChange={(e) => onFilterChange("dateTo", e.target.value)}
-                    className="bg-card border-border"
+                    className="bg-card border-border dark:[color-scheme:dark]"
                   />
                 </div>
               </div>
