@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { DEFAULT_METODO_PAGO } from "@/lib/constants"
 import { fetchExpenses, deleteExpense } from "@/services/expenses"
 
@@ -18,9 +18,7 @@ export function useGastosFiltrados() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    async function fetchGastos() {
-      setLoading(true)
+  const refreshExpenses = useCallback(async () => {
       setError(null)
       try {
         const data = await fetchExpenses()
@@ -37,9 +35,9 @@ export function useGastosFiltrados() {
         setError(e.message || "Error de red")
       }
       setLoading(false)
-    }
-    fetchGastos()
   }, [])
+
+  useEffect(() => { void refreshExpenses() }, [refreshExpenses])
 
   const deleteGasto = async (id: string) => {
     try {
@@ -53,5 +51,5 @@ export function useGastosFiltrados() {
     }
   }
 
-  return { gastos, loading, error, deleteGasto }
+  return { gastos, loading, error, deleteGasto, refreshExpenses }
 }

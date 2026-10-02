@@ -27,10 +27,10 @@ export function StatTile({ etiqueta, valor, delta, invertirColor = true, ayuda }
   const Icono = plano ? Minus : sube ? ArrowUpRight : ArrowDownRight
 
   return (
-    <div className="px-5 py-4">
+    <div className="min-w-0 px-4 sm:px-5 py-4">
       <p className="text-xs font-medium text-muted-foreground">{etiqueta}</p>
-      <p className="text-2xl font-semibold tracking-tight text-foreground tabular-nums mt-1">{valor}</p>
-      <div className="flex items-center gap-1 mt-1.5 h-4">
+      <p className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground tabular-nums mt-1 break-words">{valor}</p>
+      <div className="flex items-start gap-1 mt-1.5 min-h-4">
         {sinDato ? (
           <span className="text-xs text-muted-foreground">{ayuda ?? "sin período previo"}</span>
         ) : (

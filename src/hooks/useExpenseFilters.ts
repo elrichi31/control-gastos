@@ -1,57 +1,33 @@
 // src/hooks/useExpenseFilters.ts
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { initialFilters, countActiveExpenseFilters, readExpenseFilters, writeExpenseFilters, type FilterOptions } from '@/lib/expense-filter-state'
+export type { FilterOptions } from '@/lib/expense-filter-state'
 import { startOfYear, endOfYear } from 'date-fns'
 import { toLocalDateFromString } from '@/lib/utils'
 import type { Expense } from '@/services/expenses'
 
-export interface FilterOptions {
-  search: string
-  category: string
-  paymentMethod: string
-  dateRange: "current-month" | "year" | "all-time" | "custom"
-  year: string
-  dateFrom: string
-  dateTo: string
-  minAmount: string
-  maxAmount: string
-  sortBy: "date" | "amount" | "category" | "description"
-  sortOrder: "asc" | "desc"
-  groupBy: "none" | "day" | "week" | "month"
-}
-
-const initialFilters: FilterOptions = {
-  search: "",
-  category: "",
-  paymentMethod: "",
-  dateRange: "current-month",
-  year: "",
-  dateFrom: "",
-  dateTo: "",
-  minAmount: "",
-  maxAmount: "",
-  sortBy: "date",
-  sortOrder: "desc",
-  groupBy: "none"
-}
-
-export function useExpenseFilters(gastos: Expense[]) {
-  const [filters, setFilters] = useState<FilterOptions>(initialFilters)
+export function useExpenseFilters(gastos: Expense[], userId?: string) {
+  const [state, setState] = useState({ ownerId: userId, filters: initialFilters })
+  const filters = state.ownerId === userId ? state.filters : initialFilters
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
 
+  useEffect(() => {
+    let restored = initialFilters
+    try { restored = readExpenseFilters(window.sessionStorage, userId) } catch { /* Storage may be blocked. */ }
+    setState({ ownerId: userId, filters: restored })
+  }, [userId])
+
+  const updateFilters = (next: FilterOptions) => {
+    setState({ ownerId: userId, filters: next })
+    try { writeExpenseFilters(window.sessionStorage, userId, next) } catch { /* Keep controls usable without storage. */ }
+  }
   const handleFilterChange = (key: keyof FilterOptions, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }))
+    updateFilters({ ...filters, [key]: value })
   }
-
-  const clearFilters = () => {
-    setFilters(initialFilters)
+  const clearFilters = (dateRange: FilterOptions['dateRange'] = 'current-month') => {
+    updateFilters({ ...initialFilters, dateRange })
   }
-
-  const activeFiltersCount = useMemo(() => {
-    return Object.entries(filters).filter(([key, value]) => 
-      key !== "sortBy" && key !== "sortOrder" && key !== "groupBy" && 
-      value !== "" && value !== "current-month"
-    ).length
-  }, [filters])
+  const activeFiltersCount = countActiveExpenseFilters(filters)
 
   const filteredGastos = useMemo(() => {
     let filtered = [...gastos]
@@ -126,18 +102,18 @@ export function useExpenseFilters(gastos: Expense[]) {
       // No date filtering for all-time
       dateFrom = null
       dateTo = null
-    } else if (filters.dateRange === "custom" && filters.dateFrom && filters.dateTo) {
-      dateFrom = new Date(filters.dateFrom + 'T00:00:00')
-      dateTo = new Date(filters.dateTo + 'T23:59:59')
+    } else if (filters.dateRange === "custom") {
+      dateFrom = filters.dateFrom ? toLocalDateFromString(filters.dateFrom) : null
+      dateTo = filters.dateTo ? toLocalDateFromString(filters.dateTo) : null
     }
 
-    if (dateFrom && dateTo) {
+    if (dateFrom || dateTo) {
       const beforeFilter = filtered.length
       filtered = filtered.filter(gasto => {
         // Usar la utilidad existente que maneja bien las fechas
         const gastoDate = toLocalDateFromString(gasto.fecha)
         
-        const isInRange = gastoDate >= dateFrom! && gastoDate <= dateTo!
+        const isInRange = (!dateFrom || gastoDate >= dateFrom) && (!dateTo || gastoDate <= dateTo)
         
         // Log some examples for debugging
         if (beforeFilter > 0 && beforeFilter <= 5) {
@@ -145,8 +121,8 @@ export function useExpenseFilters(gastos: Expense[]) {
             descripcion: gasto.descripcion,
             fecha: gasto.fecha,
             gastoDate: gastoDate.toLocaleDateString(),
-            dateFrom: dateFrom!.toLocaleDateString(),
-            dateTo: dateTo!.toLocaleDateString(),
+            dateFrom: dateFrom?.toLocaleDateString(),
+            dateTo: dateTo?.toLocaleDateString(),
             isInRange
           })
         }

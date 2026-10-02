@@ -1,0 +1,13 @@
+require('./helpers/register-ts.cjs')
+const {test}=require('node:test')
+const assert=require('node:assert/strict')
+const React=require('react')
+const {renderToStaticMarkup}=require('react-dom/server')
+const {StatTile}=require('../src/components/stats/stat-tile.tsx')
+test('stats protect long amounts in narrow columns and let helper text wrap',()=>{
+ const html=renderToStaticMarkup(React.createElement(StatTile,{etiqueta:'Total gastado',valor:'$1,244.56',ayuda:'según filtros actuales'}))
+ assert.match(html,/text-xl sm:text-2xl/)
+ assert.match(html,/break-words/)
+ assert.match(html,/min-h-4/)
+ assert.match(html,/\$1,244.56/)
+})

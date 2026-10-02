@@ -14,6 +14,7 @@ import { toDateWithTime } from "@/lib/utils"
 import { DEFAULT_METODO_PAGO } from "@/lib/constants"
 import { PageShell, PageHeader } from "@/components/ui/page-layout"
 import { PageTitle } from "@/components/PageTitle"
+import { Button } from "@/components/ui/button"
 
 // Helper function to convert Gasto to Expense
 function gastoToExpense(gasto: Gasto): Expense {
@@ -31,7 +32,7 @@ function gastoToExpense(gasto: Gasto): Expense {
 }
 
 function ExpenseTracker() {
-  const { gastos, loading, deleteGasto } = useGastosFiltrados()
+  const { gastos, loading, error, deleteGasto, refreshExpenses } = useGastosFiltrados()
   // /form?tipo=recurrente abre directo la pestaña de recurrentes
   const searchParams = useSearchParams()
   const tabInicial = searchParams.get("tipo") === "recurrente" ? "recurrente" : "normal"
@@ -73,11 +74,7 @@ function ExpenseTracker() {
     }
   }
 
-  // Función para refrescar los datos (compatible con ExpenseForm)
-  const fetchExpenses = () => {
-    // Los datos se actualizan automáticamente con useGastosFiltrados
-    window.location.reload()
-  }
+  const fetchExpenses = refreshExpenses
 
   return (
     <PageShell>
@@ -126,6 +123,7 @@ function ExpenseTracker() {
               <CardTitle className="text-base font-semibold">Gastos recientes</CardTitle>
             </CardHeader>
             <CardContent className="p-0 pb-2">
+              {error && <div role="alert" className="px-5 py-3 space-y-2"><p className="text-sm text-destructive">No se pudo actualizar la lista de gastos.</p><Button variant="outline" size="sm" onClick={() => void refreshExpenses()}>Reintentar</Button></div>}
               <ExpenseList
                 groupedExpenses={groupedExpenses}
                 isLoading={loading}

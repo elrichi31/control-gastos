@@ -39,7 +39,7 @@ export function GastoTableRow({
     <TableRow className="hover:bg-muted/60">
       <TableCell className="font-medium px-4 py-4 w-[180px] min-w-[180px]">
         <div 
-          className="text-sm truncate pr-2 text-foreground" 
+          className="text-sm break-words pr-2 text-foreground"
           title={gasto.descripcion}
         >
           {gasto.descripcion}

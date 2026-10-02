@@ -74,7 +74,7 @@ export function VistaSinAgrupar({
             </div>
 
             {/* Vista de tarjetas para móvil y tablet */}
-            <div className="lg:hidden space-y-3 p-4">
+            <div className="lg:hidden divide-y divide-border">
               {gastos.map((gasto) => (
                 <GastoCard
                   key={gasto.id}

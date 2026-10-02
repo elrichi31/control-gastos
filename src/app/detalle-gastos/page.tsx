@@ -1,6 +1,11 @@
 "use client"
 
 import React from 'react'
+import Link from 'next/link'
+import { useSession } from 'next-auth/react'
+import { Plus } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from "@/components/ui/card"
 import { PageShell, PageHeader } from "@/components/ui/page-layout"
 import { PageTitle } from "@/components/PageTitle"
@@ -15,7 +20,8 @@ import { formatMoney, formatDate } from "@/lib/utils"
 
 export default function DetalleGastosPage() {
   // Data management
-  const { data, loading, error, deleteGasto } = useExpenseDetailsData()
+  const { data, loading, error, deleteGasto, refreshData } = useExpenseDetailsData()
+  const { data: session } = useSession()
 
   // Extract data for easier access
   const gastos = data?.gastos || []
@@ -31,7 +37,7 @@ export default function DetalleGastosPage() {
     handleFilterChange,
     clearFilters,
     setShowAdvancedFilters
-  } = useExpenseFilters(gastos)
+  } = useExpenseFilters(gastos, session?.user?.id)
 
   // Statistics calculation
   const statistics = useExpenseStatistics(filteredGastos)
@@ -40,8 +46,10 @@ export default function DetalleGastosPage() {
   const handleDeleteGasto = async (id: string) => {
     try {
       await deleteGasto(Number(id))
+      toast.success("Gasto eliminado")
     } catch (error) {
       console.error('Error deleting expense:', error)
+      toast.error('No se pudo eliminar el gasto. Intenta nuevamente.')
     }
   }
 
@@ -64,7 +72,8 @@ export default function DetalleGastosPage() {
       <PageShell>
         <Card className="border-destructive/40 bg-destructive/10">
           <CardContent className="p-6 text-center">
-            <p className="text-destructive">Error al cargar los gastos: {error}</p>
+            <p role="alert" className="text-destructive">No se pudieron cargar los gastos.</p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={() => void refreshData()}>Reintentar</Button>
           </CardContent>
         </Card>
       </PageShell>
@@ -78,7 +87,10 @@ export default function DetalleGastosPage() {
       <PageHeader
         title="Detalle de gastos"
         description="Análisis detallado y filtrado de todos tus gastos."
-        actions={<ExportarDatos gastos={filteredGastos} gastosOriginal={gastos} />}
+        actions={<>
+          <Button asChild size="sm"><Link href="/form"><Plus aria-hidden="true" className="h-4 w-4 mr-2" />Agregar gasto</Link></Button>
+          <ExportarDatos gastos={filteredGastos} gastosOriginal={gastos} />
+        </>}
       />
 
       <div className="space-y-4">
@@ -92,7 +104,7 @@ export default function DetalleGastosPage() {
         <FiltrosGastos
           filters={filters}
           onFilterChange={handleFilterChange}
-          onClearFilters={clearFilters}
+          onClearFilters={() => clearFilters()}
           categories={categories}
           paymentMethods={paymentMethods}
           activeFiltersCount={activeFiltersCount}
@@ -103,6 +115,8 @@ export default function DetalleGastosPage() {
         {/* Lista de gastos */}
         <ListaGastosAgrupados
           gastos={filteredGastos}
+          hasExpenses={gastos.length > 0}
+          onResetFilters={() => clearFilters("all-time")}
           activeFiltersCount={activeFiltersCount}
           formatMoney={formatMoney}
           formatDate={formatDate}
