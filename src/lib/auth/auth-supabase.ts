@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { getServerSession } from 'next-auth'
 import { NextResponse } from 'next/server'
 import { authOptions } from './auth'
-import { createServerClient } from '../database'
+import { createServiceClient } from '../database/service'
 import { verifyMobileSessionToken } from './mobile-session'
 import { authSessionActive, sessionRegistryEnabled } from './session-registry'
 
@@ -116,7 +116,17 @@ export async function getAuthenticatedSupabaseClient(request?: Request) {
     authSource = 'nextauth'
   }
 
-  const supabase = await createServerClient()
+  // Data tables are closed to anon/authenticated (RLS, no policies): only the server's
+  // service role reaches them, so every route must keep filtering by this userId.
+  const supabase = createServiceClient()
+  if (!supabase) {
+    return {
+      error: NextResponse.json({ error: 'Falta configurar el acceso privado a Supabase' }, { status: 503 }),
+      supabase: null,
+      userId: null,
+      authSource: null,
+    }
+  }
 
   return {
     error: null,

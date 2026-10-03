@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       .from('presupuesto_categoria')
       .select('id')
       .eq('presupuesto_mensual_id', presupuesto_mensual_id)
+      .eq('user_id', userId)
       .limit(1)
 
     if (errorExistentes) {
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest) {
         )
       `)
       .eq('presupuesto_mensual_id', presupuestoAnterior.id)
+      .eq('user_id', userId)
 
     if (errorCategorias) {
       return NextResponse.json({ error: errorCategorias.message }, { status: 500 })
@@ -90,6 +92,7 @@ export async function POST(req: NextRequest) {
         .from('movimiento_presupuesto')
         .select('descripcion, monto, metodo_pago_id, fecha')
         .eq('presupuesto_categoria_id', categoria.id)
+        .eq('user_id', userId)
 
       if (errorMovimientos) {
         return NextResponse.json({ error: errorMovimientos.message }, { status: 500 })

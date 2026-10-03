@@ -19,6 +19,14 @@ No se ejecutaron cron, migraciones, escrituras ni pruebas destructivas en produc
 
 ## Hallazgos pendientes, por prioridad
 
+### P0 — Tablas de datos abiertas a la clave pública (resuelto en 20261007)
+
+**Estado:** corregido en código y en `supabase/migrations/20261007_lock_data_tables.sql`. Comprobado en producción el 2026-10-03: `gasto`, `gasto_recurrente`, `gasto_recurrente_instancia`, `presupuesto_mensual`, `presupuesto_categoria`, `movimiento_presupuesto`, `categoria` y `metodo_pago` tenían RLS desactivado y permisos completos para `anon`. Como `NEXT_PUBLIC_SUPABASE_ANON_KEY` llega al navegador, cualquiera podía leer o modificar los datos de todos los usuarios directamente vía PostgREST; los filtros `user_id` del código no protegían ese camino.
+
+Corrección: el servidor accede a los datos solo con `service_role` (`getAuthenticatedSupabaseClient` y los catálogos), sigue filtrando cada consulta por el usuario autenticado, y la migración activa RLS y revoca `anon`/`authenticated`. `tests/data-lockdown-db.test.cjs` impide volver a usar el cliente anon en `src/app/api` y `src/lib/auth`.
+
+Orden obligatorio: desplegar el código antes de la migración. **Tablas nuevas:** Supabase concede por defecto acceso a `anon` en tablas nuevas de `public`; cada migración que cree una debe activar RLS y revocar `anon`/`authenticated`, como `gasto_recurrente_precio`.
+
 ### P1 — Los cron no autentican la invocación
 
 **Estado actualizado:** resuelto en el procesador único de recurrentes: valida `CRON_SECRET` antes de acceder a Supabase, utiliza service role privada y la RPC está restringida a `service_role`. El cron mensual fue eliminado. Requiere [activar la migración y configuración](RECURRING_EXPENSES.md). El hallazgo siguiente describe el estado original revisado.

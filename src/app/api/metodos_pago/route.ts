@@ -1,8 +1,10 @@
-import { createClient } from '@/lib/database/server';
+import { createServiceClient } from '@/lib/database/service';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const supabase = await createClient();
+  // Shared public catalog, read with the service role because the table is closed to anon.
+  const supabase = createServiceClient();
+  if (!supabase) return NextResponse.json({ error: 'Falta configurar el acceso privado a Supabase' }, { status: 503 });
 
   const { data, error } = await supabase
     .from('metodo_pago')
