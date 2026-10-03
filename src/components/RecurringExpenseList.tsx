@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Trash2, Repeat, Edit, Plus } from "lucide-react"
-import { GastoRecurrente } from "@/types/recurring-expense"
+import { GastoRecurrente, MESES } from "@/types/recurring-expense"
 import { fetchRecurringExpenses, deleteRecurringExpense, updateRecurringExpense } from "@/services/recurring-expenses"
 import { fetchCategories, type Category } from "@/services/categories"
 import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
@@ -116,7 +116,8 @@ export function RecurringExpenseList() {
   const describeFrecuencia = (expense: GastoRecurrente) => {
     let text = expense.frecuencia.charAt(0).toUpperCase() + expense.frecuencia.slice(1)
     if (expense.frecuencia === "semanal" && expense.dia_semana) text += ` · ${DIAS_SEMANA[expense.dia_semana].toLowerCase()}`
-    if (expense.frecuencia === "mensual" && expense.dia_mes) text += ` · día ${expense.dia_mes}`
+    if (expense.frecuencia === "mensual" && expense.dia_mes) text += expense.dia_mes >= 31 ? " · último día" : ` · día ${expense.dia_mes}`
+    if (expense.frecuencia === "anual" && expense.dia_mes && expense.mes_anual) text += ` · ${expense.dia_mes} de ${MESES[expense.mes_anual - 1].toLowerCase()}`
     if (!expense.activo) return `${text} · pausado`
     if (!(expense.id in nextDates)) return text
     const next = nextDates[expense.id]
@@ -168,10 +169,10 @@ export function RecurringExpenseList() {
     )
   }
 
-  // Weekly rules count as 52/12 charges per month.
+  // Monthly equivalent: weekly x 52/12, yearly / 12.
   const totalMensual = expenses
     .filter(e => e.activo)
-    .reduce((sum, e) => sum + (e.frecuencia === "semanal" ? e.monto * 52 / 12 : e.monto), 0)
+    .reduce((sum, e) => sum + (e.frecuencia === "semanal" ? e.monto * 52 / 12 : e.frecuencia === "anual" ? e.monto / 12 : e.monto), 0)
 
   // Soonest charge first; paused and finished rules go last.
   const rank = (e: GastoRecurrente) => (e.activo && nextDates[e.id]) || "9999"

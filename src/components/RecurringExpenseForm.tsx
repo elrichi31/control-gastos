@@ -16,7 +16,7 @@ import {
 import { createRecurringExpense } from "@/services/recurring-expenses"
 import { fetchCategories, type Category } from "@/services/categories"
 import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
-import { Frecuencia } from "@/types/recurring-expense"
+import { Frecuencia, MESES } from "@/types/recurring-expense"
 import toast from "react-hot-toast"
 
 export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
@@ -37,6 +37,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
     frecuencia: "" as Frecuencia | "",
     diaSemana: "",
     diaMes: "",
+    mesAnual: "",
     fechaInicio: getPrimerDiaMesActual(),
     fechaFin: "",
     activo: true,
@@ -56,6 +57,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
       frecuencia: "",
       diaSemana: "",
       diaMes: "",
+    mesAnual: "",
       fechaInicio: getPrimerDiaMesActual(),
       fechaFin: "",
       activo: true,
@@ -94,8 +96,12 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
     if (formData.frecuencia === 'semanal' && !formData.diaSemana) {
       newErrors.diaSemana = "Selecciona el día de la semana"
     }
-    if (formData.frecuencia === 'mensual' && !formData.diaMes) {
-      newErrors.diaMes = "Ingresa el día del mes"
+    const dia = parseInt(formData.diaMes)
+    if ((formData.frecuencia === 'mensual' || formData.frecuencia === 'anual') && !(dia >= 1 && dia <= 31)) {
+      newErrors.diaMes = "Ingresa un día entre 1 y 31"
+    }
+    if (formData.frecuencia === 'anual' && !formData.mesAnual) {
+      newErrors.mesAnual = "Selecciona el mes"
     }
     if (!formData.categoryId) {
       newErrors.categoryId = "Selecciona una categoría"
@@ -125,7 +131,8 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
         metodo_pago_id: parseInt(formData.paymentMethodId),
         frecuencia: formData.frecuencia as Frecuencia,
         dia_semana: formData.frecuencia === 'semanal' ? parseInt(formData.diaSemana) : undefined,
-        dia_mes: formData.frecuencia === 'mensual' ? parseInt(formData.diaMes) : undefined,
+        dia_mes: formData.frecuencia !== 'semanal' ? parseInt(formData.diaMes) : undefined,
+        mes_anual: formData.frecuencia === 'anual' ? parseInt(formData.mesAnual) : undefined,
         fecha_inicio: formData.fechaInicio,
         fecha_fin: formData.fechaFin || null,
         activo: formData.activo,
@@ -207,7 +214,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
           <Select
             value={formData.frecuencia}
             onValueChange={(value) => {
-              setFormData({ ...formData, frecuencia: value as Frecuencia, diaSemana: "", diaMes: "" })
+              setFormData({ ...formData, frecuencia: value as Frecuencia, diaSemana: "", diaMes: "", mesAnual: "" })
               if (errors.frecuencia) setErrors({ ...errors, frecuencia: "" })
             }}
           >
@@ -217,6 +224,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
             <SelectContent>
               <SelectItem value="semanal" className="text-base py-3">Semanal</SelectItem>
               <SelectItem value="mensual" className="text-base py-3">Mensual</SelectItem>
+              <SelectItem value="anual" className="text-base py-3">Anual</SelectItem>
             </SelectContent>
           </Select>
           {errors.frecuencia && <p className="text-red-500 text-sm">{errors.frecuencia}</p>}
@@ -251,8 +259,34 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
         </div>
       )}
 
-      {/* Día del mes (solo si es mensual) */}
-      {formData.frecuencia === 'mensual' && (
+      {/* Mes (solo si es anual) */}
+      {formData.frecuencia === 'anual' && (
+        <div className="space-y-2">
+          <Label htmlFor="mes-anual" className="text-sm font-semibold text-foreground">
+            Mes <span className="text-red-500">*</span>
+          </Label>
+          <Select
+            value={formData.mesAnual}
+            onValueChange={(value) => {
+              setFormData({ ...formData, mesAnual: value })
+              if (errors.mesAnual) setErrors({ ...errors, mesAnual: "" })
+            }}
+          >
+            <SelectTrigger id="mes-anual" className={`h-12 text-base border-2 rounded-lg ${errors.mesAnual ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}>
+              <SelectValue placeholder="Selecciona el mes" />
+            </SelectTrigger>
+            <SelectContent>
+              {MESES.map((mes, i) => (
+                <SelectItem key={mes} value={String(i + 1)} className="text-base py-3">{mes}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.mesAnual && <p className="text-red-500 text-sm">{errors.mesAnual}</p>}
+        </div>
+      )}
+
+      {/* Día del mes (mensual o anual) */}
+      {(formData.frecuencia === 'mensual' || formData.frecuencia === 'anual') && (
         <div className="space-y-2">
           <Label htmlFor="dia-mes" className="text-sm font-semibold text-foreground">
             Día del Mes <span className="text-red-500">*</span>
@@ -261,7 +295,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
             id="dia-mes"
             type="number"
             min="1"
-            max="28"
+            max="31"
             placeholder="Ej: 15"
             value={formData.diaMes}
             onChange={(e) => {
@@ -270,7 +304,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
             }}
             className={`text-base border-2 transition-colors h-12 rounded-lg ${errors.diaMes ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}
           />
-          <p className="text-xs text-muted-foreground">Máximo día 28 (compatible con todos los meses)</p>
+          <p className="text-xs text-muted-foreground">Si el mes tiene menos días, se cobra el último día (31 = último día del mes)</p>
           {errors.diaMes && <p className="text-red-500 text-sm">{errors.diaMes}</p>}
         </div>
       )}

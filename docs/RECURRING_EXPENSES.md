@@ -5,7 +5,7 @@
 - `gasto_recurrente`: regla y estado interno (`proxima_fecha`, `ultima_fecha_generada`).
 - `gasto`: gasto real, con enlace opcional `gasto_recurrente_id`.
 - `gasto_recurrente_instancia`: **historial heredado**, no se elimina ni se utiliza para generar nuevas ocurrencias.
-- Un único Schedule en Dokploy: `/api/cron/process-recurring-expenses`, `0 1 * * *`. Las fechas del procesador son UTC.
+- Un único Schedule en Dokploy: `/api/cron/process-recurring-expenses`, `5 5 * * *` (UTC = 00:05 en Ecuador). Desde `20261005_recurring_calendar_tz.sql` el día de referencia es el local (`app_today()`, `America/Guayaquil`); antes era UTC y los gastos aparecían la noche anterior.
 
 Guardar una recurrente ya no genera inmediatamente un gasto. El trigger calcula la primera fecha válida a partir de `fecha_inicio`, y el cron genera las fechas vencidas. Una regla nueva con inicio pasado recuperará esas ocurrencias: usar inicio de hoy/futuro si no se desea recuperación histórica.
 
@@ -13,7 +13,8 @@ La RPC bloquea reglas (`FOR UPDATE SKIP LOCKED`), inserta y avanza sus fechas en
 
 ## Comportamiento y compatibilidad
 
-- Mensual: días 1–28; semanal: lunes=1, domingo=7. Inicio y fin son inclusivos.
+- Semanal: lunes=1, domingo=7. Mensual: días 1–31; si el mes es más corto se cobra su último día (31 = último día del mes). Anual: `mes_anual` 1–12 + `dia_mes` 1–31, con la misma regla (29 de febrero cae el 28 en años no bisiestos). Inicio y fin son inclusivos. Requiere `20261005_recurring_calendar_tz.sql`; sin ella, semanal/mensual 1–28 siguen funcionando los días 29–31 responden 400 y anual 503 (falta la migración).
+- Borrar una regla conserva sus gastos generados (siguen contando como recurrentes en estadísticas) y deja de bloquearlos en el MCP.
 - Una regla inactiva no genera gastos. Reactivarla recalcula desde hoy, sin cobrar el período pausado.
 - Editar calendario recalcula desde hoy y después de la última fecha consumida. Editar monto/categoría/descripción no reinicia el calendario y afecta ocurrencias aún no generadas.
 - Borrar un gasto individual no borra la marca de su fecha consumida, incluso si después se edita la regla.

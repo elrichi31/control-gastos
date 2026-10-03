@@ -66,7 +66,7 @@ Servidor autenticado para consultar y gestionar gastos manuales propios desde Ch
 
 ## 🤖 Cron Job (Dokploy)
 
-Un Schedule diario de Dokploy (`0 1 * * *`, UTC, shell `sh`) dentro del contenedor genera los gastos recurrentes vencidos:
+Un Schedule diario de Dokploy (`5 5 * * *` UTC = 00:05 en Ecuador, shell `sh`) dentro del contenedor genera los gastos recurrentes vencidos:
 
 ```sh
 wget -qO- --header="Authorization: Bearer $CRON_SECRET" http://127.0.0.1:3000/api/cron/process-recurring-expenses

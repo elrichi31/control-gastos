@@ -19,9 +19,12 @@ export function validateRecurringRule(input: Record<string, unknown>) {
     throw new RecurringValidationError('Descripción, monto, categoría o método de pago inválidos')
   }
   const frequency = input.frecuencia
-  if (frequency !== 'semanal' && frequency !== 'mensual') throw new RecurringValidationError('Frecuencia inválida')
-  const day = numeric(frequency === 'mensual' ? input.dia_mes : input.dia_semana)
-  if (!Number.isInteger(day) || day < 1 || day > (frequency === 'mensual' ? 28 : 7)) throw new RecurringValidationError('Día del calendario inválido')
+  if (frequency !== 'semanal' && frequency !== 'mensual' && frequency !== 'anual') throw new RecurringValidationError('Frecuencia inválida')
+  // Days 29-31 fall on the last day of shorter months (SQL recurring_next_date).
+  const day = numeric(frequency === 'semanal' ? input.dia_semana : input.dia_mes)
+  if (!Number.isInteger(day) || day < 1 || day > (frequency === 'semanal' ? 7 : 31)) throw new RecurringValidationError('Día del calendario inválido')
+  const month = frequency === 'anual' ? numeric(input.mes_anual) : null
+  if (month !== null && (!Number.isInteger(month) || month < 1 || month > 12)) throw new RecurringValidationError('Mes del calendario inválido')
   const validDate = (value: unknown): value is string => {
     if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
     const date = new Date(value + 'T00:00:00Z')
@@ -34,7 +37,9 @@ export function validateRecurringRule(input: Record<string, unknown>) {
   if (typeof active !== 'boolean') throw new RecurringValidationError('Estado activo inválido')
   return {
     descripcion: description, monto: amount, categoria_id: category, metodo_pago_id: payment,
-    frecuencia: frequency, dia_mes: frequency === 'mensual' ? day : null, dia_semana: frequency === 'semanal' ? day : null,
+    frecuencia: frequency, dia_mes: frequency === 'semanal' ? null : day, dia_semana: frequency === 'semanal' ? day : null,
+    // Sent only for yearly rules so weekly/monthly writes keep working before the calendar migration.
+    ...(frequency === 'anual' ? { mes_anual: month } : {}),
     fecha_inicio: start, fecha_fin: end, activo: active,
   }
 }

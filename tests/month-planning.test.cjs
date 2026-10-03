@@ -46,3 +46,10 @@ test('ignores other months and keeps currency totals rounded', () => {
   const p = plan({ expenses: [{ fecha: '2026-09-30', monto: 500 }, { fecha: '2026-10-01', monto: 0.1 }, { fecha: '2026-10-02', monto: 0.2 }] })
   assert.equal(p.spent, 0.3); assert.equal(p.available, 999.7)
 })
+test('days 29-31 reserve the last day of shorter months and yearly rules only in their month', () => {
+  const nov = plan({ today: '2026-11-02', rules: [{ ...monthly, dia_mes: 31 }] })
+  assert.deepEqual(nov.upcoming.map(u => u.date), ['2026-11-30'])
+  const yearly = { ...monthly, id: 2, frecuencia: 'anual', dia_mes: 20, mes_anual: 10 }
+  assert.equal(plan({ rules: [yearly] }).committed, 50)
+  assert.equal(plan({ today: '2026-11-02', rules: [yearly] }).committed, 0)
+})

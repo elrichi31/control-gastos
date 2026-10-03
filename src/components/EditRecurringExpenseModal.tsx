@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { GastoRecurrente, Frecuencia } from "@/types/recurring-expense"
+import { GastoRecurrente, Frecuencia, MESES } from "@/types/recurring-expense"
 import { Category } from "@/services/categories"
 import { PaymentMethod } from "@/services/paymentMethods"
 
@@ -45,6 +45,7 @@ export function EditRecurringExpenseModal({
     frecuencia: "mensual" as Frecuencia,
     dia_semana: "",
     dia_mes: "",
+    mes_anual: "",
     fecha_inicio: "",
     fecha_fin: "",
     usarFechaFin: false,
@@ -62,6 +63,7 @@ export function EditRecurringExpenseModal({
         frecuencia: expense.frecuencia,
         dia_semana: expense.dia_semana?.toString() || "",
         dia_mes: expense.dia_mes?.toString() || "",
+        mes_anual: expense.mes_anual?.toString() || "",
         fecha_inicio: expense.fecha_inicio,
         fecha_fin: expense.fecha_fin || "",
         usarFechaFin: !!expense.fecha_fin,
@@ -91,6 +93,7 @@ export function EditRecurringExpenseModal({
       } else {
         data.dia_mes = parseInt(formData.dia_mes)
         data.dia_semana = null
+        if (formData.frecuencia === "anual") data.mes_anual = parseInt(formData.mes_anual)
       }
 
       await onSave(expense.id, data)
@@ -201,6 +204,7 @@ export function EditRecurringExpenseModal({
               <SelectContent className="bg-muted border-border">
                 <SelectItem value="semanal" className="text-foreground">Semanal</SelectItem>
                 <SelectItem value="mensual" className="text-foreground">Mensual</SelectItem>
+                <SelectItem value="anual" className="text-foreground">Anual</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -227,15 +231,32 @@ export function EditRecurringExpenseModal({
             </div>
           )}
 
-          {/* Día del mes (solo si es mensual) */}
-          {formData.frecuencia === "mensual" && (
+          {/* Mes (solo si es anual) */}
+          {formData.frecuencia === "anual" && (
             <div className="space-y-2">
-              <Label htmlFor="dia_mes" className="text-foreground">Día del mes (1-28)</Label>
+              <Label className="text-foreground">Mes</Label>
+              <Select value={formData.mes_anual} onValueChange={(value) => handleChange("mes_anual", value)}>
+                <SelectTrigger className="bg-muted text-foreground border-border">
+                  <SelectValue placeholder="Selecciona el mes" />
+                </SelectTrigger>
+                <SelectContent className="bg-muted border-border">
+                  {MESES.map((mes, i) => (
+                    <SelectItem key={mes} value={String(i + 1)} className="text-foreground">{mes}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Día del mes (mensual o anual) */}
+          {(formData.frecuencia === "mensual" || formData.frecuencia === "anual") && (
+            <div className="space-y-2">
+              <Label htmlFor="dia_mes" className="text-foreground">Día del mes (1-31; si el mes es más corto, el último día)</Label>
               <Input
                 id="dia_mes"
                 type="number"
                 min="1"
-                max="28"
+                max="31"
                 value={formData.dia_mes}
                 onChange={(e) => handleChange("dia_mes", e.target.value)}
                 placeholder="1"

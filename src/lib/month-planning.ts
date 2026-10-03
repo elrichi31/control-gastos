@@ -25,7 +25,11 @@ export function buildMonthPlan({ today, budget, expenses, rules, categories }: {
     for (const rule of rules) {
       if (!rule.activo || date < rule.fecha_inicio || (rule.fecha_fin && date > rule.fecha_fin)) continue
       if ((rule.proxima_fecha && date < rule.proxima_fecha) || (rule.ultima_fecha_generada && date <= rule.ultima_fecha_generada)) continue
-      const matches = rule.frecuencia === 'mensual' ? d === Number(rule.dia_mes) : weekDay === Number(rule.dia_semana)
+      // Same calendar as SQL recurring_next_date: days 29-31 clamp to the month's last day.
+      const monthDay = Math.min(Number(rule.dia_mes), days)
+      const matches = rule.frecuencia === 'semanal' ? weekDay === Number(rule.dia_semana)
+        : rule.frecuencia === 'anual' ? month === Number(rule.mes_anual) && d === monthDay
+        : d === monthDay
       if (matches && !recorded.has(`${rule.id}:${date}`)) upcoming.push({ ruleId: rule.id, description: rule.descripcion, date, amount: Number(rule.monto) })
     }
   }

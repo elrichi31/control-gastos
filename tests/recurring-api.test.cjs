@@ -24,7 +24,7 @@ test('creation stores only an owned rule, never creates an expense or an instanc
   assert.ok(!Object.hasOwn(body,'proxima_fecha') && !Object.hasOwn(body,'ultima_fecha_generada'),'El contrato público de mobile no debe exponer estado interno nuevo')
 })
 test('create/update validate frequency, dates, amounts and day ranges without writes',async()=>{
-  for(const invalid of [{frecuencia:'diaria'},{dia_mes:31},{monto:-1},{fecha_inicio:'2099-02-30'},{fecha_fin:'2000-01-01'},{activo:'false'}]) {
+  for(const invalid of [{frecuencia:'diaria'},{dia_mes:32},{monto:-1},{fecha_inicio:'2099-02-30'},{fecha_fin:'2000-01-01'},{activo:'false'}]) {
     calls=[];assert.equal((await POST(request({...existing,...invalid}))).status,400)
     assert.ok(calls.every(c=>!c.insert))
     calls=[];assert.equal((await PUT(request(invalid,'PUT'),params)).status,400)
@@ -66,4 +66,12 @@ test('unauthenticated creation does not access DB; missing migration gives a saf
   auth=true;dbError={code:'PGRST204',message:'private fixture error'}
   const response=await POST(request(existing));assert.equal(response.status,503);assert.doesNotMatch(await response.text(),/private fixture error/)
   dbError=null
+})
+test('validation accepts days 29-31 and yearly rules, and omits mes_anual otherwise', () => {
+  const { validateRecurringRule } = require('../src/lib/recurring-rules.ts')
+  const base = { descripcion: 'Dominio', monto: 12, categoria_id: 1, metodo_pago_id: 1, fecha_inicio: '2026-01-01' }
+  assert.equal(validateRecurringRule({ ...base, frecuencia: 'mensual', dia_mes: 31 }).dia_mes, 31)
+  assert.ok(!Object.hasOwn(validateRecurringRule({ ...base, frecuencia: 'mensual', dia_mes: 5, mes_anual: 3 }), 'mes_anual'), 'Pre-migration writes must not send mes_anual')
+  assert.equal(validateRecurringRule({ ...base, frecuencia: 'anual', dia_mes: 15, mes_anual: 3 }).mes_anual, 3)
+  for (const bad of [{ frecuencia: 'anual', dia_mes: 15 }, { frecuencia: 'anual', dia_mes: 15, mes_anual: 13 }, { frecuencia: 'mensual', dia_mes: 32 }]) assert.throws(() => validateRecurringRule({ ...base, ...bad }))
 })

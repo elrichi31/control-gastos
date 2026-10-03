@@ -26,8 +26,8 @@ const descriptions: Record<ExpenseTool, string> = {
   listar_categorias: 'Lista el catálogo compartido de categorías y sus IDs. Consulta antes de crear o cambiar una categoría.',
   listar_metodos_pago: 'Lista el catálogo compartido de métodos de pago y sus IDs.',
   crear_gasto: 'Registra un gasto manual del usuario conectado. Requiere que el usuario confirme los datos y confirmado=true. No crea series recurrentes.',
-  editar_gasto: 'Edita un gasto manual propio por ID. Consulta primero el gasto y pide confirmación explícita. No modifica gastos generados por una serie recurrente.',
-  eliminar_gasto: 'Elimina definitivamente un gasto manual propio por ID. Consulta primero el gasto y pide confirmación explícita. No elimina gastos de series recurrentes.',
+  editar_gasto: 'Edita un gasto propio por ID. Consulta primero el gasto y pide confirmación explícita. No modifica gastos de una serie recurrente que siga existiendo.',
+  eliminar_gasto: 'Elimina definitivamente un gasto propio por ID. Consulta primero el gasto y pide confirmación explícita. No elimina gastos de una serie recurrente que siga existiendo.',
   resumen_mes: 'Resumen del mes del usuario conectado: gastado, presupuesto restante, recurrentes por venir, disponible, gasto diario sugerido, proyección, alertas y avance por categoría del presupuesto. Envía hoy con la fecha local del usuario (YYYY-MM-DD); mes (YYYY-MM) es opcional, por defecto el de hoy.',
 }
 // Same numbers as the web dashboard: both go through buildMonthPlan.
@@ -100,9 +100,10 @@ export async function executeExpenseTool(name: ExpenseTool, input: unknown, iden
     return { gasto: data }
   }
   const mutation = name === 'eliminar_gasto' ? db.from('gasto').delete() : db.from('gasto').update(Object.fromEntries(Object.entries(p).filter(([k]) => k !== 'id' && k !== 'confirmado')))
-  const { data, error } = await mutation.eq('id', p.id).eq('user_id', identity.userId).eq('is_recurrent', false).select(columns).maybeSingle()
+  // Only expenses still owned by a live series are locked; deleting a series sets gasto_recurrente_id to NULL.
+  const { data, error } = await mutation.eq('id', p.id).eq('user_id', identity.userId).is('gasto_recurrente_id', null).select(columns).maybeSingle()
   if (error) throw new Error('No se pudo modificar el gasto')
-  if (!data) throw new Error('Gasto no encontrado o pertenece a una serie recurrente')
+  if (!data) throw new Error('Gasto no encontrado o pertenece a una serie recurrente activa')
   return name === 'eliminar_gasto' ? { eliminado: true, gasto: data } : { gasto: data }
 }
 export function createExpenseServer(identity: McpIdentity, db: SupabaseClient) {

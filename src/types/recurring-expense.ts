@@ -1,6 +1,7 @@
 // Tipos para gastos recurrentes
 
-export type Frecuencia = 'semanal' | 'mensual'
+export type Frecuencia = 'semanal' | 'mensual' | 'anual'
+export const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 export type EstadoInstancia = 'pendiente' | 'generado' | 'omitido'
 
 export interface GastoRecurrente {
@@ -12,7 +13,8 @@ export interface GastoRecurrente {
   metodo_pago_id: number
   frecuencia: Frecuencia
   dia_semana?: number // 1=Lunes, 7=Domingo
-  dia_mes?: number // 1-31
+  dia_mes?: number // 1-31; 29-31 fall on the last day of shorter months
+  mes_anual?: number | null // 1-12, only for 'anual'
   fecha_inicio: string // "YYYY-MM-DD"
   fecha_fin?: string | null // "YYYY-MM-DD" o null
   activo: boolean
@@ -38,6 +40,7 @@ export interface CreateGastoRecurrenteInput {
   frecuencia: Frecuencia
   dia_semana?: number
   dia_mes?: number
+  mes_anual?: number | null
   fecha_inicio: string
   fecha_fin?: string | null
   activo?: boolean

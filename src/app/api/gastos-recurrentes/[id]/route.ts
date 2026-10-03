@@ -26,6 +26,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     if (body.frecuencia !== undefined) {
       updateData.dia_semana = validated.dia_semana
       updateData.dia_mes = validated.dia_mes
+      updateData.mes_anual = validated.mes_anual
     }
     if (!Object.keys(updateData).length) return NextResponse.json(publicRecurringRule(existing))
     // Never write cursors from a stale read; SQL recalculates calendar edits atomically.
