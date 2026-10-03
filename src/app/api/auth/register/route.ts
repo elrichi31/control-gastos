@@ -1,6 +1,51 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import { z } from 'zod'
 
-// Provision family accounts administratively in Supabase, never through public signup.
-export async function POST() {
-  return NextResponse.json({ error: 'El registro público está cerrado. Contacta al administrador.' }, { status: 403, headers: { 'Cache-Control': 'no-store' } })
+const schema = z.object({
+  firstName: z.string().trim().min(1).max(80),
+  lastName: z.string().trim().min(1).max(80),
+  email: z.string().trim().email().max(254),
+  password: z.string().min(6).max(128),
+})
+const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } })
+const unavailable = () => json({ error: 'El registro no está disponible. Deben estar habilitados el registro y la confirmación de correo en Supabase.' }, 503)
+
+export async function POST(request: NextRequest) {
+  let input: unknown
+  try { input = await request.json() } catch { return json({ error: 'Solicitud inválida' }, 400) }
+  const parsed = schema.safeParse(input)
+  if (!parsed.success) return json({ error: 'Revisa nombre, apellido, correo y contraseña (mínimo 6 caracteres).' }, 400)
+
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!url || !key) return unavailable()
+    // Never silently downgrade verified signup if the provider is misconfigured.
+    const settingsResponse = await fetch(`${url.replace(/\/$/, '')}/auth/v1/settings`, {
+      headers: { apikey: key }, cache: 'no-store', signal: AbortSignal.timeout(5000),
+    })
+    if (!settingsResponse.ok) return unavailable()
+    const settings = await settingsResponse.json()
+    if (settings?.disable_signup !== false || settings?.mailer_autoconfirm !== false) return unavailable()
+    // Production mail destinations come from server configuration, never request Host.
+    const origin = new URL(process.env.NEXTAUTH_URL || (process.env.NODE_ENV !== 'production' ? request.nextUrl.origin : ''))
+    if (!['https:', 'http:'].includes(origin.protocol) || (process.env.NODE_ENV === 'production' && origin.protocol !== 'https:')) return unavailable()
+    const { firstName, lastName, email, password } = parsed.data
+    const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+    const { data, error } = await supabase.auth.signUp({
+      email, password,
+      options: {
+        data: { full_name: `${firstName} ${lastName}`, first_name: firstName, last_name: lastName },
+        emailRedirectTo: `${origin.origin}/auth/login`,
+      },
+    })
+    if (error) return json({ error: 'No se pudo crear la cuenta. Revisa tus datos o inténtalo más tarde.' }, 400)
+    if (!data.user || data.session) return unavailable()
+    return json({
+      message: 'Revisa tu correo para confirmar tu cuenta antes de iniciar sesión.',
+      needsEmailConfirmation: true,
+      user: { id: data.user.id, email: data.user.email, name: `${firstName} ${lastName}` },
+    })
+  } catch { return unavailable() }
 }

@@ -165,6 +165,13 @@ export default function LoginPage() {
             </Button>
           </form>
 
+          <p className="mt-6 text-center text-muted-foreground">
+            ¿No tienes cuenta?{' '}
+            <Link href="/auth/register" className="text-primary hover:underline font-medium">
+              Crear cuenta
+            </Link>
+          </p>
+
           {googleEnabled && <>
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">

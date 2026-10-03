@@ -1,13 +1,13 @@
-# Acceso privado y revocación de sesiones
+# Registro con verificación de correo y revocación de sesiones
 
 ## Cambios del código
-- `/api/auth/register` responde 403 sin crear clientes ni llamar a Supabase. `/auth/register` informa que el acceso es privado. El acceso por contraseña sigue usando las cuentas existentes.
+- `/auth/register` y `/api/auth/register` admiten nuevas cuentas por correo. La API valida los datos, comprueba que Supabase permita altas y exija confirmación de correo, y nunca devuelve tokens ni inicia sesión automáticamente. El acceso por contraseña y las protecciones de sesiones existentes se conservan. Un proveedor mal configurado o inaccesible bloquea nuevas altas con 503, no degrada silenciosamente la verificación.
 - Google se publica como proveedor únicamente con credenciales OAuth y un mapeo explícito `AUTH_GOOGLE_ACCOUNTS`. Se exige `email_verified === true`, se comprueba la cuenta real y su bloqueo con la API administrativa de Supabase y se usa su UUID, nunca el `sub` de Google. Google requiere la clave privada de servicio; si no se puede verificar la cuenta, se deniega el login.
 - Web/móvil tienen una duración máxima absoluta de 30 días desde el login. El refresh móvil mantiene el identificador y la fecha original, no prolonga indefinidamente el acceso. Su ventana ordinaria sigue siendo 72 horas.
 - `AUTH_SESSION_NOT_BEFORE` permite revocar globalmente las sesiones de la app anteriores a una fecha ISO UTC. Valores inválidos fallan cerrados. No es una fecha deslizante ni debe colocarse en el futuro salvo que se desee bloquear todos los logins hasta entonces.
 
 ## Activación en producción (no ejecutada por estos cambios)
-1. **Supabase → Authentication → configuración de usuarios:** desactivar las altas de usuarios nuevos. El bloqueo de nuestra ruta no impide llamar directamente al endpoint público de Supabase. Verificar la opción en el proyecto real, conservar usuarios actuales y probar login existente. Provisionar nuevas cuentas administrativamente cuando corresponda.
+1. **Supabase → Authentication:** activar **Allow new users to sign up** y **Confirm email** en el proveedor Email. En URL Configuration configurar Site URL como `https://bethaspend.bethalabs.com` y autorizar `https://bethaspend.bethalabs.com/auth/login` en Redirect URLs. Verificar SMTP/envío real con una nueva cuenta autorizada; no se probó envío de correo real desde este entorno. No desactivar las altas: la decisión actual es aceptar nuevos usuarios.
 2. Si Google no se usa, dejar `AUTH_GOOGLE_ACCOUNTS` sin configurar y desactivar el proveedor Google también en Supabase si allí estaba habilitado. Si se usa, configurar un objeto JSON que mapee cada email verificado a **su UUID real de una cuenta existente** de Supabase, junto con `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`. Ejemplo exclusivamente ficticio:
    ```json
    { "existing@example.invalid": "11111111-1111-4111-8111-111111111111" }
@@ -27,4 +27,4 @@
 - Programar mantenimiento autorizado para eliminar filas antiguas expiradas/revocadas según la retención elegida. No hay tarea automática instalada por esta migración.
 
 ## Comprobaciones locales
-`npm run typecheck` y `node --test tests/*.test.cjs`. Las nuevas pruebas cubren registro cerrado, login existente, Google verificado y explícito, renovación acotada, corte global, revocación por propietario, CSRF, caída de DB, ausencia de bypass con tokens antiguos, aislamiento SQL y cambios de contraseña/bloqueo. No se usan cuentas ni secretos reales en ellas.
+`npm run typecheck` y `node --test tests/*.test.cjs`. Las nuevas pruebas cubren registro público con confirmación, validación de entrada y configuración del proveedor, login existente, Google verificado y explícito, renovación acotada, corte global, revocación por propietario, CSRF, caída de DB, ausencia de bypass con tokens antiguos, aislamiento SQL y cambios de contraseña/bloqueo. No se usan cuentas ni secretos reales en ellas.
