@@ -46,7 +46,7 @@ test('HTTP OAuth consent + actual PostgreSQL token exchange + real MCP protocol 
  assert.equal((await rpc('tools/list',{},1,'wrong')).status,401)
  assert.equal((await rpc('tools/list',{},1,tokens.access_token,'https://evil.example')).status,403)
  const init=await rpc('initialize',{protocolVersion:'2025-06-18',capabilities:{},clientInfo:{name:'test-client',version:'1'}});assert.equal(init.status,200);assert.equal((await init.json()).result.serverInfo.name,'bethaspend')
- const listed=await rpc('tools/list',{},2);const tools=(await listed.json()).result.tools;assert.equal(tools.length,7);assert.ok(tools.find(t=>t.name==='eliminar_gasto').annotations.destructiveHint)
+ const listed=await rpc('tools/list',{},2);const tools=(await listed.json()).result.tools;assert.equal(tools.length,8);assert.ok(tools.find(t=>t.name==='resumen_mes').annotations.readOnlyHint);assert.ok(tools.find(t=>t.name==='eliminar_gasto').annotations.destructiveHint)
  const called=await rpc('tools/call',{name:'listar_gastos',arguments:{}},3);assert.deepEqual(JSON.parse((await called.json()).result.content[0].text).gastos,[])
  const invalid=await rpc('tools/call',{name:'crear_gasto',arguments:{user_id:'other'}},4);assert.ok((await invalid.json()).result.isError)
  const revoked=await oauth.revoke(request(config.origin+'/api/mcp/oauth/revoke',{token:tokens.refresh_token,client_id:config.clientId,client_secret:config.clientSecret}));assert.equal(revoked.status,200)

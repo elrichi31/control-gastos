@@ -63,3 +63,22 @@ test('creation uses authenticated identity and preserves Salud / Transferencia I
  assert.equal(r.gasto.user_id,'owner');assert.equal(r.gasto.categoria_id,44);assert.equal(r.gasto.metodo_pago_id,7)
  await assert.rejects(()=>executeExpenseTool('eliminar_gasto',{id:1,confirmado:true},{...auth,scopes:['expenses:read']},db),/permiso/i)
 })
+test('resumen_mes matches the dashboard plan and only reads the owner rows',async()=>{
+ const tables={
+  gasto:[{user_id:'owner',fecha:'2026-10-02',monto:30,categoria_id:44,gasto_recurrente_id:null},{user_id:'owner',fecha:'2026-10-03',monto:20,categoria_id:45,gasto_recurrente_id:null},{user_id:'other',fecha:'2026-10-02',monto:999,categoria_id:44}],
+  presupuesto_mensual:[{id:9,user_id:'owner',anio:2026,mes:10,total:300},{id:8,user_id:'other',anio:2026,mes:10,total:1}],
+  presupuesto_categoria:[{id:1,user_id:'owner',presupuesto_mensual_id:9,categoria_id:44,categoria:{nombre:'Comida'}}],
+  movimiento_presupuesto:[{user_id:'owner',presupuesto_categoria_id:1,monto:35},{user_id:'other',presupuesto_categoria_id:1,monto:500}],
+  gasto_recurrente:[{id:5,user_id:'owner',activo:true,descripcion:'Netflix',monto:10,frecuencia:'mensual',dia_mes:20,fecha_inicio:'2026-01-01'}],
+ }
+ const db={from(t){const f=[];const q={select(){return q},eq(k,v){f.push(r=>r[k]===v);return q},gte(k,v){f.push(r=>r[k]>=v);return q},lt(k,v){f.push(r=>r[k]<v);return q},in(k,v){f.push(r=>v.includes(r[k]));return q},
+  maybeSingle(){return Promise.resolve({data:tables[t].filter(r=>f.every(x=>x(r)))[0]||null,error:null})},then(res,rej){return Promise.resolve({data:tables[t].filter(r=>f.every(x=>x(r))),error:null}).then(res,rej)}};return q}}
+ const r=await executeExpenseTool('resumen_mes',{hoy:'2026-10-03'},{userId:'owner',scopes:['expenses:read']},db)
+ assert.equal(r.spent,50);assert.equal(r.remaining,250);assert.equal(r.committed,10);assert.equal(r.available,240)
+ assert.deepEqual(r.categorias,[{id:44,nombre:'Comida',presupuestado:35,gastado:30}])
+ assert.ok(r.alerts.some(a=>a.kind==='near'&&a.category==='Comida'))
+ const past=await executeExpenseTool('resumen_mes',{hoy:'2026-11-15',mes:'2026-10'},{userId:'owner',scopes:['expenses:read']},db)
+ assert.equal(past.committed,0);assert.equal(past.daysLeft,1)
+ await assert.rejects(()=>executeExpenseTool('resumen_mes',{hoy:'2026-10-03',mes:'2026-11'},{userId:'owner',scopes:['expenses:read']},db))
+ await assert.rejects(()=>executeExpenseTool('resumen_mes',{hoy:'2026-10-03'},{userId:'owner',scopes:[]},db),/permiso/i)
+})

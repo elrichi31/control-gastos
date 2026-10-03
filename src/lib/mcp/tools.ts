@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { buildMonthPlan, type PlanningRule } from '../month-planning'
 
 export type McpIdentity = { userId: string; scopes: string[] }
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v => { const d = new Date(`${v}T00:00:00Z`); return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v }, 'Fecha inválida')
@@ -15,6 +16,7 @@ export const expenseSchemas = {
   crear_gasto: z.object({ ...fields, confirmado: z.literal(true) }).strict(),
   editar_gasto: edit.refine(v => Object.keys(v).some(k => k !== 'id' && k !== 'confirmado'), 'Falta un campo a actualizar'),
   eliminar_gasto: z.object({ id, confirmado: z.literal(true) }).strict(),
+  resumen_mes: z.object({ hoy: date, mes: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional() }).strict().refine(v => !v.mes || v.mes <= v.hoy.slice(0, 7), 'No hay resumen de meses futuros'),
 }
 export type ExpenseTool = keyof typeof expenseSchemas
 const columns = 'id,descripcion,monto,fecha,categoria_id,metodo_pago_id,is_recurrent,categoria(id,nombre),metodo_pago(id,nombre)'
@@ -26,6 +28,41 @@ const descriptions: Record<ExpenseTool, string> = {
   crear_gasto: 'Registra un gasto manual del usuario conectado. Requiere que el usuario confirme los datos y confirmado=true. No crea series recurrentes.',
   editar_gasto: 'Edita un gasto manual propio por ID. Consulta primero el gasto y pide confirmación explícita. No modifica gastos generados por una serie recurrente.',
   eliminar_gasto: 'Elimina definitivamente un gasto manual propio por ID. Consulta primero el gasto y pide confirmación explícita. No elimina gastos de series recurrentes.',
+  resumen_mes: 'Resumen del mes del usuario conectado: gastado, presupuesto restante, recurrentes por venir, disponible, gasto diario sugerido, proyección, alertas y avance por categoría del presupuesto. Envía hoy con la fecha local del usuario (YYYY-MM-DD); mes (YYYY-MM) es opcional, por defecto el de hoy.',
+}
+// Same numbers as the web dashboard: both go through buildMonthPlan.
+async function monthSummary(p: z.infer<typeof expenseSchemas.resumen_mes>, userId: string, db: SupabaseClient) {
+  const mes = p.mes || p.hoy.slice(0, 7)
+  const [year, month] = mes.split('-').map(Number)
+  const next = month === 12 ? `${year + 1}-01-01` : `${year}-${String(month + 1).padStart(2, '0')}-01`
+  const current = mes === p.hoy.slice(0, 7)
+  // A past month is evaluated as of its last day: no upcoming commitments, projection = spent.
+  const today = current ? p.hoy : `${mes}-${String(new Date(Date.UTC(year, month, 0)).getUTCDate()).padStart(2, '0')}`
+  const fail = (e: unknown) => { if (e) throw new Error('No se pudo calcular el resumen del mes') }
+  const [expenses, budget, rules] = await Promise.all([
+    db.from('gasto').select('fecha,monto,categoria_id,gasto_recurrente_id').eq('user_id', userId).gte('fecha', `${mes}-01`).lt('fecha', next),
+    db.from('presupuesto_mensual').select('id,total').eq('user_id', userId).eq('anio', year).eq('mes', month).maybeSingle(),
+    current ? db.from('gasto_recurrente').select('*').eq('user_id', userId) : Promise.resolve({ data: [], error: null }),
+  ])
+  fail(expenses.error || budget.error || rules.error)
+  const gastos = expenses.data || []
+  const spentBy: Record<number, number> = {}
+  for (const g of gastos) spentBy[g.categoria_id] = (spentBy[g.categoria_id] || 0) + Number(g.monto)
+  let categories: { id: number; nombre: string; presupuestado: number; gastado: number }[] = []
+  if (budget.data) {
+    const cats = await db.from('presupuesto_categoria').select('id,categoria_id,categoria(nombre)').eq('user_id', userId).eq('presupuesto_mensual_id', budget.data.id)
+    fail(cats.error)
+    const ids = (cats.data || []).map(c => c.id)
+    const movs = ids.length ? await db.from('movimiento_presupuesto').select('presupuesto_categoria_id,monto').eq('user_id', userId).in('presupuesto_categoria_id', ids) : { data: [], error: null }
+    fail(movs.error)
+    categories = (cats.data || []).map(c => {
+      const cat = (Array.isArray(c.categoria) ? c.categoria[0] : c.categoria) as { nombre?: string } | null
+      const presupuestado = (movs.data || []).filter(m => m.presupuesto_categoria_id === c.id).reduce((s, m) => s + Number(m.monto), 0)
+      return { id: c.categoria_id, nombre: cat?.nombre || 'Sin nombre', presupuestado: Math.round(presupuestado * 100) / 100, gastado: Math.round((spentBy[c.categoria_id] || 0) * 100) / 100 }
+    })
+  }
+  const plan = buildMonthPlan({ today, budget: budget.data ? Number(budget.data.total) : undefined, expenses: gastos, rules: (rules.data || []) as PlanningRule[], categories })
+  return { mes, presupuesto: budget.data ? Number(budget.data.total) : null, ...plan, categorias: categories }
 }
 export async function executeExpenseTool(name: ExpenseTool, input: unknown, identity: McpIdentity, db: SupabaseClient): Promise<Record<string, unknown>> {
   const write = ['crear_gasto', 'editar_gasto', 'eliminar_gasto'].includes(name)
@@ -37,6 +74,7 @@ export async function executeExpenseTool(name: ExpenseTool, input: unknown, iden
     if (error) throw new Error('No se pudo consultar el catálogo')
     return { catalogo: data || [] }
   }
+  if (name === 'resumen_mes') return monthSummary(parsed as z.infer<typeof expenseSchemas.resumen_mes>, identity.userId, db)
   if (name === 'listar_gastos') {
     const p = parsed as z.infer<typeof expenseSchemas.listar_gastos>
     let query = db.from('gasto').select(columns).eq('user_id', identity.userId)
