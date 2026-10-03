@@ -1,11 +1,12 @@
 "use client"
 
-import { Plug, Copy, ArrowUpRight } from 'lucide-react'
+import { Plug, Copy } from 'lucide-react'
+import { McpConnectionsDialog } from './McpConnectionsDialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import type { McpStatus } from '@/services/mcp-status'
 
-export function McpStatusCard({ status, onCopy }: { status: McpStatus; onCopy: () => void }) {
+export function McpStatusCard({ status, onCopy, onChanged }: { status: McpStatus; onCopy: () => void; onChanged: () => void }) {
   const ready = status.state === 'ready'
   const label = ready ? 'Configurado' : status.state === 'not_configured' ? 'Sin configurar' : 'No disponible'
   return (
@@ -33,7 +34,7 @@ export function McpStatusCard({ status, onCopy }: { status: McpStatus; onCopy: (
           </div>
         )}
         {ready && status.accountSupported && (
-          <Button asChild variant="outline" size="sm"><a href="/api/mcp/connections">Administrar permisos<ArrowUpRight className="ml-2 h-4 w-4" aria-hidden="true" /></a></Button>
+          <McpConnectionsDialog onChanged={onChanged} />
         )}
       </CardContent>
     </Card>

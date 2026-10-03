@@ -91,3 +91,18 @@ test('RPC failures log only operation and safe code, preserving generic client e
   assert.ok(!JSON.stringify(logs).includes('secret-'))
  } finally {console.error=original}
 })
+
+test('JSON connections API lists grants and revokes only same-origin requests',async()=>{
+ const grant='22222222-2222-4222-8222-222222222222'
+ let updates=0
+ const db={from(){const q={select(){return q},eq(){return q},in(){return q},is(){return q},gt(){return q},order(){return q},update(){updates++;return q},maybeSingle(){return Promise.resolve({data:{id:grant},error:null})},limit(){return Promise.resolve({data:[{id:grant,created_at:'2026-10-01T00:00:00Z',expires_at:'2026-10-31T00:00:00Z',revoked_at:null,scopes:['expenses:read']}],error:null})}};return q}}
+ const oauth=createOAuthHandlers(config,db,async()=>({user:{id:user,email:'fixture@example.test'}}))
+ const list=await (await oauth.connectionsGet(new Request(config.origin+'/api/mcp/connections',{headers:{accept:'application/json'}}))).json()
+ assert.deepEqual(list.connections.map(c=>c.id),[grant])
+ const post=origin=>oauth.connectionsPost(new Request(config.origin+'/api/mcp/connections',{method:'POST',headers:{'content-type':'application/json',...(origin?{origin}:{})},body:JSON.stringify({grant_id:grant})}))
+ assert.equal((await post('https://evil.example')).status,403)
+ assert.equal((await post()).status,403)
+ assert.equal(updates,0)
+ const ok=await post(config.origin)
+ assert.equal(ok.status,200);assert.deepEqual(await ok.json(),{success:true});assert.equal(updates,1)
+})

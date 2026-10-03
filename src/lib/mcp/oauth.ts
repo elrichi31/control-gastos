@@ -107,25 +107,38 @@ export function createOAuthHandlers(config: McpConfig, db: SupabaseClient, getSe
       if (token && token.length <= 512) await rpc('mcp_revoke_token', { p_token_hash: hashSecret(token), p_client_id: client.clientId, p_resource: config.resource })
       return new Response(null, { status: 200, headers: privateHeaders })
     }),
-    connectionsGet: guarded(async () => {
+    connectionsGet: guarded(async request => {
+      const json = (request.headers.get('accept') || '').includes('application/json')
       const user = await owner()
-      if (!user) return redirect(`${config.origin}/auth/login`, config)
+      if (!user) return json ? Response.json({ error: 'access_denied' }, { status: 401, headers: privateHeaders }) : redirect(`${config.origin}/auth/login`, config)
       const { data, error } = await db.from('mcp_oauth_grants').select('id,created_at,expires_at,revoked_at,scopes').eq('user_id', user.id).in('client_id', clientIds).is('revoked_at', null).gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false }).limit(50)
       if (error) throw new OAuthError('server_error', 'No se pudieron consultar las conexiones', 503)
+      if (json) return Response.json({ connections: (data || []).map(({ id, created_at, expires_at, scopes }) => ({ id, created_at, expires_at, scopes })) }, { headers: privateHeaders })
       const csrf = randomSecret()
       const rows = (data || []).map(g => `<li>ChatGPT · vence ${escape(g.expires_at)}<form method="post" action="/api/mcp/connections"><input type="hidden" name="grant_id" value="${escape(g.id)}"><input type="hidden" name="csrf" value="${csrf}"><button>Revocar acceso</button></form></li>`).join('')
       return htmlPage(config, `<h1>Conexiones de ChatGPT</h1><p>${escape(user.email)}</p><ul>${rows || '<li>No hay conexiones activas.</li>'}</ul><a href="/dashboard">Volver al dashboard</a>`, csrf)
     }),
     connectionsPost: guarded(async request => {
-      const params = await readForm(request)
-      checkCsrf(request, params, config)
+      // JSON (modal de la app): Origin propio + content-type no simple fuerza preflight CORS, no hace falta token CSRF de formulario
+      const json = (request.headers.get('content-type') || '').startsWith('application/json')
+      let grantId = ''
+      if (json) {
+        requireSameOrigin(request, config)
+        const body: unknown = await request.json().catch(() => null)
+        const value = body && typeof body === 'object' ? (body as Record<string, unknown>).grant_id : null
+        grantId = typeof value === 'string' ? value : ''
+      } else {
+        const params = await readForm(request)
+        checkCsrf(request, params, config)
+        grantId = params.get('grant_id') || ''
+      }
       const user = await owner()
       if (!user) throw new OAuthError('access_denied', 'Inicia sesión', 401)
-      const grantId = params.get('grant_id') || ''
       if (!z.string().uuid().safeParse(grantId).success) throw new OAuthError('invalid_request', 'Conexión inválida')
       const { data, error } = await db.from('mcp_oauth_grants').update({ revoked_at: new Date().toISOString() }).eq('id', grantId).eq('user_id', user.id).in('client_id', clientIds).select('id').maybeSingle()
       if (error) throw new OAuthError('server_error', 'No se pudo revocar el acceso', 503)
       if (!data) throw new OAuthError('invalid_request', 'Conexión no encontrada', 404)
+      if (json) return Response.json({ success: true }, { headers: privateHeaders })
       return redirect(`${config.origin}/api/mcp/connections`, config, true)
     }),
   }
