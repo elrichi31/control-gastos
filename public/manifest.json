@@ -9,6 +9,10 @@
   "orientation": "portrait",
   "scope": "/",
   "lang": "es",
+  "shortcuts": [
+    { "name": "Nuevo gasto", "short_name": "Gasto", "url": "/form", "icons": [{ "src": "/icon-96x96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Nuevo gasto recurrente", "short_name": "Recurrente", "url": "/form?tipo=recurrente", "icons": [{ "src": "/icon-96x96.png", "sizes": "96x96", "type": "image/png" }] }
+  ],
   "icons": [
     {
       "src": "/icon-72x72.png",

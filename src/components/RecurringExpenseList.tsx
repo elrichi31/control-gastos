@@ -23,6 +23,8 @@ import { ConfirmModal } from "@/components/ConfirmModal"
 import { EditRecurringExpenseModal } from "@/components/EditRecurringExpenseModal"
 import { getCategoriaColor } from "@/lib/constants"
 import toast from "react-hot-toast"
+import { format, parseISO } from "date-fns"
+import { es } from "date-fns/locale"
 
 const DIAS_SEMANA: Record<number, string> = {
   1: "Lunes",
@@ -41,6 +43,14 @@ export function RecurringExpenseList() {
   const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [editExpense, setEditExpense] = useState<GastoRecurrente | null>(null)
+  const [nextDates, setNextDates] = useState<Record<number, string | null>>({})
+
+  // The public recurring API hides scheduling state (mobile contract); the web-only plan endpoint exposes it.
+  const loadNextDates = () =>
+    fetch(`/api/dashboard/recurring-plan?month=${format(new Date(), "yyyy-MM")}`, { cache: "no-store" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d && Array.isArray(d.rules)) setNextDates(Object.fromEntries(d.rules.map((r: { id: number; proxima_fecha?: string | null }) => [r.id, r.proxima_fecha ?? null]))) })
+      .catch(() => {})
 
   const loadData = async () => {
     try {
@@ -63,6 +73,7 @@ export function RecurringExpenseList() {
 
   useEffect(() => {
     loadData()
+    loadNextDates()
   }, [])
 
   const handleToggleActive = async (id: number, currentActive: boolean) => {
@@ -71,6 +82,7 @@ export function RecurringExpenseList() {
       setExpenses(prev =>
         prev.map(exp => (exp.id === id ? { ...exp, activo: !currentActive } : exp))
       )
+      loadNextDates()
       toast.success(`Gasto ${!currentActive ? 'activado' : 'desactivado'} correctamente`)
     } catch (error) {
       console.error("Error al cambiar estado:", error)
@@ -100,16 +112,15 @@ export function RecurringExpenseList() {
     return paymentMethods.find(p => p.id === id)?.nombre || "Sin método"
   }
 
-  /** "Mensual · día 13" / "Semanal · lunes" */
+  /** "Mensual · día 13 · próximo 13 nov" / "Semanal · lunes · pausado" */
   const describeFrecuencia = (expense: GastoRecurrente) => {
-    const base = expense.frecuencia.charAt(0).toUpperCase() + expense.frecuencia.slice(1)
-    if (expense.frecuencia === "semanal" && expense.dia_semana) {
-      return `${base} · ${DIAS_SEMANA[expense.dia_semana].toLowerCase()}`
-    }
-    if (expense.frecuencia === "mensual" && expense.dia_mes) {
-      return `${base} · día ${expense.dia_mes}`
-    }
-    return base
+    let text = expense.frecuencia.charAt(0).toUpperCase() + expense.frecuencia.slice(1)
+    if (expense.frecuencia === "semanal" && expense.dia_semana) text += ` · ${DIAS_SEMANA[expense.dia_semana].toLowerCase()}`
+    if (expense.frecuencia === "mensual" && expense.dia_mes) text += ` · día ${expense.dia_mes}`
+    if (!expense.activo) return `${text} · pausado`
+    if (!(expense.id in nextDates)) return text
+    const next = nextDates[expense.id]
+    return next ? `${text} · próximo ${format(parseISO(next), "d MMM", { locale: es })}` : `${text} · finalizado`
   }
 
   const handleEdit = async (id: number, data: Partial<GastoRecurrente>) => {
@@ -118,6 +129,7 @@ export function RecurringExpenseList() {
       setExpenses(prev =>
         prev.map(exp => (exp.id === id ? { ...exp, ...data } : exp))
       )
+      loadNextDates()
       toast.success("Gasto recurrente actualizado correctamente")
     } catch (error) {
       console.error("Error al editar:", error)
@@ -156,9 +168,14 @@ export function RecurringExpenseList() {
     )
   }
 
+  // Weekly rules count as 52/12 charges per month.
   const totalMensual = expenses
-    .filter(e => e.activo && e.frecuencia === "mensual")
-    .reduce((sum, e) => sum + e.monto, 0)
+    .filter(e => e.activo)
+    .reduce((sum, e) => sum + (e.frecuencia === "semanal" ? e.monto * 52 / 12 : e.monto), 0)
+
+  // Soonest charge first; paused and finished rules go last.
+  const rank = (e: GastoRecurrente) => (e.activo && nextDates[e.id]) || "9999"
+  const sortedExpenses = [...expenses].sort((a, b) => rank(a).localeCompare(rank(b)))
 
   return (
     <>
@@ -180,7 +197,7 @@ export function RecurringExpenseList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {expenses.map((expense) => (
+              {sortedExpenses.map((expense) => (
                 <TableRow
                   key={expense.id}
                   className={`group ${expense.activo ? "" : "opacity-55"}`}
@@ -238,7 +255,7 @@ export function RecurringExpenseList() {
 
         {/* En móvil la tabla no cabe: se apila como filas */}
         <div className="md:hidden divide-y divide-border">
-          {expenses.map((expense) => (
+          {sortedExpenses.map((expense) => (
             <div key={expense.id} className={`px-4 py-3 ${expense.activo ? "" : "opacity-55"}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -293,7 +310,7 @@ export function RecurringExpenseList() {
       <p className="text-xs text-muted-foreground mt-3">
         {expenses.length} {expenses.length === 1 ? "gasto recurrente" : "gastos recurrentes"}
         {totalMensual > 0 && (
-          <> · <span className="tabular-nums">${totalMensual.toFixed(2)}</span> al mes en los activos</>
+          <> · <span className="tabular-nums">${totalMensual.toFixed(2)}</span> al mes en los activos (aprox.)</>
         )}
       </p>
 
