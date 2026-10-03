@@ -5,6 +5,8 @@ import { fetchPaymentMethods } from "./paymentMethods"
 
 export async function fetchPresupuestoCategorias(id: string): Promise<PresupuestoCategoriaDetalle[]> {
   const res = await fetch(`/api/presupuesto-mensual-detalle?presupuesto_mensual_id=${id}`)
+  // An error body must never reach updateBudgetTotal, or it would persist a zero total.
+  if (!res.ok) throw new Error("Error al cargar categorías del presupuesto")
   return await res.json()
 }
 

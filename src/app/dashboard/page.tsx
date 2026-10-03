@@ -22,7 +22,20 @@ import type { PlanningRule } from "@/lib/month-planning"
 
 export default function DashboardPage() {
     const { gastos, loading, error: expensesError } = useGastosFiltrados()
-    const [currentDate] = useState(() => new Date())
+    const [currentDate, setCurrentDate] = useState(() => new Date())
+    // A tab left open across midnight must roll over to the new day/month.
+    useEffect(() => {
+        const tick = () => setCurrentDate(prev => {
+            const now = new Date()
+            return now.toDateString() === prev.toDateString() ? prev : now
+        })
+        const id = setInterval(tick, 60_000)
+        document.addEventListener('visibilitychange', tick)
+        return () => {
+            clearInterval(id)
+            document.removeEventListener('visibilitychange', tick)
+        }
+    }, [])
     const currentMonth = startOfMonth(currentDate)
     const currentMonthEnd = endOfMonth(currentDate)
     const lastMonth = startOfMonth(subMonths(currentDate, 1))
