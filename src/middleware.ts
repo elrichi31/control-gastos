@@ -10,7 +10,9 @@ export default withAuth(
     const { pathname } = req.nextUrl
     
     // Verificar si el usuario está intentando acceder a rutas de auth cuando ya está autenticado
-    if (req.nextauth.token && pathname.startsWith('/auth/')) {
+    // Misma regla que `authorized`: un token viejo/revocado no cuenta, si no /auth <-> /dashboard entran en bucle
+    const token = req.nextauth.token
+    if (token?.id && sessionWithinPolicy(token.sessionStartedAt) && pathname.startsWith('/auth/')) {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
     
