@@ -39,3 +39,26 @@ test('server data access never goes back to the public anon client', () => {
   const offenders = files.filter(f => /database\/server|createServerClient|from ['"]@\/lib\/database['"]/.test(fs.readFileSync(f, 'utf8')))
   assert.deepEqual(offenders.map(f => path.relative(path.join(__dirname, '..'), f)), [], 'These files reach the locked tables with the anon key')
 })
+
+test('PostgreSQL: legacy and trigger functions are not executable by the public roles', async () => {
+  const db = new PGlite()
+  try {
+    await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated;
+      CREATE TABLE t(id int, updated_at timestamptz);
+      CREATE FUNCTION procesar_gastos_recurrentes_pendientes() RETURNS int LANGUAGE sql AS 'SELECT 1';
+      CREATE FUNCTION generar_instancias_gasto_especifico(p_id bigint, p_desde date) RETURNS int LANGUAGE sql AS 'SELECT 1';
+      CREATE FUNCTION update_updated_at_column() RETURNS trigger LANGUAGE plpgsql AS 'BEGIN NEW.updated_at := now(); RETURN NEW; END';
+      CREATE TRIGGER touch BEFORE UPDATE ON t FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+      CREATE FUNCTION app_today() RETURNS date LANGUAGE sql AS 'SELECT current_date';
+      GRANT ALL ON t TO anon;`)
+    await db.exec(fs.readFileSync(path.join(__dirname, '../supabase/migrations/20261008_revoke_public_functions.sql'), 'utf8'))
+    await db.exec('SET ROLE anon')
+    await assert.rejects(() => db.query('SELECT procesar_gastos_recurrentes_pendientes()'), /permission denied/)
+    await assert.rejects(() => db.query("SELECT generar_instancias_gasto_especifico(1, '2026-01-01')"), /permission denied/, 'every overload is revoked')
+    assert.ok((await db.query('SELECT app_today() AS d')).rows[0].d, 'harmless calendar helpers stay callable')
+    await db.query('INSERT INTO t VALUES (1, NULL)')
+    await db.query('UPDATE t SET id = 2') // triggers still fire for a role with table access
+    await db.exec('RESET ROLE')
+    assert.ok((await db.query('SELECT updated_at FROM t')).rows[0].updated_at)
+  } finally { await db.close() }
+})
