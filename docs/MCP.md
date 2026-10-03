@@ -14,6 +14,9 @@ Servidor remoto en `https://TU_DOMINIO/api/mcp`, con **Streamable HTTP**, SDK of
 | `editar_gasto` | `expenses:write` | Un gasto propio que no pertenezca a una serie recurrente existente, previa confirmación |
 | `eliminar_gasto` | `expenses:write` | Un gasto propio que no pertenezca a una serie recurrente existente, previa confirmación |
 | `resumen_mes` | `expenses:read` | Gastado, restante, recurrentes por venir, disponible, proyección, alertas y avance por categoría (mismo cálculo que el dashboard) |
+| `listar_recurrentes` | `expenses:read` | Recurrentes propios con próximo cobro, costo mensual/anual, último cambio de precio y totales |
+| `cambiar_estado_recurrente` | `expenses:write` | Pausar o reanudar un recurrente propio, previa confirmación |
+| `saltar_recurrente` | `expenses:write` | Omitir solo el próximo cobro de un recurrente activo propio, previa confirmación |
 
 Los gastos recurrentes se pueden consultar, pero **no editar ni borrar** desde MCP: no se gestionan las relaciones entre series, instancias y gastos. No hay herramientas de SQL libre, administración de usuarios ni cambios en presupuestos.
 

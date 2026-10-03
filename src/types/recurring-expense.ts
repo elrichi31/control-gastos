@@ -2,6 +2,9 @@
 
 export type Frecuencia = 'semanal' | 'mensual' | 'anual'
 export const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+/** Yearly cost of a rule: weekly x 52, monthly x 12, yearly x 1. */
+export const costoAnual = (r: { frecuencia: Frecuencia; monto: number }) =>
+  Number(r.monto) * (r.frecuencia === 'semanal' ? 52 : r.frecuencia === 'mensual' ? 12 : 1)
 export type EstadoInstancia = 'pendiente' | 'generado' | 'omitido'
 
 export interface GastoRecurrente {

@@ -54,7 +54,13 @@ export default function GastosRecurrentesPage() {
                 <strong>Semanal:</strong> El gasto se creará automáticamente cada semana en el día que especifiques.
               </p>
               <p>
-                <strong>Mensual:</strong> El gasto se creará automáticamente cada mes en el día que especifiques (máximo día 28).
+                <strong>Mensual:</strong> El gasto se creará automáticamente cada mes en el día que especifiques. Si el mes tiene menos días, se cobra el último (31 = último día del mes).
+              </p>
+              <p>
+                <strong>Anual:</strong> Se cobra una vez al año en el mes y día que elijas.
+              </p>
+              <p>
+                <strong>Saltar:</strong> Omite solo el próximo cobro, sin pausar el gasto.
               </p>
               <p>
                 <strong>Fecha de fin:</strong> Opcional. Si la activas, el gasto dejará de crearse después de esa fecha.

@@ -82,3 +82,27 @@ test('resumen_mes matches the dashboard plan and only reads the owner rows',asyn
  await assert.rejects(()=>executeExpenseTool('resumen_mes',{hoy:'2026-10-03',mes:'2026-11'},{userId:'owner',scopes:['expenses:read']},db))
  await assert.rejects(()=>executeExpenseTool('resumen_mes',{hoy:'2026-10-03'},{userId:'owner',scopes:[]},db),/permiso/i)
 })
+test('recurring tools are owner-bound, scope-checked and price the year correctly',async()=>{
+ const rules=[{id:1,user_id:'owner',descripcion:'ChatGPT',monto:20,frecuencia:'mensual',activo:true},{id:2,user_id:'owner',descripcion:'Gym',monto:5,frecuencia:'semanal',activo:false},{id:3,user_id:'other',descripcion:'PRIVATE',monto:999,frecuencia:'mensual',activo:true}]
+ const prices=[{gasto_recurrente_id:1,user_id:'owner',monto_anterior:18,monto_nuevo:20,cambiado_en:'2026-09-01'}]
+ const rpcCalls=[]
+ const db={rpc(name,args){rpcCalls.push({name,args});return Promise.resolve(args.p_id===1&&args.p_user_id==='owner'?{data:{omitida:'2026-10-23',proxima_fecha:'2026-11-23'},error:null}:{data:null,error:null})},
+  from(t){const f=[];let patch=null;const rows=t==='gasto_recurrente'?rules:prices;const q={select(){return q},eq(k,v){f.push(r=>r[k]===v);return q},order(){return q},limit(){return q},update(p){patch=p;return q},
+   maybeSingle(){const m=rows.filter(r=>f.every(x=>x(r)));if(patch)m.forEach(r=>Object.assign(r,patch));return Promise.resolve({data:m[0]||null,error:null})},
+   then(res,rej){return Promise.resolve({data:rows.filter(r=>f.every(x=>x(r))),error:null}).then(res,rej)}};return q}}
+ const auth={userId:'owner',scopes:['expenses:read','expenses:write']}
+ const list=await executeExpenseTool('listar_recurrentes',{},auth,db)
+ assert.deepEqual(list.recurrentes.map(r=>r.id),[1,2])
+ assert.equal(list.recurrentes[0].costo_anual,240);assert.equal(list.recurrentes[1].costo_anual,260)
+ assert.deepEqual(list.recurrentes[0].ultimo_cambio_precio,{antes:18,ahora:20,fecha:'2026-09-01'})
+ assert.equal(list.total_anual_activos,240);assert.equal(list.total_mensual_activos,20)
+ assert.deepEqual((await executeExpenseTool('saltar_recurrente',{id:1,confirmado:true},auth,db)).salto,{omitida:'2026-10-23',proxima_fecha:'2026-11-23'})
+ assert.equal(rpcCalls[0].args.p_user_id,'owner','the user id comes from the token, never from the input')
+ await assert.rejects(()=>executeExpenseTool('saltar_recurrente',{id:3,confirmado:true},auth,db),/no encontrado/i)
+ await assert.rejects(()=>executeExpenseTool('cambiar_estado_recurrente',{id:3,activo:false,confirmado:true},auth,db),/no encontrado/i)
+ assert.equal(rules[2].activo,true)
+ await executeExpenseTool('cambiar_estado_recurrente',{id:1,activo:false,confirmado:true},auth,db);assert.equal(rules[0].activo,false)
+ await assert.rejects(()=>executeExpenseTool('saltar_recurrente',{id:1,confirmado:true},{...auth,scopes:['expenses:read']},db),/permiso/i)
+ assert.throws(()=>expenseSchemas.saltar_recurrente.parse({id:1}))
+ assert.throws(()=>expenseSchemas.cambiar_estado_recurrente.parse({id:1,activo:false,confirmado:true,user_id:'other'}))
+})
