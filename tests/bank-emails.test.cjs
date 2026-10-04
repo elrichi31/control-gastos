@@ -47,11 +47,24 @@ test('Deuna: pago a un tercero', () => {
   assert.deepEqual([r.monto, r.descripcion, r.origen], [0.9, 'Deuna a Bazar Y Novedades', 'Deuna'])
 })
 
-test('ignora transferencias propias, recibidas y fallidas', () => {
+test('ignora transferencias propias y fallidas', () => {
   const owner = 'PRUEBA LOPEZ ANA MARIA'
   assert.equal(parse('banco@pichincha.com', 'NOTIFICACION BANCO PICHINCHA', html('Banco Pichincha', 'Transferencia', owner, 'Tu transferencia se realizó con éxito.', 'Detalle', 'Nombre del beneficiario:', 'Ana Maria Prueba Lopez', 'Monto:', 'USD 350.00')), null)
-  assert.equal(parse('banco@pichincha.com', 'NOTIFICACION BANCO PICHINCHA', html('Banco Pichincha', 'Transferencia recibida', 'Acabas de recibir una transferencia.', 'Nombre del ordenante:', 'Juan Perez', 'Monto:', 'USD 2,00')), null)
   assert.equal(parse('banco@pichincha.com', 'NOTIFICACION BANCO PICHINCHA', html('Banco Pichincha', owner, 'La transferencia no se realizó.', 'Nombre del beneficiario:', 'Juan Perez', 'Monto:', 'USD 40')), null)
+  // Produbanco: dinero que te mandas a ti mismo desde otra cuenta.
+  assert.equal(parse('bancaenlinea@produbanco.com', 'Transferencia recibida desde Produbanco', html('Estimado/a', owner, 'Enviada por:', 'Ana Maria Prueba Lopez', 'Monto:', '$400.00')), null)
+})
+
+test('dinero recibido de otra persona es un ingreso', () => {
+  const pichincha = parse('banco@pichincha.com', 'NOTIFICACION BANCO PICHINCHA', html('Banco Pichincha', 'Transferencia recibida', 'Estimado/a PRUEBA LOPEZ ANA MARIA', 'Acabas de recibir una transferencia.', 'Nombre del ordenante:', 'Juan Perez', 'Monto:', 'USD 10,00'))
+  assert.deepEqual([pichincha.tipo, pichincha.descripcion, pichincha.monto], ['ingreso', 'Recibido de Juan Perez', 10])
+  const deuna = parse('notificaciones@deunaapp.com', '¡Recibiste $5,00 en tu cuenta Deuna! 🤑', html('Hola, Ana 💸', 'Recibiste $5,00 de', 'Monto', '$5,00 USD', 'Nombre del ordenante', 'Martin Aldas'))
+  assert.deepEqual([deuna.tipo, deuna.descripcion, deuna.monto], ['ingreso', 'Recibido de Martin Aldas', 5])
+})
+
+test('"Transferencia Ingresada" de Produbanco es un gasto enviado, no un ingreso', () => {
+  const r = parse('bancaenlinea@produbanco.com', 'Transferencia Ingresada desde Produbanco', html('Estimado/a', 'PRUEBA LOPEZ ANA MARIA', 'Beneficiario:', 'PEREZ JUAN', 'Monto:', '$1600.00'))
+  assert.deepEqual([r.tipo, r.descripcion, r.monto], ['gasto', 'Transferencia a PEREZ JUAN', 1600])
 })
 
 test('categoriza por palabra sin importar tildes y sin falsos positivos', () => {

@@ -1,7 +1,8 @@
 // Parsers de notificaciones bancarias (Ecuador) que llegan al correo.
 export type PaymentKind = 'credito' | 'debito' | 'transferencia'
-type Source = { origen: string; metodo: PaymentKind; transfer: boolean }
-export type BankCharge = Source & { fecha: string; descripcion: string; monto: number }
+type Source = { origen: string; metodo: PaymentKind; transfer: boolean; ingreso?: boolean }
+/** tipo "ingreso": dinero que te transfirieron (p. ej. tu parte de un gasto compartido). */
+export type BankCharge = Source & { tipo: 'gasto' | 'ingreso'; fecha: string; descripcion: string; monto: number }
 
 export const BANK_SENDERS = [
   'servicios@dinersclub.com.ec',
@@ -10,18 +11,23 @@ export const BANK_SENDERS = [
   'notificaciones@deunaapp.com',
 ]
 
-/** Decide por remitente y asunto (sin bajar el cuerpo) si el correo puede ser un gasto. */
+/** Decide por remitente y asunto (sin bajar el cuerpo) si el correo puede ser un gasto o un ingreso. */
 export function classifyEmail(from: string, subject: string): Source | null {
   const f = from.toLowerCase()
   if (f === 'servicios@dinersclub.com.ec' && /consumos/i.test(subject)) return { origen: 'Diners', metodo: 'credito', transfer: false }
   if (f === 'bancaenlinea@produbanco.com') {
     if (/^consumo tarjeta de cr/i.test(subject)) return { origen: 'Produbanco', metodo: 'credito', transfer: false }
     if (/^consumo tarjeta de d/i.test(subject)) return { origen: 'Produbanco', metodo: 'debito', transfer: false }
-    if (/^transferencia enviada/i.test(subject)) return { origen: 'Produbanco', metodo: 'transferencia', transfer: true }
+    // "Ingresada" es una transferencia enviada que el banco registró, no dinero recibido.
+    if (/^transferencia (enviada|ingresada)/i.test(subject)) return { origen: 'Produbanco', metodo: 'transferencia', transfer: true }
+    if (/^transferencia recibida/i.test(subject)) return { origen: 'Produbanco', metodo: 'transferencia', transfer: true, ingreso: true }
   }
   // Pichincha usa el mismo asunto para todo: el cuerpo decide (ver parseBankEmail).
   if (f === 'banco@pichincha.com' && /notificaci|transferencia/i.test(subject)) return { origen: 'Pichincha', metodo: 'transferencia', transfer: true }
-  if (f === 'notificaciones@deunaapp.com' && /recibi. tus/i.test(subject)) return { origen: 'Deuna', metodo: 'transferencia', transfer: true }
+  if (f === 'notificaciones@deunaapp.com') {
+    if (/recibi. tus/i.test(subject)) return { origen: 'Deuna', metodo: 'transferencia', transfer: true }
+    if (/^.?recibiste/i.test(subject)) return { origen: 'Deuna', metodo: 'transferencia', transfer: true, ingreso: true }
+  }
   return null
 }
 
@@ -66,8 +72,8 @@ export function ecuadorDate(date: Date) {
 }
 
 /**
- * Extrae el gasto de una notificación ya clasificada. Devuelve null si falta el monto o el
- * destino, si la operación falló, si es dinero recibido o una transferencia entre cuentas propias.
+ * Extrae el movimiento de una notificación ya clasificada. Devuelve null si falta el monto o la
+ * contraparte, si la operación falló o fue reversada, o si es una transferencia entre cuentas propias.
  */
 export function parseBankEmail(source: Source, subject: string, html: string, date: Date): BankCharge | null {
   const lines = htmlToLines(html)
@@ -76,7 +82,8 @@ export function parseBankEmail(source: Source, subject: string, html: string, da
   // Índice de la línea cuyo texto normalizado es la etiqueta (con o sin valor en la misma línea).
   const labelAt = (label: string) => norm.findIndex(line => line === label || line.startsWith(label + ' '))
 
-  if (norm.some(line => /no se realizo|transferencia recibida|acabas de recibir|reverso/.test(line))) return null
+  if (norm.some(line => /no se realizo|reverso/.test(line))) return null
+  const ingreso = source.ingreso || norm.some(line => /transferencia recibida|acabas de recibir/.test(line))
 
   let monto = parseAmount(subject.match(/(?:USD|\$)\s*[\d.,]+/i)?.[0] ?? '')
   for (const label of ['valor', 'monto']) {
@@ -90,7 +97,8 @@ export function parseBankEmail(source: Source, subject: string, html: string, da
 
   let nombre: string | undefined
   let nombreAt = -1 // índice de la etiqueta del nombre: el saludo al titular va antes
-  for (const label of ['establecimiento', 'nombre del beneficiario', 'beneficiario', 'contacto']) {
+  const nameLabels = ingreso ? ['nombre del ordenante', 'enviada por'] : ['establecimiento', 'nombre del beneficiario', 'beneficiario', 'contacto']
+  for (const label of nameLabels) {
     const i = labelAt(label)
     if (i < 0) continue
     const inline = lines[i].split(':').slice(1).join(':').trim()
@@ -100,7 +108,7 @@ export function parseBankEmail(source: Source, subject: string, html: string, da
   }
   // Pichincha "¡Transferencia exitosa!": columnas mezcladas, el nombre es el primer texto
   // sin enmascarar después de "Cuenta destino".
-  if (!nombre) {
+  if (!nombre && !ingreso) {
     nombreAt = norm.indexOf('cuenta destino')
     if (nombreAt >= 0) nombre = lines.slice(nombreAt + 1, nombreAt + 5).find(line => !isLabel(line) && !/\*|^\d+$/.test(line))
   }
@@ -112,8 +120,9 @@ export function parseBankEmail(source: Source, subject: string, html: string, da
     const words = (s: string) => normalizeName(s).replace(/^hola /, '').split(' ').sort().join(' ')
     if (lines.slice(0, Math.min(6, nombreAt)).some(line => words(line) === words(nombre!))) return null
   }
-  const descripcion = source.transfer ? `${source.origen === 'Deuna' ? 'Deuna' : 'Transferencia'} a ${nombre}` : nombre
-  return { ...source, fecha: ecuadorDate(date), descripcion: descripcion.slice(0, 200), monto }
+  const descripcion = ingreso ? `Recibido de ${nombre}`
+    : source.transfer ? `${source.origen === 'Deuna' ? 'Deuna' : 'Transferencia'} a ${nombre}` : nombre
+  return { ...source, tipo: ingreso ? 'ingreso' : 'gasto', fecha: ecuadorDate(date), descripcion: descripcion.slice(0, 200), monto }
 }
 
 // ponytail: reglas fijas por palabra; el historial del usuario manda antes que estas reglas.

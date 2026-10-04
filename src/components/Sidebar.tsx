@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { clearPrivateCaches } from "@/lib/pwa/cache-policy"
-import { Home, FileText, Calculator, X, ChevronLeft, BarChart3, Receipt, LogOut, User, ChevronDown, Repeat, Plus, Wallet, Plug } from "lucide-react"
+import { Home, FileText, Calculator, X, ChevronLeft, BarChart3, Receipt, LogOut, User, ChevronDown, Repeat, Plus, Wallet, Plug, Mail } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -44,6 +44,11 @@ const gastosSubmenu = [
 		name: "Detalle",
 		href: "/detalle-gastos",
 		icon: Receipt,
+	},
+	{
+		name: "Del correo",
+		href: "/gastos-correo",
+		icon: Mail,
 	},
 	{
 		name: "Gastos Recurrentes",

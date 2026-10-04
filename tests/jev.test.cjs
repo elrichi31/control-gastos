@@ -28,6 +28,26 @@ test('usa la elección de Jev solo con confianza suficiente y un solo request po
   })
 })
 
+test('duplicados: veredicto de Jev y orden (encaja > desconocido); solo descripciones salen', async () => {
+  let sent
+  await withFetch(async (_url, init) => {
+    sent = JSON.parse(init.body)
+    return new Response(JSON.stringify({ answers: {
+      p0: { type: 'choice', choice: 'no_encaja', probabilities: { encaja: 0.09, desconocido: 0.04, no_encaja: 0.87 } },
+      p1: { type: 'choice', choice: 'desconocido', probabilities: { encaja: 0, desconocido: 0.9, no_encaja: 0.1 } },
+    } }), { status: 200 })
+  }, async () => {
+    const { scoreSameExpense } = require('../src/lib/jev.ts')
+    const [gas, transfer] = await scoreSameExpense([
+      { correo: { descripcion: 'PETROCOMERCIAL' }, gasto: { descripcion: 'Almuerzo' } },
+      { correo: { descripcion: 'Transferencia a Juan' }, gasto: { descripcion: 'Cyrano' } },
+    ])
+    assert.equal(gas.veredicto, 'no_encaja')
+    assert.deepEqual([transfer.veredicto, transfer.probabilidad], ['desconocido', 0.45])
+    assert.doesNotMatch(JSON.stringify(sent.state), /monto|fecha/)
+  })
+})
+
 test('sin key o con error de la API no bloquea la importación', async () => {
   const saved = process.env.TYPESAFE_API_KEY
   delete process.env.TYPESAFE_API_KEY
