@@ -36,6 +36,7 @@ export function FiltrosGastos({
   if (filters.search) chips.push({key:'search', label:`Búsqueda: ${filters.search}`, reset:''})
   if (filters.category) chips.push({key:'category', label:`Categoría: ${categories.find(c => String(c.id) === filters.category)?.nombre || filters.category}`, reset:''})
   if (filters.paymentMethod) chips.push({key:'paymentMethod', label:`Pago: ${paymentMethods.find(m => String(m.id) === filters.paymentMethod)?.nombre || filters.paymentMethod}`, reset:''})
+  if (filters.origin) chips.push({key:'origin', label:`Origen: ${filters.origin === 'email' ? 'Del correo' : 'Manual'}`, reset:''})
   if (filters.dateRange !== 'current-month') chips.push({key:'dateRange', label:filters.dateRange === 'all-time' ? 'Todo el tiempo' : filters.dateRange === 'year' ? `Año: ${filters.year || new Date().getFullYear()}` : `Rango: ${filters.dateFrom || 'inicio'} → ${filters.dateTo || 'sin límite'}`, reset:'current-month'})
   if (filters.minAmount) chips.push({key:'minAmount', label:`Desde $${filters.minAmount}`, reset:''})
   if (filters.maxAmount) chips.push({key:'maxAmount', label:`Hasta $${filters.maxAmount}`, reset:''})
@@ -74,7 +75,7 @@ export function FiltrosGastos({
         </div>
 
         {/* Filtros básicos */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           <div className="space-y-2">
             <label htmlFor="filter-category" className="text-sm font-medium text-foreground">Categoría</label>
             <Select value={filters.category || "all"} onValueChange={(value) => onFilterChange("category", value === "all" ? "" : value)}>
@@ -105,6 +106,20 @@ export function FiltrosGastos({
                     {method.nombre}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="filter-origin" className="text-sm font-medium text-foreground">Origen</label>
+            <Select value={filters.origin || "all"} onValueChange={(value) => onFilterChange("origin", value === "all" ? "" : value)}>
+              <SelectTrigger id="filter-origin" className="bg-card border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="manual">Manual</SelectItem>
+                <SelectItem value="email">Del correo</SelectItem>
               </SelectContent>
             </Select>
           </div>

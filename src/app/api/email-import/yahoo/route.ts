@@ -4,6 +4,7 @@ import { simpleParser } from 'mailparser'
 import { getAuthenticatedSupabaseClient } from '@/lib/auth'
 import { predictExpenseSelection } from '@/lib/expense-suggestions'
 import { categorizeWithJev } from '@/lib/jev'
+import { AUTO_EXPENSE_TAG } from '@/lib/expense-tags'
 import { BANK_SENDERS, categoryByRules, classifyEmail, normalizeName, parseBankEmail, type PaymentKind } from '@/lib/bank-emails'
 
 export const dynamic = 'force-dynamic'
@@ -14,7 +15,6 @@ export const maxDuration = 120
 const IMPORT_SINCE = new Date('2026-01-01T00:00:00-05:00')
 // Enviados, borradores, papelera y spam no traen consumos válidos.
 const SKIPPED_FOLDERS = new Set(['\\Sent', '\\Drafts', '\\Trash', '\\Junk'])
-const AUTO_TAG = 'auto'
 
 // Las credenciales de Yahoo son del dueño de la cuenta, así que solo ese usuario puede importar.
 function configuredFor(userId: string) {
@@ -179,7 +179,7 @@ export async function PATCH(request: Request) {
         categoria_id: categoriaPor.get(row.id) ?? row.categoria_id,
         metodo_pago_id: row.metodo_pago_id,
         is_recurrent: false,
-        tags: [AUTO_TAG],
+        tags: [AUTO_EXPENSE_TAG],
       }))
       const { error: insertError } = await supabase.from('gasto').insert(gastos)
       if (insertError) {

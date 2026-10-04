@@ -1,5 +1,7 @@
 export const MAX_EXPENSE_TAGS = 10
 export const MAX_EXPENSE_TAG_LENGTH = 30
+/** Tag de los gastos creados desde consumos detectados en el correo. */
+export const AUTO_EXPENSE_TAG = 'auto'
 
 /** API input is an array; omitted tags remain compatible with existing clients. */
 export function normalizeExpenseTags(value: unknown): string[] {
