@@ -74,7 +74,7 @@ export default function RootLayout({
 
               <div className={cn("min-w-0 flex-1 transition-all duration-300 ease-in-out", getMainMargin())}>
                 <TopBar onMenuClick={toggle} isMobile={isMobile} />
-                <main className="bg-background min-h-screen">{children}</main>
+                <main className="bg-background min-h-[calc(100dvh-3.5rem)]">{children}</main>
               </div>
             </div>
           )}

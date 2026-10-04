@@ -81,7 +81,7 @@ export default function DetalleGastosPage() {
   }
 
   return (
-    <PageShell>
+    <PageShell fill>
       <PageTitle customTitle="Detalle de Gastos - BethaSpend" />
       
       <PageHeader
@@ -93,7 +93,7 @@ export default function DetalleGastosPage() {
         </>}
       />
 
-      <div className="space-y-4">
+      <div className="space-y-4 lg:fill-y">
         {/* Estadísticas resumidas */}
         <EstadisticasResumen
           statistics={statistics}

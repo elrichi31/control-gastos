@@ -292,9 +292,9 @@ export function RecurringExpenseList() {
   return (
     <>
       {suggestionsCard}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden lg:fill-y">
         {/* Tabla para desktop */}
-        <div className="hidden md:block">
+        <div className="hidden md:block lg:fill-y">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">

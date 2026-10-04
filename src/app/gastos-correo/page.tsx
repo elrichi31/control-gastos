@@ -140,7 +140,7 @@ export default function EmailExpensesPage() {
   const description = { nuevos: 'Elige la categoría y registra solo los gastos que correspondan.', duplicados: 'Compara antes de registrar: vincular conserva tu gasto sin crear otro.', recibidos: 'Descuenta una devolución de un gasto existente o descártala.' }
 
   return (
-    <PageShell>
+    <PageShell fill>
       <PageTitle customTitle="Correo - BethaSpend" />
       <PageHeader title="Correo" description="Revisa tus movimientos antes de registrarlos."
         actions={<Button variant="outline" disabled={enabled !== true || syncing || inFlight > 0} onClick={sync}><RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />{syncing ? 'Sincronizando…' : 'Sincronizar'}</Button>} />
@@ -148,7 +148,7 @@ export default function EmailExpensesPage() {
       {message && <p className="mb-4 text-sm" role="status">{message}</p>}
       {enabled === false ? <Empty title="Correo no habilitado" text="La importación desde Yahoo no está habilitada para esta cuenta." /> : enabled === null ? (
         !loadError && <div className="flex min-h-48 items-center justify-center gap-2 text-sm" role="status"><Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />Cargando movimientos…</div>
-      ) : <Tabs value={tab} onValueChange={value => setTab(value as Tab)}>
+      ) : <Tabs value={tab} onValueChange={value => setTab(value as Tab)} className="lg:fill-y">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <TabsList aria-label="Clasificación de movimientos" className="grid h-auto w-full grid-cols-3 sm:w-auto">
             {([['nuevos', 'Nuevos'], ['duplicados', 'Duplicados'], ['recibidos', 'Recibidos']] as const).map(([value, label]) => (
@@ -161,7 +161,7 @@ export default function EmailExpensesPage() {
           <p className="text-[13px] text-muted-foreground">{description[tab]}</p>
           {inFlight > 0 && <span className="inline-flex items-center gap-1.5 text-xs" role="status"><Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />{inFlight} en cola · no cierres esta pestaña</span>}
         </div>
-        {(['nuevos', 'duplicados', 'recibidos'] as const).map(value => <TabsContent key={value} value={value} className="mt-0">
+        {(['nuevos', 'duplicados', 'recibidos'] as const).map(value => <TabsContent key={value} value={value} className="mt-0 lg:fill-y">
           {value === tab && <>
             {tab === 'nuevos' && rows.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border bg-card px-4 py-2">
               <label className="mr-auto flex min-h-11 cursor-pointer items-center gap-2.5 text-[13px] sm:min-h-9"><input type="checkbox" className="h-4 w-4 accent-primary" aria-label="Seleccionar todos los nuevos visibles" checked={allSelected} disabled={syncing} onChange={() => setSelected(prev => { const next = new Set(prev); visibleNew.forEach(p => allSelected ? next.delete(p.id) : next.add(p.id)); return next })} />{chosen.length ? `${chosen.length} seleccionados · ${money.format(total)}` : 'Seleccionar visibles'}</label>

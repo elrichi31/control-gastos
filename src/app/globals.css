@@ -83,6 +83,15 @@
   --color-pink-800: #9d174d;
 }
 
+/* Eslabón de una cadena de flex que estira la tabla hasta el fondo de la pantalla
+   (PageShell fill): cada contenedor entre la página y la tabla lo lleva. */
+@utility fill-y {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
 /* v3 space-x/y: margin on every child after the first. v4 puts margin-bottom on every
    child but the last, which an inline first child (a <label>) silently ignores, so
    label/input gaps collapsed. */

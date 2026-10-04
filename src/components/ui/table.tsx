@@ -6,8 +6,9 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  // Alto fijo: la tabla scrollea por dentro y el encabezado queda pegado arriba.
-  <div className="relative w-full max-h-[min(70vh,640px)] overflow-auto overscroll-contain">
+  // Dentro de una cadena fill-y se estira y scrollea por dentro con el encabezado pegado;
+  // fuera de ella crece con su contenido y scrollea la página (nunca dos scrolls).
+  <div className="relative w-full flex-1 overflow-auto overscroll-contain lg:min-h-56">
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-[13px]", className)}

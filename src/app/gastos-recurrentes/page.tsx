@@ -26,10 +26,10 @@ export default function GastosRecurrentesPage() {
   }
 
   return (
-    <PageShell>
+    <PageShell fill>
       <PageTitle customTitle="Gastos Recurrentes - BethaSpend" />
       
-      <div className="space-y-4">
+      <div className="space-y-4 lg:fill-y">
         <PageHeader title="Gastos recurrentes" description="Gestiona tus gastos que se repiten automáticamente."
           actions={<Button size="sm" asChild><Link href="/form?tipo=recurrente"><Plus className="w-4 h-4 mr-1.5" />Nuevo recurrente</Link></Button>} />
 

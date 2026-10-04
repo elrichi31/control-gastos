@@ -24,8 +24,8 @@ export function VistaSinAgrupar({
   onDeleteGasto
 }: VistaSinAgruparProps) {
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-0">
+    <Card className="overflow-hidden lg:fill-y">
+      <CardContent className="p-0 lg:fill-y">
         {gastos.length === 0 ? (
           <div className="text-center py-12 px-6">
             <Receipt className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -42,7 +42,7 @@ export function VistaSinAgrupar({
         ) : (
           <>
             {/* Vista de tabla para desktop */}
-            <div className="hidden lg:block">
+            <div className="hidden lg:fill-y">
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent dark:hover:bg-transparent">

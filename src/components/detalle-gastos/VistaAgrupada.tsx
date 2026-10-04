@@ -29,13 +29,13 @@ export function VistaAgrupada({
   onToggleGroup
 }: VistaAgrupadaProps) {
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-card border-border lg:fill-y">
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-foreground">
           <span>Resultados ({gastos.length} gastos en {groupedGastos.length} grupos)</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 lg:fill-y lg:overflow-auto">
         {groupedGastos.length === 0 ? (
           <div className="text-center py-12 px-6">
             <Receipt className="w-16 h-16 text-muted-foreground mx-auto mb-4" />

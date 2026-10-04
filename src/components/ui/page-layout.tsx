@@ -2,10 +2,12 @@ import type { HTMLAttributes, ReactNode } from "react"
 import { cn } from "@/lib/utils"
 
 /** Shared layout for authenticated app views (not landing/auth pages). */
-export function PageShell({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+/** fill: en desktop la página mide el alto de la ventana y la tabla (cadena lg:fill-y) llena
+ *  el resto, así solo scrollea la tabla. El overflow-auto es la salida en pantallas muy bajas. */
+export function PageShell({ className, fill, ...props }: HTMLAttributes<HTMLDivElement> & { fill?: boolean }) {
   return (
     <div
-      className={cn("w-full min-w-0 max-w-7xl mx-auto px-4 py-5 sm:px-6 sm:py-6", className)}
+      className={cn("w-full min-w-0 max-w-7xl mx-auto px-4 py-5 sm:px-6 sm:py-6", fill && "lg:flex lg:flex-col lg:h-[calc(100dvh-3.5rem)] lg:overflow-auto", className)}
       {...props}
     />
   )

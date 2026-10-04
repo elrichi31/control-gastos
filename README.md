@@ -72,6 +72,14 @@ Un Schedule diario de Dokploy (`5 5 * * *` UTC = 00:05 en Ecuador, shell `sh`) d
 wget -qO- --header="Authorization: Bearer $CRON_SECRET" http://127.0.0.1:3000/api/cron/process-recurring-expenses
 ```
 
+Otro Schedule cada 30 min (`*/30 * * * *`, shell `sh`) trae los movimientos bancarios del correo de las últimas 2 semanas:
+
+```sh
+wget -qO- --header="Authorization: Bearer $CRON_SECRET" http://127.0.0.1:3000/api/cron/sync-email
+```
+
+La imagen es `node:20-alpine`: trae `wget` pero **no** `curl`. La última corrida de cada cron se ve en el sidebar (Automatizaciones).
+
 ## 📱 Estructura del Proyecto
 
 ```
