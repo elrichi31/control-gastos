@@ -8,6 +8,7 @@ export interface CreateExpenseData {
   fecha: string
   metodo_pago_id: number
   is_recurrent?: boolean
+  tags?: string[]
 }
 
 export interface Expense {
@@ -19,6 +20,7 @@ export interface Expense {
   categoria: { id: number; nombre: string }
   metodo_pago?: { id: number; nombre: string }
   is_recurrent?: boolean
+  tags?: string[]
 }
 
 /**

@@ -5,6 +5,7 @@ export type Expense = {
   fecha: string
   categoria_id: number
   metodo_pago_id: number
+  tags?: string[]
   categoria: { id: number; nombre: string }
   metodo_pago: { id: number; nombre: string }
 }
@@ -48,4 +49,5 @@ export interface MovimientoPresupuesto {
   monto: number
   fecha: string
   metodo_pago_id: number
+  tags?: string[]
 }

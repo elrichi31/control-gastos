@@ -1,0 +1,48 @@
+require('./helpers/register-ts.cjs')
+const { test } = require('node:test')
+const assert = require('node:assert/strict')
+const React = require('react')
+const { ExpenseTagsField } = require('../src/components/ExpenseTags.tsx')
+const { parseExpenseTags } = require('../src/lib/expense-tags.ts')
+function elements(node) { if (!node || typeof node !== 'object') return []; return [node, ...React.Children.toArray(node.props?.children).flatMap(elements)] }
+const render = (value, onChange = () => {}) => elements(ExpenseTagsField({ value, onChange }))
+test('invalid long tag remains removable without losing valid chips or silently truncating input', () => {
+  const long = 'x'.repeat(31)
+  let value = `viaje, familia, ${long}`
+  let tree = render(value, next => { value = next })
+  assert.equal(tree.filter(x => x.props?.['aria-label']?.startsWith('Quitar etiqueta')).length, 3)
+  assert.ok(tree.some(x => x.props?.role === 'alert'))
+  assert.throws(() => parseExpenseTags(value), /30/)
+  tree.find(x => x.props?.['aria-label'] === 'Quitar etiqueta viaje').props.onClick()
+  assert.equal(value, `familia, ${long}`)
+  tree = render(value, next => { value = next })
+  tree.find(x => x.props?.['aria-label'] === `Quitar etiqueta ${long}`).props.onClick()
+  assert.deepEqual(parseExpenseTags(value), ['familia'])
+})
+test('all eleven draft tags remain visible and removing one resolves the count error', () => {
+  let value = Array.from({ length: 11 }, (_, i) => `tag${i}`).join(', ')
+  const tree = render(value, next => { value = next })
+  const buttons = tree.filter(x => x.props?.['aria-label']?.startsWith('Quitar etiqueta'))
+  assert.equal(buttons.length, 11)
+  assert.throws(() => parseExpenseTags(value), /10/)
+  buttons[10].props.onClick()
+  assert.equal(parseExpenseTags(value).length, 10)
+  assert.ok(!render(value).some(x => x.props?.role === 'alert'))
+})
+test('draft removal preserves other raw entries instead of deduplicating invalid input', () => {
+  let value = 'Viaje, VIAJE, familia'
+  const tree = render(value, next => { value = next })
+  tree.find(x => x.props?.['aria-label'] === 'Quitar etiqueta familia').props.onClick()
+  assert.equal(value, 'Viaje, VIAJE')
+  assert.deepEqual(parseExpenseTags(value), ['viaje'])
+})
+test('mobile removal controls reserve a 44px target while desktop stays compact', () => {
+  const button = render('viaje').find(x => x.props?.['aria-label'] === 'Quitar etiqueta viaje')
+  assert.match(button.props.className, /\bmin-h-11\b/)
+  assert.match(button.props.className, /\bmin-w-11\b/)
+  assert.match(button.props.className, /\bsm:min-h-6\b/)
+})
+test('hint uses the existing readable foreground token rather than marginal muted contrast', () => {
+  const hint = render('').find(x => x.props?.id === 'expense-tags-hint')
+  assert.match(hint.props.className, /\btext-foreground\b/)
+})

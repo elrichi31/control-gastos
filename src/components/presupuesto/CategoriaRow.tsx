@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
+import { ExpenseTags } from "@/components/ExpenseTags"
 import { ChevronRight, Edit2, Plus, Trash2, X } from "lucide-react"
 import { PresupuestoCategoriaDetalle, MovimientoPresupuesto } from "@/types/budget"
 import { formatMoney } from "@/lib/utils"
@@ -126,6 +127,7 @@ export const CategoriaRow: React.FC<Props> = ({
             >
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-foreground truncate">{expense.descripcion}</p>
+                <ExpenseTags tags={expense.tags} />
                 <p className="text-xs text-muted-foreground">{formatFecha(expense.fecha)}</p>
               </div>
               <span className="text-sm text-foreground tabular-nums shrink-0">

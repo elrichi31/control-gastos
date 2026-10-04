@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ExpenseTagsField } from '@/components/ExpenseTags'
+import { parseExpenseTags } from '@/lib/expense-tags'
 import { createExpense } from "@/services/expenses"
 import { fetchCategories, type Category } from "@/services/categories"
 import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
@@ -16,7 +18,7 @@ import { predictExpenseSelection, resolveExpenseSelection, type SuggestionHistor
 const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0]
 
 export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: () => void | Promise<void>; history?: readonly SuggestionHistory[] }) {
-  const [formData, setFormData] = useState({ description: "", amount: "", categoryId: "", date: today(), paymentMethodId: "" })
+  const [formData, setFormData] = useState({ description: "", amount: "", categoryId: "", date: today(), paymentMethodId: "", tags: "" })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const submitting = useRef(false)
   const formRef = useRef<HTMLFormElement>(null)
@@ -65,6 +67,8 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
     event.preventDefault()
     if (submitting.current || !ready) return
     const newErrors: Record<string, string> = {}
+    let tags: string[] = []
+    try { tags = parseExpenseTags(formData.tags) } catch (error) { newErrors.tags = (error as Error).message }
     const amount = Number(formData.amount)
     if (!formData.amount || !Number.isFinite(amount) || amount <= 0 || Math.abs(amount * 100 - Math.round(amount * 100)) > 0.000001) newErrors.amount = "Ingresa un monto mayor a 0, con hasta 2 decimales"
     if (!formData.description.trim()) newErrors.description = "La descripción es obligatoria"
@@ -75,7 +79,7 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
     setSubmitError(null)
     if (Object.keys(newErrors).length) {
       const first = Object.keys(newErrors)[0]
-      const id = first === 'categoryId' ? 'category' : first === 'paymentMethodId' ? 'paymentMethod' : first
+      const id = first === 'tags' ? 'expense-tags' : first === 'categoryId' ? 'category' : first === 'paymentMethodId' ? 'paymentMethod' : first
       formRef.current?.querySelector<HTMLElement>(`#${id}`)?.focus()
       return
     }
@@ -83,7 +87,7 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
     submitting.current = true
     setIsSubmitting(true)
     try {
-      await createExpense({ descripcion: formData.description.trim(), monto: amount, categoria_id: parseInt(selection.categoryId), fecha: formData.date, metodo_pago_id: parseInt(selection.paymentMethodId), is_recurrent: false })
+      await createExpense({ descripcion: formData.description.trim(), monto: amount, categoria_id: parseInt(selection.categoryId), fecha: formData.date, metodo_pago_id: parseInt(selection.paymentMethodId), is_recurrent: false, tags })
     } catch (error) {
       console.error("Error al agregar gasto:", error)
       setSubmitError("No se pudo guardar el gasto. Tus datos siguen aquí; vuelve a intentar.")
@@ -92,7 +96,7 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
       submitting.current = false
       setIsSubmitting(false)
     }
-    setFormData({ description: "", amount: "", categoryId: another ? selection.categoryId : "", date: another ? formData.date : today(), paymentMethodId: another ? selection.paymentMethodId : "" })
+    setFormData({ description: "", amount: "", categoryId: another ? selection.categoryId : "", date: another ? formData.date : today(), paymentMethodId: another ? selection.paymentMethodId : "", tags: "" })
     setErrors({})
     toast.success("Gasto guardado")
     if (another) requestAnimationFrame(() => amountRef.current?.focus())
@@ -147,6 +151,7 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
             {fieldError('paymentMethodId')}
           </div>
         </div>
+        <ExpenseTagsField value={formData.tags} onChange={value => change("tags", value)} error={errors.tags} />
         <div className="flex flex-col sm:flex-row gap-2">
           <Button type="submit" value="save" disabled={!ready || isSubmitting} className="h-11 flex-1">{isSubmitting ? <><LoaderCircle aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />Guardando…</> : 'Guardar gasto'}</Button>
           <Button type="submit" value="another" variant="outline" disabled={!ready || isSubmitting} className="h-11 flex-1">Guardar y agregar otro</Button>

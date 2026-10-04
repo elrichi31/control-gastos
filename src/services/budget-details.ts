@@ -56,6 +56,7 @@ export interface AddBudgetExpenseData {
   monto: number
   fecha: string
   metodo_pago_id: number
+  tags?: string[]
 }
 
 export interface UpdateBudgetExpenseData {
@@ -64,6 +65,7 @@ export interface UpdateBudgetExpenseData {
   monto: number
   fecha: string
   metodo_pago_id: number
+  tags?: string[]
 }
 
 export const addBudgetExpense = async (data: AddBudgetExpenseData): Promise<MovimientoPresupuesto> => {

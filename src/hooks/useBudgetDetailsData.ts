@@ -1,5 +1,6 @@
 // Hook para gestión de datos del detalle de presupuesto
 import { useState, useEffect } from "react"
+import { parseExpenseTags } from "@/lib/expense-tags"
 import { toast } from "react-hot-toast"
 import {
   PresupuestoCategoriaDetalle,
@@ -42,7 +43,8 @@ export const useBudgetDetailsData = (presupuestoId: string) => {
     amount: "",
     paymentDate: "",
     category: "",
-    metodoPago: ""
+    metodoPago: "",
+    tags: ""
   })
   const [editingExpense, setEditingExpense] = useState<EditingExpense | null>(null)
   const [expenseToDelete, setExpenseToDelete] = useState<ExpenseToDelete | null>(null)
@@ -183,7 +185,8 @@ export const useBudgetDetailsData = (presupuestoId: string) => {
         descripcion: formData.name,
         monto: Number(formData.amount),
         fecha: formData.paymentDate,
-        metodo_pago_id: Number(formData.metodoPago)
+        metodo_pago_id: Number(formData.metodoPago),
+        tags: parseExpenseTags(formData.tags || "")
       }
 
       await addBudgetExpense(expenseData)
@@ -209,7 +212,8 @@ export const useBudgetDetailsData = (presupuestoId: string) => {
         descripcion: formData.name,
         monto: Number(formData.amount),
         fecha: formData.paymentDate,
-        metodo_pago_id: Number(formData.metodoPago)
+        metodo_pago_id: Number(formData.metodoPago),
+        tags: parseExpenseTags(formData.tags || "")
       }
 
       await updateBudgetExpense(expenseData)
@@ -247,7 +251,8 @@ export const useBudgetDetailsData = (presupuestoId: string) => {
       amount: "",
       paymentDate: "",
       category: "",
-      metodoPago: ""
+      metodoPago: "",
+      tags: ""
     })
   }
 
@@ -258,7 +263,8 @@ export const useBudgetDetailsData = (presupuestoId: string) => {
       amount: expense.monto.toString(),
       paymentDate: expense.fecha.split('T')[0],
       category: categoryId.toString(),
-      metodoPago: expense.metodo_pago_id?.toString() || ""
+      metodoPago: expense.metodo_pago_id?.toString() || "",
+      tags: (expense.tags || []).join(", ")
     })
   }
 

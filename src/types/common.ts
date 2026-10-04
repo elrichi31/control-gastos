@@ -8,6 +8,7 @@ export interface BaseGasto {
   categoria_id: number
   categoria: { id: number; nombre: string }
   is_recurrent?: boolean
+  tags?: string[]
 }
 
 export interface Gasto extends BaseGasto {

@@ -51,6 +51,7 @@ export interface MovimientoPresupuesto {
   monto: number
   fecha: string
   metodo_pago_id: number
+  tags?: string[]
 }
 
 export interface PresupuestoCategoriaDetalle {
@@ -85,6 +86,7 @@ export interface ExpenseFormData {
   paymentDate: string
   category: string
   metodoPago: string
+  tags?: string
 }
 
 export interface EditingExpense {

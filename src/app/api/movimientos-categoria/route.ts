@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { normalizeExpenseTags } from '@/lib/expense-tags'
 import { getAuthenticatedSupabaseClient } from '@/lib/auth'
 import { requireOwnedBudget, requireOwnedBudgetCategory, requireOwnedBudgetMovement } from '@/lib/auth/budget-ownership'
 
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
   for (const cat of categorias || []) {
     const { data: movimientos, error: errorMov } = await supabase
       .from('movimiento_presupuesto')
-      .select('id, descripcion, monto, fecha, metodo_pago_id')
+      .select('id, descripcion, monto, fecha, metodo_pago_id, tags')
       .eq('presupuesto_categoria_id', cat.id)
       .eq('user_id', userId)
       .order('fecha', { ascending: false })
@@ -61,10 +62,15 @@ export async function POST(req: NextRequest) {
   const ownershipError = await requireOwnedBudgetCategory(supabase, userId, presupuesto_categoria_id)
   if (ownershipError) return ownershipError
 
+  let tags: string[]
+  try { tags = normalizeExpenseTags(body.tags) } catch (error) {
+    return NextResponse.json({ error: (error as Error).message }, { status: 400 })
+  }
+
   // Crear el movimiento
   const { data, error } = await supabase
     .from('movimiento_presupuesto')
-    .insert({ presupuesto_categoria_id, descripcion, monto, fecha, metodo_pago_id, user_id: userId })
+    .insert({ presupuesto_categoria_id, descripcion, monto, fecha, metodo_pago_id, user_id: userId, ...(body.tags !== undefined ? { tags } : {}) })
     .select()
     .single()
 
@@ -89,12 +95,19 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Faltan parámetros requeridos' }, { status: 400 })
   }
 
+  const tagUpdates: { tags?: string[] } = {}
+  if (body.tags !== undefined) {
+    try { tagUpdates.tags = normalizeExpenseTags(body.tags) } catch (error) {
+      return NextResponse.json({ error: (error as Error).message }, { status: 400 })
+    }
+  }
+
   const ownershipError = await requireOwnedBudgetMovement(supabase, userId, id)
   if (ownershipError) return ownershipError
 
   const { data, error } = await supabase
     .from('movimiento_presupuesto')
-    .update({ descripcion, monto, fecha, metodo_pago_id })
+    .update({ descripcion, monto, fecha, metodo_pago_id, ...tagUpdates })
     .eq('id', id)
     .eq('user_id', userId)
     .select()

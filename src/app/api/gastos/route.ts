@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { normalizeExpenseTags } from '@/lib/expense-tags';
 import { getAuthenticatedSupabaseClient } from '@/lib/auth';
 
 export async function GET(request: Request) {
@@ -16,6 +17,7 @@ export async function GET(request: Request) {
       metodo_pago_id,
       user_id,
       is_recurrent,
+      tags,
       categoria (id, nombre),
       metodo_pago (id, nombre)
     `)
@@ -41,6 +43,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Faltan datos requeridos.' }, { status: 400 });
   }
 
+  let tags: string[];
+  try { tags = normalizeExpenseTags(body.tags); } catch (error) {
+    return NextResponse.json({ error: (error as Error).message }, { status: 400 });
+  }
+
   // Asegurar que is_recurrent siempre sea un booleano
   const isRecurrentValue = typeof is_recurrent === 'boolean' ? is_recurrent : false;
 
@@ -52,7 +59,8 @@ export async function POST(request: Request) {
       categoria_id, 
       metodo_pago_id,
       user_id: userId,
-      is_recurrent: isRecurrentValue
+      is_recurrent: isRecurrentValue,
+      ...(body.tags !== undefined ? { tags } : {})
     },
   ])
   .select()
@@ -83,6 +91,11 @@ export async function PUT(request: Request) {
   }
 
   const updates: Record<string, unknown> = {};
+  if (body.tags !== undefined) {
+    try { updates.tags = normalizeExpenseTags(body.tags); } catch (error) {
+      return NextResponse.json({ error: (error as Error).message }, { status: 400 });
+    }
+  }
   if (descripcion !== undefined) updates.descripcion = descripcion;
   if (monto !== undefined) updates.monto = monto;
   if (fecha !== undefined) updates.fecha = fecha;
@@ -107,6 +120,7 @@ export async function PUT(request: Request) {
       metodo_pago_id,
       user_id,
       is_recurrent,
+      tags,
       categoria (id, nombre),
       metodo_pago (id, nombre)
     `)

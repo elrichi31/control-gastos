@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
   for (const cat of categorias || []) {
     const { data: movimientos, error: errorMov } = await supabase
       .from('movimiento_presupuesto')
-      .select('id, descripcion, monto, fecha, metodo_pago_id')
+      .select('id, descripcion, monto, fecha, metodo_pago_id, tags')
       .eq('presupuesto_categoria_id', cat.id)
       .eq('user_id', userId)
       .order('fecha', { ascending: false })

@@ -1,4 +1,5 @@
 import React from "react"
+import { ExpenseTagsField } from "@/components/ExpenseTags"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { MetodoPagoDB, MovimientoPresupuesto } from "@/types/budget"
@@ -12,6 +13,7 @@ interface ExpenseModalProps {
     paymentDate: string
     category: string
     metodoPago: string
+    tags?: string
   }
   setFormData: React.Dispatch<React.SetStateAction<any>>
   metodosPago: MetodoPagoDB[]
@@ -87,6 +89,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({
               </select>
             </div>
           </div>
+          <ExpenseTagsField value={formData.tags || ""} onChange={tags => setFormData({ ...formData, tags })} />
           <div className="flex gap-2 pt-4">
             <Button type="submit" className="flex-1">
               {editingExpense ? "Guardar cambios" : "Agregar gasto"}

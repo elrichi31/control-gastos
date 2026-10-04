@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { ExpenseTags } from '@/components/ExpenseTags'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { getCategoriaColor } from '@/lib/constants'
@@ -18,6 +19,7 @@ export const GastoCard: React.FC<GastoCardProps> = ({ gasto, onDeleteGasto, form
   <div className="flex items-start gap-3 px-5 py-3">
     <div className="min-w-0 flex-1">
       <h4 className="text-sm font-medium text-foreground break-words">{gasto.descripcion}</h4>
+      <ExpenseTags tags={gasto.tags} />
       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted-foreground">
         <Badge className={`max-w-full truncate border font-normal ${getCategoriaColor(gasto.categoria?.nombre)}`} title={gasto.categoria?.nombre}>{gasto.categoria?.nombre || 'Sin categoría'}</Badge>
         <span>{formatDate(gasto.fecha)}</span>

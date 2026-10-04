@@ -38,7 +38,8 @@ export function useExpenseFilters(gastos: Expense[], userId?: string) {
       filtered = filtered.filter(gasto => 
         gasto.descripcion.toLowerCase().includes(searchLower) ||
         gasto.categoria.nombre.toLowerCase().includes(searchLower) ||
-        (gasto.metodo_pago?.nombre.toLowerCase().includes(searchLower))
+        (gasto.metodo_pago?.nombre.toLowerCase().includes(searchLower)) ||
+        (gasto.tags?.some(tag => tag.toLowerCase().includes(searchLower.replace(/^#/, ''))))
       )
     }
 

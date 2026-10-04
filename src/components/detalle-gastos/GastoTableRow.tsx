@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { ExpenseTags } from '@/components/ExpenseTags'
 import { Badge } from '@/components/ui/badge'
 import { getCategoriaColor } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
@@ -44,6 +45,7 @@ export function GastoTableRow({
         >
           {gasto.descripcion}
         </div>
+        <ExpenseTags tags={gasto.tags} />
       </TableCell>
       <TableCell className="px-3 py-4 w-[140px] min-w-[140px]">
         <Badge 

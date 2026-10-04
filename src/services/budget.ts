@@ -68,6 +68,7 @@ export async function addBudgetExpense(data: {
   monto: number,
   fecha: string,
   metodo_pago_id: number
+  tags?: string[]
 }) {
   const res = await fetch("/api/movimientos-categoria", {
     method: "POST",
@@ -84,6 +85,7 @@ export async function updateBudgetExpense(data: {
   monto: number,
   fecha: string,
   metodo_pago_id: number
+  tags?: string[]
 }) {
   const res = await fetch("/api/movimientos-categoria", {
     method: "PUT",
