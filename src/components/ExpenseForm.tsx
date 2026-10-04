@@ -113,10 +113,15 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
       {submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}
       <fieldset disabled={isSubmitting} className="space-y-5 min-w-0">
         <div className="rounded-xl border bg-muted/30 px-4 py-4 text-center">
-          <Label htmlFor="amount" className="text-xs font-normal text-muted-foreground">Monto (USD) <span className="text-destructive">*</span></Label>
+          {/* El asterisco va fuera del flujo para no correr el centro del título. */}
+          <Label htmlFor="amount" className="relative text-xs font-normal text-muted-foreground">Monto (USD)<span className="absolute -right-2.5 text-destructive">*</span></Label>
           <div className="mt-1 flex items-baseline justify-center gap-1">
             <span aria-hidden="true" className="text-3xl font-semibold text-muted-foreground">$</span>
-            <Input ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : undefined} style={{ width: `${(formData.amount || "0.00").length + 0.5}ch` }} className="h-14 max-w-full border-0 bg-transparent px-0 text-left text-4xl md:text-4xl font-semibold tracking-tight tabular-nums shadow-none focus-visible:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+            {/* Texto espejo invisible en la misma celda: el input toma exactamente el ancho de lo escrito. */}
+            <span className="inline-grid max-w-full text-4xl font-semibold tracking-tight tabular-nums">
+              <span aria-hidden="true" className="invisible col-start-1 row-start-1 whitespace-pre">{formData.amount || "0.00"}</span>
+              <Input ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : undefined} className="col-start-1 row-start-1 h-14 w-0 min-w-full rounded-none border-0 bg-transparent p-0 text-4xl md:text-4xl font-semibold tracking-tight tabular-nums shadow-none focus-visible:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+            </span>
           </div>
           {fieldError('amount')}
         </div>
