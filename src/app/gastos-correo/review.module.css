@@ -1,0 +1,39 @@
+.surface [role='tab'] { transition: none; color: hsl(var(--foreground)); }
+.surface > header p, .surface input::placeholder { color: hsl(var(--foreground)); }
+.surface button[data-review-primary] { background: color-mix(in srgb, hsl(var(--primary)) 80%, black); }
+@media (hover: hover) {
+  .surface button[data-review-primary]:hover { background: color-mix(in srgb, hsl(var(--primary)) 75%, black); }
+}
+.table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: .875rem; }
+.table th { padding: .75rem; background: hsl(var(--muted) / .4); font-weight: 500; text-align: left; }
+.table td { padding: 1rem .75rem; vertical-align: top; overflow-wrap: anywhere; border-bottom: 1px solid hsl(var(--border)); }
+.table thead th:first-child { border-radius: .5rem 0 0 .5rem; }
+.table thead th:last-child { border-radius: 0 .5rem .5rem 0; }
+.table[data-classification='nuevos'] th:nth-child(1) { width: 44px; }
+.table[data-classification='nuevos'] th:nth-child(2) { width: 24%; }
+.table[data-classification='nuevos'] th:nth-child(3) { width: 18%; }
+.table[data-classification='nuevos'] th:nth-child(4) { width: 11%; }
+.table[data-classification='nuevos'] th:nth-child(5) { width: 14%; }
+.table[data-classification='nuevos'] th:nth-child(6) { width: 27%; }
+.table:not([data-classification='nuevos']) th:nth-child(1) { width: 25%; }
+.table:not([data-classification='nuevos']) th:nth-child(2) { width: 35%; }
+.table:not([data-classification='nuevos']) th:nth-child(3) { width: 13%; }
+.table:not([data-classification='nuevos']) th:nth-child(4) { width: 27%; }
+.table td.amount, .table th:nth-last-child(2) { text-align: right; }
+.table td.selection { padding: .5rem 0; }
+.table input:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
+@media (max-width: 767px) {
+  .table, .table tbody { display: block; }
+  .table thead { display: none; }
+  .table tr { display: grid; position: relative; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-bottom: 1px solid hsl(var(--border)); padding: .75rem 0; }
+  .table td { display: block; min-width: 0; border: 0; padding: .5rem .375rem; }
+  .table td::before { content: attr(data-label); display: block; margin-bottom: .375rem; font-size: .75rem; }
+  .table td.movement, .table td.match, .table td.actions, .table td.amount { grid-column: 1 / -1; }
+  .table td.movement::before, .table td.actions::before, .table td.selection::before { display: none; }
+  .table td.selection { position: absolute; top: 1rem; left: 0; padding: 0; }
+  .table[data-classification='nuevos'] td.movement { padding-left: 3rem; min-height: 3.5rem; }
+  .table td.amount { display: flex; align-items: baseline; gap: .5rem; text-align: left; }
+  .table td.amount::before { margin: 0 auto 0 0; }
+  .table td.actions > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .table[data-classification='duplicados'] td.actions > div { grid-template-columns: 1fr 1fr; }
+}

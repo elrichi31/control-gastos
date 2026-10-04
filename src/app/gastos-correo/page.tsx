@@ -1,23 +1,24 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ArrowDownLeft, Check, Copy, Mail, RefreshCw, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Check, Inbox, Loader2, RefreshCw, Search, X } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { PageShell, PageHeader } from '@/components/ui/page-layout'
 import { PageTitle } from '@/components/PageTitle'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { getSessionEmailReviewQueue, type ReviewJob } from '@/lib/email-review-queue'
+import styles from './review.module.css'
 
 type Gasto = { id: number; descripcion: string; monto: number; fecha: string; categoria?: { nombre: string } | null }
 type Coincidencia = { gasto: Gasto; kind: 'igual' | 'mitad' | 'otro'; dias: number; veredicto?: 'encaja' | 'desconocido' | 'no_encaja'; probabilidad?: number }
-const VEREDICTO = { encaja: 'el comercio encaja con tu descripción', desconocido: 'el correo no dice qué se compró', no_encaja: '' }
-type Pendiente = {
-  id: number; tipo: 'gasto' | 'ingreso'; origen: string; fecha: string; descripcion: string; monto: number
-  categoria_id: number | null; coincidencias: Coincidencia[]
-}
+type Pendiente = { id: number; tipo: 'gasto' | 'ingreso'; origen: string; fecha: string; descripcion: string; monto: number; categoria_id: number | null; coincidencias: Coincidencia[] }
 type Categoria = { id: number; nombre: string }
+type Tab = 'nuevos' | 'duplicados' | 'recibidos'
 const API = '/api/email-import/yahoo'
 const money = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' })
-const selectClass = 'h-8 rounded-md border bg-background px-2 text-xs'
+const selectClass = 'h-11 w-full min-w-0 rounded-md border border-input bg-background px-2 text-base focus-visible:outline-2 focus-visible:outline-ring sm:h-9 sm:text-sm'
 const half = (n: number) => Math.round(n * 50) / 100
 
 export default function EmailExpensesPage() {
@@ -29,198 +30,187 @@ export default function EmailExpensesPage() {
   const [mitadPor, setMitadPor] = useState<Record<number, boolean>>({})
   const [elegidoPor, setElegidoPor] = useState<Record<number, number>>({})
   const [noEsDuplicado, setNoEsDuplicado] = useState<Set<number>>(new Set())
-  const [busy, setBusy] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState('')
+  const [jobs, setJobs] = useState<ReviewJob[]>([])
+  const [loadError, setLoadError] = useState('')
+  const [tab, setTab] = useState<Tab>('nuevos')
+  const [search, setSearch] = useState('')
+  const mounted = useRef(true)
+  const loadVersion = useRef(0)
+  const queue = useRef<ReturnType<typeof getSessionEmailReviewQueue> | null>(null)
 
   const load = useCallback(async () => {
-    const response = await fetch(API, { cache: 'no-store' })
-    const body = await response.json().catch(() => null)
-    if (!response.ok) { setEnabled(true); setMessage(body?.error || 'No se pudieron cargar los movimientos.'); return }
-    setEnabled(body?.enabled === true)
-    setPendientes(Array.isArray(body?.pendientes) ? body.pendientes : [])
-    setSelected(new Set())
+    const version = ++loadVersion.current
+    try {
+      const response = await fetch(API, { cache: 'no-store' })
+      const body = await response.json().catch(() => null)
+      if (!response.ok || !body || !Array.isArray(body.pendientes)) throw new Error(body?.error || 'No se pudieron cargar los movimientos.')
+      if (!mounted.current || version !== loadVersion.current) return
+      setEnabled(body.enabled === true)
+      setPendientes(body.pendientes)
+      const available = new Set<number>(body.pendientes.map((p: Pendiente) => p.id))
+      setSelected(prev => new Set([...prev].filter(id => available.has(id))))
+      setLoadError('')
+    } catch (cause) {
+      if (mounted.current && version === loadVersion.current) setLoadError((cause as Error).message || 'No se pudo conectar. Intenta de nuevo.')
+    }
   }, [])
+
+  if (!queue.current) queue.current = getSessionEmailReviewQueue(job => {
+      const id = `correo-${job.id}`
+      const theme = { background: 'hsl(var(--background))', color: 'hsl(var(--foreground))' }
+      if (job.status === 'queued' || job.status === 'saving') toast.loading(`${job.status === 'queued' ? 'En cola' : 'Guardando'} · ${job.label}`, { id, style: theme })
+      else if (job.status === 'success') toast.success(job.label, { id, duration: 3500, style: { ...theme, border: '1px solid #16a34a', background: 'color-mix(in srgb, hsl(var(--background)) 92%, #16a34a)' }, iconTheme: { primary: '#16a34a', secondary: 'white' } })
+      else toast.error(`${job.label}: ${job.error}`, { id, duration: 7000, style: theme })
+  })
   useEffect(() => {
-    load().catch(() => setEnabled(false))
-    fetch('/api/categorias').then(r => r.ok ? r.json() : []).then(data => setCategorias(Array.isArray(data) ? data : [])).catch(() => {})
+    mounted.current = true
+    return queue.current!.subscribe({
+      onChange: next => { if (mounted.current) { ++loadVersion.current; setJobs(next) } },
+      // One reconciliation per drained batch, not a slow full read after every click.
+      onIdle: () => { if (mounted.current) void load() },
+    })
   }, [load])
 
-  const { duplicados, ingresos, nuevos } = useMemo(() => ({
-    duplicados: pendientes.filter(p => p.tipo === 'gasto' && p.coincidencias.length && !noEsDuplicado.has(p.id)),
-    ingresos: pendientes.filter(p => p.tipo === 'ingreso'),
-    nuevos: pendientes.filter(p => p.tipo === 'gasto' && (!p.coincidencias.length || noEsDuplicado.has(p.id))),
-  }), [pendientes, noEsDuplicado])
+  useEffect(() => {
+    mounted.current = true
+    void load()
+    fetch('/api/categorias').then(r => { if (!r.ok) throw new Error(); return r.json() }).then(data => {
+      if (mounted.current) setCategorias(Array.isArray(data) ? data : [])
+    }).catch(() => { if (mounted.current) setMessage('No se cargaron las categorías. Recarga antes de aceptar gastos.') })
+    return () => { mounted.current = false }
+  }, [load])
 
-  async function run(action: () => Promise<Response>, describe: (body: Record<string, number>) => string) {
-    setBusy(true); setMessage('')
-    try {
-      const response = await action()
-      const body = await response.json()
-      if (!response.ok) throw new Error(body?.error)
-      setMessage(describe(body))
-      await load()
-    } catch (error) {
-      setMessage((error as Error).message || 'Algo falló. Intenta nuevamente.')
-    } finally {
-      setBusy(false)
+  const inFlight = jobs.filter(job => job.status === 'queued' || job.status === 'saving').length
+  const hidden = useMemo(() => new Set(jobs.filter(job => job.status !== 'error').map(job => job.id)), [jobs])
+  const errors = new Map(jobs.filter(job => job.status === 'error').map(job => [job.id, job.error]))
+  const { duplicados, recibidos, nuevos } = useMemo(() => {
+    const visible = pendientes.filter(p => !hidden.has(p.id))
+    return {
+      duplicados: visible.filter(p => p.tipo === 'gasto' && p.coincidencias.length && !noEsDuplicado.has(p.id)),
+      recibidos: visible.filter(p => p.tipo === 'ingreso'),
+      nuevos: visible.filter(p => p.tipo === 'gasto' && (!p.coincidencias.length || noEsDuplicado.has(p.id))),
+    }
+  }, [pendientes, hidden, noEsDuplicado])
+  const groups = { nuevos, duplicados, recibidos }
+  const matchesSearch = (p: Pendiente) => `${p.descripcion} ${p.origen} ${p.fecha}`.toLocaleLowerCase('es').includes(search.trim().toLocaleLowerCase('es'))
+  const rows = groups[tab].filter(matchesSearch)
+  const chosen = nuevos.filter(p => selected.has(p.id))
+  const visibleNew = nuevos.filter(matchesSearch)
+  const allSelected = visibleNew.length > 0 && visibleNew.every(p => selected.has(p.id))
+  const total = chosen.reduce((sum, p) => sum + (mitadPor[p.id] ? half(p.monto) : p.monto), 0)
+  const category = (p: Pendiente) => categoriaPor[p.id] ?? p.categoria_id
+  const validCategory = (p: Pendiente) => categorias.some(c => c.id === category(p))
+
+  function enqueue(p: Pendiente, payload: object, countKey: 'aceptados' | 'descartados' | 'vinculados', label: string) {
+    if (syncing) return
+    const added = queue.current!.enqueue({ id: p.id, label, execute: async () => {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 120000)
+      try {
+        const response = await fetch(API, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: controller.signal })
+        const body = await response.json().catch(() => null)
+        if (!response.ok) throw new Error(body?.error || 'No se pudo confirmar el guardado. Revisa antes de reintentar.')
+        if (body?.[countKey] !== 1) throw new Error('El movimiento ya cambió. Actualizaremos la lista; no se confirmó una nueva operación.')
+      } finally { clearTimeout(timeout) }
+    } })
+    if (added) {
+      setSelected(prev => { const next = new Set(prev); next.delete(p.id); return next })
     }
   }
-  const patch = (payload: object, describe: (body: Record<string, number>) => string) =>
-    run(() => fetch(API, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }), describe)
-  const sync = () => run(() => fetch(API, { method: 'POST' }),
-    body => body.nuevos === 0 ? 'No hay movimientos nuevos.' : `${body.nuevos} movimientos nuevos para revisar.`)
-  const vincular = (id: number, gasto_id: number, texto: string) => patch({ vincular: [{ id, gasto_id }] }, () => texto)
-  const descartar = (list: number[]) => patch({ descartar: list }, body => `${body.descartados} descartados.`)
-  const crear = () => {
-    const chosen = nuevos.filter(p => selected.has(p.id))
-    patch({ aceptar: chosen.map(p => ({ id: p.id, categoria_id: categoriaPor[p.id] ?? p.categoria_id, ...(mitadPor[p.id] ? { monto: half(p.monto) } : {}) })) },
-      body => `${body.aceptados} gastos creados con el tag "auto".`)
+  function aceptar(list: Pendiente[]) {
+    list.filter(validCategory).forEach(p => enqueue(p, { aceptar: [{ id: p.id, categoria_id: category(p), ...(mitadPor[p.id] ? { monto: half(p.monto) } : {}) }] }, 'aceptados', `Gasto registrado · ${p.descripcion}`))
   }
-
+  const descartar = (p: Pendiente) => enqueue(p, { descartar: [p.id] }, 'descartados', `Descartado · ${p.descripcion}`)
+  async function sync() {
+    if (syncing || queue.current!.pendingCount()) return
+    setSyncing(true); setMessage('')
+    const id = toast.loading('Buscando movimientos nuevos…')
+    try {
+      const response = await fetch(API, { method: 'POST' })
+      const body = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(body?.error || 'No se pudo sincronizar.')
+      toast.success(body.nuevos ? `${body.nuevos} movimientos nuevos.` : 'No hay movimientos nuevos.', { id })
+      await load()
+    } catch (cause) { toast.error((cause as Error).message || 'No se pudo conectar.', { id }) }
+    finally { if (mounted.current) setSyncing(false) }
+  }
   const toggle = (id: number) => setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
-  const allSelected = nuevos.length > 0 && nuevos.every(p => selected.has(p.id))
-  const total = nuevos.filter(p => selected.has(p.id)).reduce((sum, p) => sum + (mitadPor[p.id] ? half(p.monto) : p.monto), 0)
-
-  if (enabled === false) {
-    return (
-      <PageShell>
-        <PageTitle customTitle="Gastos del correo - BethaSpend" />
-        <PageHeader title="Gastos del correo" description="Movimientos detectados en tu correo." />
-        <p className="max-w-2xl text-sm text-muted-foreground">La importación desde Yahoo no está habilitada para esta cuenta.</p>
-      </PageShell>
-    )
-  }
+  const description = { nuevos: 'Elige la categoría y registra solo los gastos que correspondan.', duplicados: 'Compara antes de registrar: vincular conserva tu gasto sin crear otro.', recibidos: 'Descuenta una devolución de un gasto existente o descártala.' }
 
   return (
-    <PageShell>
-      <PageTitle customTitle="Gastos del correo - BethaSpend" />
-      <PageHeader title="Gastos del correo" description="Nada cuenta como gasto hasta que lo apruebes."
-        actions={<Button variant="outline" size="sm" disabled={busy} onClick={sync}><RefreshCw className={`mr-2 h-4 w-4 ${busy ? 'animate-spin' : ''}`} aria-hidden="true" />Sincronizar</Button>} />
-      <div className="max-w-3xl space-y-6">
-        {message && <p className="text-sm text-muted-foreground" role="status">{message}</p>}
-        {enabled === null && <div className="h-48 animate-pulse rounded-xl border bg-card" role="status" aria-label="Cargando movimientos" />}
-        {enabled && !pendientes.length && (
-          <Card><CardContent className="flex items-center gap-3 py-6 text-sm text-muted-foreground"><Mail className="h-5 w-5" aria-hidden="true" />Todo revisado. Sincroniza para buscar movimientos nuevos.</CardContent></Card>
-        )}
-
-        {duplicados.length > 0 && (
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Copy className="h-4 w-4" aria-hidden="true" />Posibles duplicados <span className="font-normal text-muted-foreground">({duplicados.length})</span></CardTitle>
-              <p className="text-xs text-muted-foreground">Ya registraste algo parecido a mano. Si es lo mismo, se queda tu gasto y el del correo no se crea.</p></CardHeader>
-            <CardContent className="space-y-3">
-              {duplicados.map(p => {
-                const elegido = p.coincidencias.find(c => c.gasto.id === elegidoPor[p.id]) ?? p.coincidencias[0]
-                return (
-                  <div key={p.id} className="rounded-lg border p-3">
-                    <Row title={p.descripcion} meta={`${p.fecha} · ${p.origen}`} amount={p.monto} />
-                    <div className="mt-2 rounded-md bg-muted/40 p-2">
-                      <p className="mb-1 text-xs text-muted-foreground">¿Es este gasto que ya tienes?</p>
-                      {p.coincidencias.length > 1 ? (
-                        <select className={`${selectClass} w-full`} aria-label={`Gasto existente para ${p.descripcion}`} value={elegido.gasto.id}
-                          onChange={e => setElegidoPor(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}>
-                          {p.coincidencias.map(c => <option key={c.gasto.id} value={c.gasto.id}>{c.gasto.descripcion} · {c.gasto.fecha} · {money.format(c.gasto.monto)}</option>)}
-                        </select>
-                      ) : <Row title={elegido.gasto.descripcion} meta={`${elegido.gasto.fecha}${elegido.gasto.categoria ? ` · ${elegido.gasto.categoria.nombre}` : ''}`} amount={elegido.gasto.monto} />}
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {elegido.kind === 'mitad' ? 'Registraste la mitad (¿gasto compartido?)' : 'Mismo monto'}
-                        {elegido.dias ? `, ${elegido.dias} ${elegido.dias === 1 ? 'día' : 'días'} de diferencia` : ', mismo día'}
-                        {elegido.veredicto && VEREDICTO[elegido.veredicto] && ` · Jev: ${VEREDICTO[elegido.veredicto]}`}
-                      </p>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <Button size="sm" disabled={busy} onClick={() => vincular(p.id, elegido.gasto.id, 'Listo: se queda tu gasto, sin duplicar.')}><Check className="mr-1 h-4 w-4" aria-hidden="true" />Sí, es el mismo</Button>
-                      <Button size="sm" variant="outline" disabled={busy} onClick={() => setNoEsDuplicado(prev => new Set(prev).add(p.id))}>No, es otro gasto</Button>
-                    </div>
-                  </div>
-                )
-              })}
-            </CardContent>
-          </Card>
-        )}
-
-        {ingresos.length > 0 && (
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ArrowDownLeft className="h-4 w-4" aria-hidden="true" />Te transfirieron <span className="font-normal text-muted-foreground">({ingresos.length})</span></CardTitle>
-              <p className="text-xs text-muted-foreground">Si te devolvieron su parte de un gasto compartido, descuéntalo de ese gasto.</p></CardHeader>
-            <CardContent className="space-y-3">
-              {ingresos.map(p => {
-                const elegido = p.coincidencias.find(c => c.gasto.id === elegidoPor[p.id]) ?? p.coincidencias[0]
-                return (
-                  <div key={p.id} className="rounded-lg border p-3">
-                    <Row title={p.descripcion} meta={`${p.fecha} · ${p.origen}`} amount={p.monto} positive />
-                    {elegido ? (
-                      <div className="mt-2 space-y-1">
-                        <label className="text-xs text-muted-foreground" htmlFor={`refund-${p.id}`}>Descontar de</label>
-                        <select id={`refund-${p.id}`} className={`${selectClass} w-full`} value={elegido.gasto.id}
-                          onChange={e => setElegidoPor(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}>
-                          {p.coincidencias.map(c => <option key={c.gasto.id} value={c.gasto.id}>{c.gasto.descripcion} · {c.gasto.fecha} · {money.format(c.gasto.monto)}{c.kind === 'mitad' ? ' · justo el doble' : ''}</option>)}
-                        </select>
-                        <p className="text-xs text-muted-foreground">Quedará en {money.format(elegido.gasto.monto - p.monto)} con el tag &quot;compartido&quot;.</p>
+    <PageShell className={styles.surface}>
+      <PageTitle customTitle="Correo - BethaSpend" />
+      <PageHeader title="Correo" description="Revisa tus movimientos antes de registrarlos."
+        actions={<Button variant="outline" disabled={enabled !== true || syncing || inFlight > 0} onClick={sync}><RefreshCw className={`mr-2 h-4 w-4 ${syncing ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />{syncing ? 'Sincronizando…' : 'Sincronizar'}</Button>} />
+      {loadError && <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-destructive/30 p-3" role="alert"><p className="min-w-0 flex-1 text-sm">{loadError}</p><Button variant="outline" size="sm" disabled={inFlight > 0 || syncing} onClick={() => void load()}>Reintentar</Button></div>}
+      {message && <p className="mb-4 text-sm" role="status">{message}</p>}
+      {enabled === false ? <Empty title="Correo no habilitado" text="La importación desde Yahoo no está habilitada para esta cuenta." /> : enabled === null ? (
+        !loadError && <div className="flex min-h-48 items-center justify-center gap-2 text-sm" role="status"><Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />Cargando movimientos…</div>
+      ) : <Tabs value={tab} onValueChange={value => setTab(value as Tab)}>
+        <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <TabsList aria-label="Clasificación de movimientos" className="grid h-auto w-full grid-cols-3 sm:w-auto">
+            {([['nuevos', 'Nuevos'], ['duplicados', 'Duplicados'], ['recibidos', 'Recibidos']] as const).map(([value, label]) => (
+              <TabsTrigger key={value} value={value} data-review-tab className="min-h-11 min-w-0 gap-1.5 px-2 text-xs sm:px-3 sm:text-sm"><span>{label}</span><span className="rounded bg-background/70 px-1.5 py-0.5 text-xs tabular-nums">{groups[value].length}</span></TabsTrigger>
+            ))}
+          </TabsList>
+          <div className="relative w-full sm:max-w-60"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4" aria-hidden="true" /><Input aria-label="Buscar movimientos" placeholder="Buscar movimiento…" value={search} onChange={event => setSearch(event.target.value)} className="h-11 pl-9 text-base sm:text-sm" /></div>
+        </div>
+        <div className="flex min-h-12 flex-wrap items-center justify-between gap-2 py-3">
+          <p className="text-sm">{description[tab]}</p>
+          {inFlight > 0 && <span className="inline-flex items-center gap-1.5 text-xs" role="status"><Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />{inFlight} en cola · no cierres esta pestaña</span>}
+        </div>
+        {(['nuevos', 'duplicados', 'recibidos'] as const).map(value => <TabsContent key={value} value={value} className="mt-0">
+          {value === tab && <>
+            {tab === 'nuevos' && rows.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg bg-muted/40 px-3 py-2">
+              <label className="mr-auto flex min-h-11 cursor-pointer items-center gap-2 text-sm"><input type="checkbox" className="h-4 w-4 accent-primary" aria-label="Seleccionar todos los nuevos visibles" checked={allSelected} disabled={syncing} onChange={() => setSelected(prev => { const next = new Set(prev); visibleNew.forEach(p => allSelected ? next.delete(p.id) : next.add(p.id)); return next })} />{chosen.length ? `${chosen.length} seleccionados · ${money.format(total)}` : 'Seleccionar visibles'}</label>
+              <Button data-review-primary size="sm" className="min-h-11" disabled={syncing || !chosen.length || chosen.some(p => !validCategory(p))} onClick={() => aceptar(chosen)}>Aceptar selección</Button>
+              <Button size="sm" variant="outline" className="min-h-11" disabled={syncing || !chosen.length} onClick={() => chosen.forEach(descartar)}>Descartar selección</Button>
+            </div>}
+            {!rows.length ? <Empty title={search ? 'Sin coincidencias' : inFlight ? 'Guardando tus decisiones' : gruposEmpty(tab)} text={search ? 'Prueba con otra descripción, fecha o banco.' : inFlight ? 'Puedes cambiar de clasificación mientras terminan de guardarse.' : 'Los movimientos de esta clasificación aparecerán aquí.'} /> : (
+              <table className={styles.table} data-classification={tab}>
+                <caption className="sr-only">Movimientos de correo: {tab}</caption>
+                <thead><tr>{tab === 'nuevos' && <th scope="col"><span className="sr-only">Selección</span></th>}<th scope="col">Movimiento</th>{tab === 'nuevos' ? <><th scope="col">Categoría</th><th scope="col">Tu parte</th></> : <th scope="col">{tab === 'duplicados' ? 'Gasto existente' : 'Descontar de'}</th>}<th scope="col" className="text-right">Importe</th><th scope="col">Acciones</th></tr></thead>
+                <tbody>{rows.map(p => {
+                  const elegido = p.coincidencias.find(c => c.gasto.id === elegidoPor[p.id]) ?? p.coincidencias[0]
+                  return <tr key={p.id}>
+                    {tab === 'nuevos' && <td className={styles.selection}><label className="inline-flex min-h-11 min-w-11 items-center justify-center"><input type="checkbox" className="h-4 w-4 accent-primary" disabled={syncing} checked={selected.has(p.id)} onChange={() => toggle(p.id)} aria-label={`Seleccionar ${p.descripcion}`} /></label></td>}
+                    <td data-label="Movimiento" className={styles.movement}><p className="font-medium break-words">{p.descripcion}</p><p className="mt-1 text-xs">{p.fecha} · {p.origen}</p>{errors.get(p.id) && <p className="mt-2 text-xs text-destructive" role="alert">{errors.get(p.id)}</p>}</td>
+                    {tab === 'nuevos' ? <>
+                      <td data-label="Categoría"><select className={selectClass} disabled={syncing} aria-label={`Categoría de ${p.descripcion}`} value={category(p) ?? ''} onChange={e => setCategoriaPor(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}><option value="" disabled>Elegir categoría</option>{categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></td>
+                      <td data-label="Tu parte"><select className={selectClass} disabled={syncing} aria-label={`Parte de ${p.descripcion}`} value={mitadPor[p.id] ? 'mitad' : 'todo'} onChange={e => setMitadPor(prev => ({ ...prev, [p.id]: e.target.value === 'mitad' }))}><option value="todo">Total</option><option value="mitad">Mitad</option></select></td>
+                    </> : <td data-label={tab === 'duplicados' ? 'Gasto existente' : 'Descontar de'} className={styles.match}>
+                      {elegido ? <>
+                        <select className={selectClass} disabled={syncing} aria-label={`Gasto existente para ${p.descripcion}`} value={elegido.gasto.id} onChange={e => setElegidoPor(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}>{p.coincidencias.map(c => <option key={c.gasto.id} value={c.gasto.id}>{c.gasto.descripcion} · {money.format(c.gasto.monto)}</option>)}</select>
+                        <p className="mt-2 text-xs">{elegido.gasto.fecha}{tab === 'recibidos' ? ` · Quedará en ${money.format(elegido.gasto.monto - p.monto)}` : ` · ${elegido.kind === 'mitad' ? 'Registraste la mitad' : 'Mismo monto'} · ${elegido.dias ? `${elegido.dias} día(s) de diferencia` : 'Mismo día'}`}</p>
+                        {tab === 'duplicados' && <details className="mt-1 text-xs"><summary className="cursor-pointer py-1 underline underline-offset-4">Ver comparación</summary><p className="py-1 break-words">{elegido.gasto.descripcion}{elegido.gasto.categoria ? ` · ${elegido.gasto.categoria.nombre}` : ''}. {elegido.veredicto === 'encaja' ? 'El comercio encaja con tu descripción.' : elegido.veredicto === 'desconocido' ? 'El correo no especifica qué se compró.' : 'Coincidencia por fecha e importe; confirma antes de vincular.'}</p></details>}
+                      </> : <p className="text-xs">No hay un gasto compatible de los últimos 20 días.</p>}
+                    </td>}
+                    <td data-label={tab === 'recibidos' ? 'Recibido' : 'Importe'} className={styles.amount}><span className="font-semibold tabular-nums">{tab === 'recibidos' ? '+' : ''}{money.format(tab === 'nuevos' && mitadPor[p.id] ? half(p.monto) : p.monto)}</span>{tab === 'nuevos' && mitadPor[p.id] && <span className="mt-1 block text-xs">de {money.format(p.monto)}</span>}</td>
+                    <td data-label="Acciones" className={styles.actions}>
+                      <div className="flex flex-wrap gap-2">
+                        {tab === 'nuevos' ? <>
+                          <Button data-review-primary size="sm" className="min-h-11" disabled={syncing || !validCategory(p)} aria-label={`Aceptar ${p.descripcion}`} onClick={() => aceptar([p])}><Check className="mr-1 h-3.5 w-3.5" aria-hidden="true" />Aceptar</Button>
+                          <Button size="sm" variant="outline" className="min-h-11" disabled={syncing} aria-label={`Descartar ${p.descripcion}`} onClick={() => descartar(p)}><X className="mr-1 h-3.5 w-3.5" aria-hidden="true" />Descartar</Button>
+                        </> : <>
+                          {elegido && <Button data-review-primary size="sm" className="min-h-11" disabled={syncing || (tab === 'recibidos' && elegido.gasto.monto <= p.monto)} onClick={() => enqueue(p, { vincular: [{ id: p.id, gasto_id: elegido.gasto.id }] }, 'vinculados', `${tab === 'duplicados' ? 'Vinculado sin duplicar' : 'Devolución descontada'} · ${p.descripcion}`)}>{tab === 'duplicados' ? 'Es el mismo' : 'Descontar'}</Button>}
+                          {tab === 'duplicados' ? <Button size="sm" variant="outline" className="min-h-11" disabled={syncing} onClick={() => { setNoEsDuplicado(prev => new Set(prev).add(p.id)); setTab('nuevos') }}>Es otro gasto</Button> : null}
+                          <Button size="sm" variant="ghost" className="min-h-11" disabled={syncing} onClick={() => descartar(p)}>Descartar</Button>
+                        </>}
                       </div>
-                    ) : <p className="mt-2 text-xs text-muted-foreground">No hay un gasto de los últimos 20 días que lo cubra.</p>}
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {elegido && <Button size="sm" disabled={busy} onClick={() => vincular(p.id, elegido.gasto.id, `Descontado de "${elegido.gasto.descripcion}".`)}><Check className="mr-1 h-4 w-4" aria-hidden="true" />Descontar</Button>}
-                      <Button size="sm" variant="outline" disabled={busy} onClick={() => descartar([p.id])}>No es de un gasto</Button>
-                    </div>
-                  </div>
-                )
-              })}
-            </CardContent>
-          </Card>
-        )}
-
-        {nuevos.length > 0 && (
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Mail className="h-4 w-4" aria-hidden="true" />Nuevos <span className="font-normal text-muted-foreground">({nuevos.length})</span></CardTitle>
-              <p className="text-xs text-muted-foreground">Marca los que sí son gastos. &quot;Mitad&quot; registra solo tu parte de un gasto compartido.</p></CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <label className="mr-auto flex items-center gap-2 text-sm">
-                  <input type="checkbox" className="h-4 w-4" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(nuevos.map(p => p.id)))} />
-                  {selected.size ? `${selected.size} de ${nuevos.length} · ${money.format(total)}` : 'Seleccionar todos'}
-                </label>
-                <Button size="sm" disabled={busy || !selected.size} onClick={crear}><Check className="mr-1 h-4 w-4" aria-hidden="true" />Crear gastos</Button>
-                <Button size="sm" variant="outline" disabled={busy || !selected.size} onClick={() => descartar([...selected])}><X className="mr-1 h-4 w-4" aria-hidden="true" />Descartar</Button>
-              </div>
-              <ul className="divide-y rounded-lg border">
-                {nuevos.map(p => (
-                  <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2">
-                    <input type="checkbox" className="h-4 w-4" checked={selected.has(p.id)} onChange={() => toggle(p.id)} aria-label={`Seleccionar ${p.descripcion}`} />
-                    <div className="min-w-0 flex-1 basis-40">
-                      <p className="truncate text-sm font-medium">{p.descripcion}</p>
-                      <p className="text-xs text-muted-foreground">{p.fecha} · {p.origen}</p>
-                    </div>
-                    <select className={`${selectClass} max-w-[10rem]`} aria-label={`Categoría de ${p.descripcion}`}
-                      value={categoriaPor[p.id] ?? p.categoria_id ?? ''} onChange={e => setCategoriaPor(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}>
-                      {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                    </select>
-                    <select className={selectClass} aria-label={`Parte de ${p.descripcion}`} value={mitadPor[p.id] ? 'mitad' : 'todo'}
-                      onChange={e => setMitadPor(prev => ({ ...prev, [p.id]: e.target.value === 'mitad' }))}>
-                      <option value="todo">Todo</option>
-                      <option value="mitad">Mitad</option>
-                    </select>
-                    <span className="w-24 text-right text-sm tabular-nums">
-                      {mitadPor[p.id] ? <>{money.format(half(p.monto))}<span className="block text-xs text-muted-foreground">de {money.format(p.monto)}</span></> : money.format(p.monto)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                    </td>
+                  </tr>
+                })}</tbody>
+              </table>
+            )}
+          </>}
+        </TabsContent>)}
+      </Tabs>}
     </PageShell>
   )
 }
-
-function Row({ title, meta, amount, positive }: { title: string; meta: string; amount: number; positive?: boolean }) {
-  return (
-    <div className="flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium">{title}</p>
-        <p className="text-xs text-muted-foreground">{meta}</p>
-      </div>
-      <span className={`shrink-0 text-sm tabular-nums ${positive ? 'text-chart-2' : ''}`}>{positive ? '+' : ''}{money.format(amount)}</span>
-    </div>
-  )
+function gruposEmpty(tab: Tab) { return { nuevos: 'No hay gastos nuevos por revisar', duplicados: 'No hay posibles duplicados', recibidos: 'No hay transferencias recibidas' }[tab] }
+function Empty({ title, text }: { title: string; text: string }) {
+  return <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-6 py-8 text-center"><Inbox className="mb-1 h-6 w-6" aria-hidden="true" /><h2 className="text-sm font-medium">{title}</h2><p className="max-w-sm text-sm">{text}</p></div>
 }

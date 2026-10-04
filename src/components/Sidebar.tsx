@@ -46,7 +46,7 @@ const gastosSubmenu = [
 		icon: Receipt,
 	},
 	{
-		name: "Del correo",
+		name: "Correo",
 		href: "/gastos-correo",
 		icon: Mail,
 	},
