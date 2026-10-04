@@ -37,16 +37,16 @@ export function DeleteRecurringExpenseModal({
           </p>
           
           <div className="space-y-3">
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm font-medium text-blue-900 mb-1">Eliminar solo este gasto</p>
-              <p className="text-xs text-blue-700">
+            <div className="p-3 bg-primary/10 rounded-lg border border-primary/25">
+              <p className="text-sm font-medium text-foreground mb-1">Eliminar solo este gasto</p>
+              <p className="text-xs text-muted-foreground">
                 Solo se eliminará este gasto específico. Los demás gastos recurrentes seguirán generándose.
               </p>
             </div>
             
-            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-              <p className="text-sm font-medium text-red-900 mb-1">Eliminar gasto recurrente completo</p>
-              <p className="text-xs text-red-700">
+            <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/25">
+              <p className="text-sm font-medium text-destructive mb-1">Eliminar gasto recurrente completo</p>
+              <p className="text-xs text-muted-foreground">
                 Se eliminará este gasto y se desactivará el gasto recurrente para que no se generen más gastos en el futuro.
               </p>
             </div>
@@ -58,7 +58,7 @@ export function DeleteRecurringExpenseModal({
             variant="outline"
             onClick={onDeleteSingle}
             disabled={isDeleting}
-            className="w-full h-11 border-2 border-blue-500 text-blue-700 hover:bg-blue-50 hover:border-blue-600 font-medium"
+            className="w-full h-10 font-medium"
           >
             Eliminar solo este gasto
           </Button>

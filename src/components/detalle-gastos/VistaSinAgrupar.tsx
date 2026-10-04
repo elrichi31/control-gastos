@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Receipt } from 'lucide-react'
 import type { Expense } from '@/services/expenses'
@@ -24,12 +24,7 @@ export function VistaSinAgrupar({
   onDeleteGasto
 }: VistaSinAgruparProps) {
   return (
-    <Card className="bg-card border-border">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between text-foreground">
-          <span>Resultados ({gastos.length} gastos)</span>
-        </CardTitle>
-      </CardHeader>
+    <Card className="overflow-hidden">
       <CardContent className="p-0">
         {gastos.length === 0 ? (
           <div className="text-center py-12 px-6">
@@ -50,7 +45,7 @@ export function VistaSinAgrupar({
             <div className="hidden lg:block">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-border hover:bg-transparent dark:hover:bg-transparent">
+                  <TableRow className="hover:bg-transparent dark:hover:bg-transparent">
                     <TableHead className="px-4 py-3 text-muted-foreground">Descripción</TableHead>
                     <TableHead className="px-3 py-3 text-muted-foreground">Categoría</TableHead>
                     <TableHead className="px-3 py-3 text-muted-foreground">Método de Pago</TableHead>
@@ -84,6 +79,10 @@ export function VistaSinAgrupar({
                   formatDate={formatDate}
                 />
               ))}
+            </div>
+            <div className="flex divide-x divide-border border-t border-border text-xs text-muted-foreground">
+              <p className="px-4 py-2.5"><span className="font-semibold text-foreground tabular-nums">{gastos.length}</span> gastos en vista</p>
+              <p className="px-4 py-2.5">Total <span className="font-semibold text-foreground tabular-nums">{formatMoney(gastos.reduce((sum, g) => sum + g.monto, 0))}</span></p>
             </div>
           </>
         )}

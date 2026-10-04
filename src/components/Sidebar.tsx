@@ -4,58 +4,38 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { clearPrivateCaches } from "@/lib/pwa/cache-policy"
-import { Home, FileText, Calculator, X, ChevronLeft, BarChart3, Receipt, LogOut, User, ChevronDown, Repeat, Plus, Wallet, Plug, Mail } from "lucide-react"
+import { Home, Calculator, BarChart3, Receipt, LogOut, Repeat, Plus, Wallet, Plug, Mail, PanelLeft, X, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { useState, useEffect } from "react"
 import { ModeToggle } from "@/components/mode-toggle"
 
-const menuItems = [
+type NavItem = { name: string; href: string; icon: LucideIcon }
+
+export const navSections: { title?: string; items: NavItem[] }[] = [
 	{
-		name: "Resumen",
-		href: "/dashboard",
-		icon: Home,
+		items: [
+			{ name: "Resumen", href: "/dashboard", icon: Home },
+			{ name: "Detalle de gastos", href: "/detalle-gastos", icon: Receipt },
+			{ name: "Presupuesto", href: "/presupuesto", icon: Calculator },
+			{ name: "Estadísticas", href: "/estadisticas", icon: BarChart3 },
+		],
 	},
 	{
-		name: "Presupuesto",
-		href: "/presupuesto",
-		icon: Calculator,
+		title: "Gastos",
+		items: [
+			{ name: "Nuevo gasto", href: "/form", icon: Plus },
+			{ name: "Desde correo", href: "/gastos-correo", icon: Mail },
+			{ name: "Recurrentes", href: "/gastos-recurrentes", icon: Repeat },
+		],
 	},
 	{
-		name: "Estadísticas",
-		href: "/estadisticas",
-		icon: BarChart3,
-	},
-	{
-		name: "Conexiones MCP",
-		href: "/conexiones",
-		icon: Plug,
+		title: "Cuenta",
+		items: [{ name: "Conexiones MCP", href: "/conexiones", icon: Plug }],
 	},
 ]
 
-const gastosSubmenu = [
-	{
-		name: "Crear Nuevo",
-		href: "/form",
-		icon: Plus,
-	},
-	{
-		name: "Detalle",
-		href: "/detalle-gastos",
-		icon: Receipt,
-	},
-	{
-		name: "Correo",
-		href: "/gastos-correo",
-		icon: Mail,
-	},
-	{
-		name: "Gastos Recurrentes",
-		href: "/gastos-recurrentes",
-		icon: Repeat,
-	},
-]
+export function initials(name?: string | null) {
+	return (name ?? "?").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]!.toUpperCase()).join("")
+}
 
 interface SidebarProps {
 	isOpen: boolean
@@ -65,376 +45,128 @@ interface SidebarProps {
 	onToggleCollapse: () => void
 }
 
-export function Sidebar({
-	isOpen,
-	onClose,
-	isMobile,
-	isCollapsed,
-	onToggleCollapse,
-}: SidebarProps) {
+export function Sidebar({ isOpen, onClose, isMobile, isCollapsed, onToggleCollapse }: SidebarProps) {
 	const pathname = usePathname()
-
 	const { data: session } = useSession()
-	const [gastosOpen, setGastosOpen] = useState(false)
-
-	// Verificar si alguna ruta de gastos está activa
-	const isGastosActive = gastosSubmenu.some(item => pathname === item.href)
-
-	// Abrir automáticamente el dropdown si estamos en una ruta de gastos
-	useEffect(() => {
-		if (isGastosActive) {
-			setGastosOpen(true)
-		}
-	}, [isGastosActive])
-
-	// Cerrar dropdown cuando se hace clic fuera (solo para versión colapsada)
-	useEffect(() => {
-		if (!gastosOpen || !isCollapsed) return
-
-		const handleClickOutside = (e: MouseEvent) => {
-			const target = e.target as HTMLElement
-			if (!target.closest('.gastos-dropdown-container')) {
-				setGastosOpen(false)
-			}
-		}
-
-		document.addEventListener('click', handleClickOutside)
-		return () => document.removeEventListener('click', handleClickOutside)
-	}, [gastosOpen, isCollapsed])
+	// En móvil el drawer siempre va expandido.
+	const collapsed = !isMobile && isCollapsed
 
 	const handleLogout = async () => {
 		await clearPrivateCaches()
-		await signOut({ 
-			callbackUrl: '/auth/login',
-			redirect: true 
-		})
+		await signOut({ callbackUrl: "/auth/login", redirect: true })
 	}
+
+	const content = (
+		<>
+			<div className={cn("flex h-14 items-center gap-2.5 border-b border-sidebar-border px-3", collapsed && "justify-center px-0")}>
+				<div className="grid size-8 shrink-0 place-items-center rounded-lg border border-sidebar-border bg-card">
+					<Wallet className="size-4 text-foreground" />
+				</div>
+				{!collapsed && (
+					<div className="min-w-0 flex-1 leading-tight">
+						<p className="truncate text-[13px] font-semibold text-foreground">BethaSpend</p>
+						<p className="truncate text-[11px] text-sidebar-muted">Control de gastos</p>
+					</div>
+				)}
+				{isMobile && (
+					<button onClick={onClose} aria-label="Cerrar menú" className="grid size-8 place-items-center rounded-md text-sidebar-muted hover:bg-sidebar-accent hover:text-foreground">
+						<X className="size-4" />
+					</button>
+				)}
+			</div>
+
+			<nav className="flex-1 overflow-y-auto px-2 py-3">
+				{navSections.map((section, i) => (
+					<div key={i} className={cn(i > 0 && "mt-3 border-t border-sidebar-border pt-3")}>
+						{section.title && !collapsed && (
+							<p className="px-2.5 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-sidebar-muted/80">{section.title}</p>
+						)}
+						{section.items.map(({ name, href, icon: Icon }) => {
+							const isActive = pathname === href || pathname?.startsWith(href + "/")
+							return (
+								<Link
+									key={href}
+									href={href}
+									onClick={isMobile ? onClose : undefined}
+									title={collapsed ? name : undefined}
+									aria-current={isActive ? "page" : undefined}
+									className={cn(
+										"mb-0.5 flex h-8 items-center gap-2.5 rounded-lg border px-2.5 text-[13px] transition-colors",
+										isActive
+											? "border-sidebar-border bg-sidebar-accent font-semibold text-foreground shadow-xs"
+											: "border-transparent text-sidebar-muted hover:bg-sidebar-accent/60 hover:text-foreground",
+										collapsed && "justify-center px-0",
+									)}
+								>
+									<Icon className="size-4 shrink-0" />
+									{!collapsed && <span className="truncate">{name}</span>}
+								</Link>
+							)
+						})}
+					</div>
+				))}
+			</nav>
+
+			<div className="border-t border-sidebar-border p-2">
+				<div className={cn("flex items-center gap-1", collapsed ? "flex-col" : "justify-between px-1")}>
+					<ModeToggle />
+					{!isMobile && (
+						<button
+							onClick={onToggleCollapse}
+							aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
+							className="grid size-9 place-items-center rounded-lg text-sidebar-muted hover:bg-sidebar-accent hover:text-foreground"
+						>
+							<PanelLeft className="size-4" />
+						</button>
+					)}
+				</div>
+				<div className={cn("mt-2 flex items-center gap-2.5 rounded-lg border border-sidebar-border bg-card p-2", collapsed && "flex-col p-1.5")}>
+					<div className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary">
+						{initials(session?.user?.name)}
+					</div>
+					{!collapsed && (
+						<div className="min-w-0 flex-1 leading-tight">
+							<p className="truncate text-[13px] font-medium text-foreground">{session?.user?.name ?? "—"}</p>
+							<p className="truncate text-[11px] text-sidebar-muted">{session?.user?.email}</p>
+						</div>
+					)}
+					<button
+						onClick={handleLogout}
+						title="Cerrar sesión"
+						aria-label="Cerrar sesión"
+						className="grid size-7 shrink-0 place-items-center rounded-md text-sidebar-muted hover:bg-destructive/10 hover:text-destructive"
+					>
+						<LogOut className="size-4" />
+					</button>
+				</div>
+			</div>
+		</>
+	)
 
 	if (isMobile) {
 		return (
 			<>
-				{/* Overlay para móviles */}
-				{isOpen && (
-					<div
-						className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-						onClick={onClose}
-					/>
-				)}
-
-				{/* Sidebar móvil */}
-				<div
+				{isOpen && <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={onClose} />}
+				<aside
 					className={cn(
-						"fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border z-50 transition-transform duration-300 ease-in-out w-64 lg:hidden flex flex-col",
+						"fixed left-0 top-0 z-50 flex h-dvh w-64 flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-300 ease-out lg:hidden",
 						isOpen ? "translate-x-0" : "-translate-x-full",
 					)}
 				>
-					<div className="flex items-center justify-between p-6">
-						<div className="flex items-center gap-2">
-							<div className="p-1.5 rounded-lg bg-blue-500 text-white">
-								<Wallet className="w-5 h-5" />
-							</div>
-							<h1 className="text-xl font-bold text-foreground">BethaSpend</h1>
-						</div>
-						<Button variant="ghost" size="sm" onClick={onClose}>
-							<X className="w-5 h-5 text-foreground" />
-						</Button>
-					</div>
-
-					<div className="px-6 pb-4">
-						<p className="text-sm font-medium text-muted-foreground">Menu</p>
-					</div>
-
-					<nav className="px-3 flex-1">
-						{menuItems.map((item) => {
-							const Icon = item.icon
-							const isActive =
-								pathname === item.href ||
-								(item.href === "/" && pathname === "/")
-
-							return (
-								<Link
-									key={item.name}
-									href={item.href}
-									onClick={onClose}
-									className={cn(
-										"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
-										isActive
-											? "bg-muted text-foreground"
-											: "text-muted-foreground hover:bg-muted hover:text-foreground",
-									)}
-								>
-									<Icon className="w-5 h-5" />
-									{item.name}
-								</Link>
-							)
-						})}
-
-						{/* Sección de Gastos con Collapsible */}
-						<Collapsible open={gastosOpen} onOpenChange={setGastosOpen}>
-							<CollapsibleTrigger asChild>
-								<button
-									className={cn(
-										"w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
-										isGastosActive
-											? "bg-muted text-foreground"
-											: "text-muted-foreground hover:bg-muted hover:text-foreground",
-									)}
-								>
-									<div className="flex items-center gap-3">
-										<FileText className="w-5 h-5" />
-										<span>Gastos</span>
-									</div>
-									<ChevronDown
-										className={cn(
-											"w-4 h-4 transition-transform",
-											gastosOpen && "rotate-180"
-										)}
-									/>
-								</button>
-							</CollapsibleTrigger>
-							<CollapsibleContent className="pl-4">
-								{gastosSubmenu.map((item) => {
-									const Icon = item.icon
-									const isActive = pathname === item.href
-
-									return (
-										<Link
-											key={item.name}
-											href={item.href}
-											onClick={onClose}
-											className={cn(
-												"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
-												isActive
-													? "bg-muted text-foreground"
-													: "text-muted-foreground hover:bg-muted hover:text-foreground",
-											)}
-										>
-											<Icon className="w-4 h-4" />
-											{item.name}
-										</Link>
-									)
-								})}
-							</CollapsibleContent>
-						</Collapsible>
-					</nav>
-
-					{/* Sección de usuario en la parte inferior del móvil */}
-					<div className="mt-auto border-t border-sidebar-border p-3">
-						{session?.user && (
-							<div className="px-3 py-2 mb-2">
-								<div className="flex items-center gap-2 mb-1">
-									<User className="w-4 h-4 text-muted-foreground" />
-									<p className="text-sm font-medium text-foreground">{session.user.name}</p>
-								</div>
-								<p className="text-xs text-muted-foreground ml-6">{session.user.email}</p>
-							</div>
-						)}
-						
-						<button
-							onClick={handleLogout}
-							className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
-						>
-							<LogOut className="w-5 h-5 flex-shrink-0" />
-							<span>Cerrar Sesión</span>
-						</button>
-					</div>
-				</div>
+					{content}
+				</aside>
 			</>
 		)
 	}
 
-	// Sidebar desktop
 	return (
-		<div
+		<aside
 			className={cn(
-				"fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border z-50 transition-all duration-300 ease-in-out hidden lg:flex lg:flex-col",
-				isCollapsed ? "w-16" : "w-64",
+				"fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-300 ease-out lg:flex",
+				collapsed ? "w-16" : "w-60",
 			)}
 		>
-			<div
-				className={cn(
-					"flex items-center p-6",
-					isCollapsed ? "flex-col gap-3" : "justify-between",
-				)}
-			>
-				{isCollapsed ? (
-					<div className="p-1.5 rounded-lg bg-blue-500 text-white">
-						<Wallet className="w-5 h-5" />
-					</div>
-				) : (
-					<div className="flex items-center gap-2">
-						<div className="p-1.5 rounded-lg bg-blue-500 text-white">
-							<Wallet className="w-5 h-5" />
-						</div>
-						<h1 className="text-xl font-bold text-foreground">BethaSpend</h1>
-					</div>
-				)}
-				<Button
-					variant="ghost"
-					size="sm"
-					onClick={onToggleCollapse}
-					className="flex-shrink-0"
-				>
-					<ChevronLeft
-						className={cn(
-							"w-5 h-5 transition-transform text-foreground",
-							isCollapsed && "rotate-180",
-						)}
-					/>
-				</Button>
-			</div>
-
-			{!isCollapsed && (
-				<div className="px-6 pb-4">
-					<p className="text-sm font-medium text-muted-foreground">Menu</p>
-				</div>
-			)}
-
-			<nav className="px-3">
-				{menuItems.map((item) => {
-					const Icon = item.icon
-					const isActive =
-						pathname === item.href ||
-						(item.href === "/" && pathname === "/")
-
-					return (
-						<Link
-							key={item.name}
-							href={item.href}
-							className={cn(
-								"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1 group",
-								isActive
-									? "bg-muted text-foreground"
-									: "text-muted-foreground hover:bg-muted hover:text-foreground",
-								isCollapsed && "justify-center",
-							)}
-							title={isCollapsed ? item.name : undefined}
-						>
-							<Icon className="w-5 h-5 flex-shrink-0" />
-							{!isCollapsed && <span>{item.name}</span>}
-						</Link>
-					)
-				})}
-
-				{/* Sección de Gastos con Collapsible - Desktop */}
-				{isCollapsed ? (
-					// Versión colapsada: solo mostrar ícono con tooltip
-					<div className="relative group gastos-dropdown-container">
-						<button
-							onClick={() => setGastosOpen(!gastosOpen)}
-							className={cn(
-								"w-full flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
-								isGastosActive
-									? "bg-muted text-foreground"
-									: "text-muted-foreground hover:bg-muted hover:text-foreground",
-							)}
-							title="Gastos"
-						>
-							<FileText className="w-5 h-5 flex-shrink-0" />
-						</button>
-						
-						{/* Dropdown flotante cuando está colapsado */}
-						{gastosOpen && (
-							<div className="absolute left-full top-0 ml-2 bg-popover border border-border rounded-lg shadow-md py-1 min-w-[180px] z-50">
-								{gastosSubmenu.map((item) => {
-									const Icon = item.icon
-									const isActive = pathname === item.href
-
-									return (
-										<Link
-											key={item.name}
-											href={item.href}
-											className={cn(
-												"flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors",
-												isActive
-													? "bg-muted text-foreground"
-													: "text-muted-foreground hover:bg-muted hover:text-foreground",
-											)}
-										>
-											<Icon className="w-4 h-4" />
-											{item.name}
-										</Link>
-									)
-								})}
-							</div>
-						)}
-					</div>
-				) : (
-					// Versión expandida: collapsible normal
-					<Collapsible open={gastosOpen} onOpenChange={setGastosOpen}>
-						<CollapsibleTrigger asChild>
-							<button
-								className={cn(
-									"w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
-									isGastosActive
-										? "bg-muted text-foreground"
-										: "text-muted-foreground hover:bg-muted hover:text-foreground",
-								)}
-							>
-								<div className="flex items-center gap-3">
-									<FileText className="w-5 h-5 flex-shrink-0" />
-									<span>Gastos</span>
-								</div>
-								<ChevronDown
-									className={cn(
-										"w-4 h-4 transition-transform",
-										gastosOpen && "rotate-180"
-									)}
-								/>
-							</button>
-						</CollapsibleTrigger>
-						<CollapsibleContent className="pl-4">
-							{gastosSubmenu.map((item) => {
-								const Icon = item.icon
-								const isActive = pathname === item.href
-
-								return (
-									<Link
-										key={item.name}
-										href={item.href}
-										className={cn(
-											"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1",
-											isActive
-												? "bg-muted text-foreground"
-												: "text-muted-foreground hover:bg-muted hover:text-foreground",
-										)}
-									>
-										<Icon className="w-4 h-4" />
-										{item.name}
-									</Link>
-								)
-							})}
-						</CollapsibleContent>
-					</Collapsible>
-				)}
-			</nav>
-
-			{/* Sección de usuario en la parte inferior */}
-			<div className="mt-auto border-t border-sidebar-border p-3">
-				<div className={cn("mb-2 flex justify-center", !isCollapsed && "justify-start px-3")}>
-					<ModeToggle />
-				</div>
-				
-				{session?.user && !isCollapsed && (
-					<div className="px-3 py-2 mb-2">
-						<p className="text-sm font-medium text-foreground">{session.user.name}</p>
-						<p className="text-xs text-muted-foreground">{session.user.email}</p>
-					</div>
-				)}
-				
-				<button
-					onClick={handleLogout}
-					className={cn(
-						"w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-						"text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20",
-						isCollapsed && "justify-center"
-					)}
-					title={isCollapsed ? "Cerrar Sesión" : undefined}
-				>
-					<LogOut className="w-5 h-5 flex-shrink-0" />
-					{!isCollapsed && <span>Cerrar Sesión</span>}
-				</button>
-			</div>
-		</div>
+			{content}
+		</aside>
 	)
 }

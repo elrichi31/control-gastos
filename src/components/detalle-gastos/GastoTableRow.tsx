@@ -37,8 +37,8 @@ export function GastoTableRow({
   }
 
   return (
-    <TableRow className="hover:bg-muted/60">
-      <TableCell className="font-medium px-4 py-4 w-[180px] min-w-[180px]">
+    <TableRow>
+      <TableCell className="font-medium px-4 py-3 w-[180px] min-w-[180px]">
         <div 
           className="text-sm break-words pr-2 text-foreground"
           title={gasto.descripcion}
@@ -47,7 +47,7 @@ export function GastoTableRow({
         </div>
         <ExpenseTags tags={gasto.tags} />
       </TableCell>
-      <TableCell className="px-3 py-4 w-[140px] min-w-[140px]">
+      <TableCell className="px-3 py-3 w-[140px] min-w-[140px]">
         <Badge 
           variant="secondary" 
           className={`border font-normal ${getCategoriaColor(gasto.categoria?.nombre)} truncate max-w-full`}
@@ -55,7 +55,7 @@ export function GastoTableRow({
           {gasto.categoria?.nombre || 'Otros'}
         </Badge>
       </TableCell>
-      <TableCell className="px-3 py-4 w-[150px] min-w-[150px]">
+      <TableCell className="px-3 py-3 w-[150px] min-w-[150px]">
         <div className="flex items-center gap-2 min-w-0 text-muted-foreground">
           <div className="flex-shrink-0">
             {getPaymentMethodIcon(gasto.metodo_pago?.nombre || '')}
@@ -65,23 +65,23 @@ export function GastoTableRow({
           </span>
         </div>
       </TableCell>
-      <TableCell className="px-3 py-4 w-[100px] min-w-[100px]">
+      <TableCell className="px-3 py-3 w-[100px] min-w-[100px]">
         <span className="text-xs whitespace-nowrap text-muted-foreground">
           {formatDate(gasto.fecha)}
         </span>
       </TableCell>
-      <TableCell className="text-right font-medium text-foreground tabular-nums px-3 py-4 w-[100px] min-w-[100px]">
+      <TableCell className="text-right font-medium text-foreground tabular-nums px-3 py-3 w-[100px] min-w-[100px]">
         <span className="text-sm whitespace-nowrap">
           {formatMoney(gasto.monto)}
         </span>
       </TableCell>
-      <TableCell className="text-center px-3 py-4 w-[80px] min-w-[80px]">
+      <TableCell className="text-center px-3 py-3 w-[80px] min-w-[80px]">
         <Button
           size="sm"
           onClick={() => onDeleteGasto(gasto.id.toString())}
           variant="ghost"
           aria-label={`Eliminar gasto: ${gasto.descripcion}`}
-          className="text-destructive hover:text-destructive hover:bg-destructive/10 p-0 h-8 w-8"
+          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-0 h-8 w-8"
         >
           <Trash2 className="h-4 w-4" />
         </Button>

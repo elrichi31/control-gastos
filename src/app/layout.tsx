@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { Sidebar } from "@/components/Sidebar"
-import { MobileHeader } from "@/components/MobileHeader"
+import { TopBar } from "@/components/TopBar"
 import { PageTitle } from "@/components/PageTitle"
 import { Providers } from "@/components/Providers"
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt"
@@ -32,7 +32,7 @@ export default function RootLayout({
   const getMainMargin = () => {
     if (isMobile) return "ml-0"
     if (isCollapsed) return "lg:ml-16"
-    return "lg:ml-64"
+    return "lg:ml-60"
   }
 
   return (
@@ -45,7 +45,7 @@ export default function RootLayout({
         <meta name="description" content="Aplicación para el control y gestión de gastos personales" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#0c0c0d" media="(prefers-color-scheme: dark)" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
@@ -72,8 +72,8 @@ export default function RootLayout({
                 onToggleCollapse={toggleCollapse}
               />
 
-              <div className={cn("flex-1 transition-all duration-300 ease-in-out", getMainMargin())}>
-                <MobileHeader onMenuClick={toggle} isMobile={isMobile} />
+              <div className={cn("min-w-0 flex-1 transition-all duration-300 ease-in-out", getMainMargin())}>
+                <TopBar onMenuClick={toggle} isMobile={isMobile} />
                 <main className="bg-background min-h-screen">{children}</main>
               </div>
             </div>

@@ -29,8 +29,8 @@ test('page shell owns responsive width and spacing', () => {
   const html = render(PageShell, { children: React.createElement(PageHeader, {
     title: 'Detalle de gastos', description: 'Historial', actions: React.createElement('button', null, 'Exportar'),
   }) })
-  assert.match(html, /max-w-5xl/)
-  assert.match(html, /sm:py-8/)
+  assert.match(html, /max-w-7xl/)
+  assert.match(html, /sm:py-6/)
   assert.match(html, /<h1 class="[^"]*font-semibold[^"]*tracking-tight/)
   assert.match(html, /sm:flex-row/)
   assert.match(html, /Exportar/)
@@ -74,6 +74,6 @@ test('desktop expense badge uses the dashboard category palette', () => {
 test('card heading defaults match dashboard section hierarchy', () => {
   const { CardTitle } = load('components/ui/card.tsx')
   const html = render(CardTitle, { children: 'Filtros' })
-  assert.match(html, /text-base font-semibold/)
+  assert.match(html, /text-sm font-semibold/)
   assert.doesNotMatch(html, /text-2xl/)
 })

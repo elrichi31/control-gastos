@@ -81,7 +81,7 @@ export default function LoginPage() {
         {/* Logo and Theme Toggle */}
         <div className="absolute top-6 left-6 sm:left-8 lg:left-16 xl:left-24 flex items-center gap-4">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="p-2 rounded-lg bg-blue-500 text-white group-hover:bg-blue-600 transition-colors">
+            <div className="p-2 rounded-lg bg-primary text-primary-foreground group-hover:bg-primary/90 transition-colors">
               <Wallet className="w-5 h-5" />
             </div>
             <span className="text-lg font-semibold text-foreground">
@@ -207,11 +207,11 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Decorative */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary via-primary to-[hsl(141_45%_26%)]">
         {/* Subtle Background Pattern */}
         <div className="absolute inset-0">
           <div className="absolute top-1/4 -left-20 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-indigo-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
         </div>
 
         {/* Content */}

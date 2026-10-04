@@ -180,11 +180,11 @@ export function StatsFilterWidget({ onFiltersChange }: StatsFilterWidgetProps) {
         {/* Active Filter Tag */}
         {filters.filterType !== "all" && activeLabel && (
           <div className="flex items-center ml-auto md:ml-0">
-            <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1.5 text-sm font-normal bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-100 hover:bg-blue-100 dark:hover:bg-blue-900/40 border-blue-200 dark:border-blue-800">
+            <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1.5 text-sm font-normal bg-primary/10 text-primary border-primary/25">
               {activeLabel}
               <button
                 onClick={clearFilters}
-                className="ml-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5 transition-colors"
+                className="ml-1 hover:bg-primary/20 rounded-full p-0.5 transition-colors"
               >
                 <X className="h-3 w-3" />
                 <span className="sr-only">Eliminar filtro</span>
