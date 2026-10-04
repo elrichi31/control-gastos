@@ -1,10 +1,12 @@
-import { Tag, Calendar, CreditCard, Trash2, Repeat } from "lucide-react"
+import { Tag, Calendar, CreditCard, Trash2, Repeat, Pencil } from "lucide-react"
 import { Gasto } from "@/hooks/useGastosFiltrados"
 import { Badge } from "@/components/ui/badge"
 import { formatDisplayDate } from "@/lib/utils"
 import { getCategoriaColor } from "@/lib/constants"
 import { useState } from "react"
 import { ConfirmModal } from "./ConfirmModal"
+import { ExpenseTags } from "./ExpenseTags"
+import { EditExpenseDialog } from "./EditExpenseDialog"
 import { DeleteRecurringExpenseModal } from "./DeleteRecurringExpenseModal"
 import { getRecurringExpenseId, deleteExpense, deactivateRecurringExpense } from "@/services/expenses"
 import toast from "react-hot-toast"
@@ -12,14 +14,16 @@ import toast from "react-hot-toast"
 type Props = {
   expense: Gasto
   onDelete: (id: string) => void
+  onUpdated?: () => void | Promise<void>
   showDeleteIcon?: boolean // Opcional, por defecto será false
 }
 
-export function ExpenseItem({ expense, onDelete, showDeleteIcon = false }: Props) {
+export function ExpenseItem({ expense, onDelete, onUpdated, showDeleteIcon = false }: Props) {
   const [showRecurringModal, setShowRecurringModal] = useState(false)
   const [showSimpleModal, setShowSimpleModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDeleted, setIsDeleted] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
 
   const handleDeleteClick = () => {
     if (expense.is_recurrent) {
@@ -101,17 +105,31 @@ export function ExpenseItem({ expense, onDelete, showDeleteIcon = false }: Props
                   Recurrente
                 </Badge>
               )}
+              <ExpenseTags tags={expense.tags} className="" />
             </div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <span className="font-medium text-sm text-foreground tabular-nums">
               ${expense.monto.toFixed(2)}
             </span>
+            {onUpdated && (
+              <button
+                type="button"
+                onClick={() => setShowEdit(true)}
+                className="relative h-6 w-6 grid place-items-center rounded text-muted-foreground after:absolute after:-inset-2 after:content-[''] transition-[opacity,color,background-color,scale] duration-150 ease-out active:scale-90 motion-reduce:active:scale-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100 focus-visible:opacity-100 hover:bg-muted hover:text-foreground"
+                title="Editar"
+                aria-label={`Editar ${expense.descripcion}`}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            )}
             {showDeleteIcon && (
               <button
+                type="button"
                 onClick={handleDeleteClick}
-                className="h-6 w-6 grid place-items-center rounded text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 hover:text-destructive hover:bg-muted transition-all"
+                className="relative h-6 w-6 grid place-items-center rounded text-muted-foreground after:absolute after:-inset-2 after:content-[''] transition-[opacity,color,background-color,scale] duration-150 ease-out active:scale-90 motion-reduce:active:scale-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100 focus-visible:opacity-100 hover:bg-muted hover:text-destructive"
                 title="Eliminar"
+                aria-label={`Eliminar ${expense.descripcion}`}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -129,6 +147,8 @@ export function ExpenseItem({ expense, onDelete, showDeleteIcon = false }: Props
           </span>
         </div>
       </div>
+
+      {onUpdated && <EditExpenseDialog expense={expense} open={showEdit} onOpenChange={setShowEdit} onSaved={onUpdated} />}
 
       {/* Modal para gastos recurrentes */}
       <DeleteRecurringExpenseModal

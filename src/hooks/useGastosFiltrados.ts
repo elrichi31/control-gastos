@@ -11,6 +11,7 @@ export interface Gasto {
   categoria: { id: number; nombre: string }
   metodo_pago?: { id: number; nombre: string }
   is_recurrent?: boolean
+  tags?: string[]
 }
 
 export function useGastosFiltrados() {

@@ -24,7 +24,16 @@ export function ExpenseTagsField({ value, onChange, error }: { value: string; on
   )
 }
 
-export function ExpenseTags({ tags }: { tags?: readonly string[] }) {
+// Quiet chips on purpose: the colored category pill stays the primary signal, tags are a secondary layer.
+export function ExpenseTags({ tags, className = "mt-1.5" }: { tags?: readonly string[]; className?: string }) {
   if (!tags?.length) return null
-  return <div aria-label="Etiquetas" className="mt-1.5 flex flex-wrap gap-1">{tags.map(tag => <Badge key={tag} variant="secondary" className="font-normal text-xs break-all max-w-full">#{tag}</Badge>)}</div>
+  return (
+    <ul aria-label="Etiquetas" className={`flex flex-wrap gap-1 min-w-0 ${className}`}>
+      {tags.map(tag => (
+        <li key={tag} className="inline-flex max-w-full items-center rounded-md border border-border bg-muted/40 px-1.5 py-px text-[11px] leading-4 text-muted-foreground break-all">
+          #{tag}
+        </li>
+      ))}
+    </ul>
+  )
 }

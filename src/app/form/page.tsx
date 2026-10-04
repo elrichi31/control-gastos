@@ -27,7 +27,8 @@ function gastoToExpense(gasto: Gasto): Expense {
     metodo_pago_id: gasto.metodo_pago?.id || 1,
     categoria: gasto.categoria,
     metodo_pago: gasto.metodo_pago || DEFAULT_METODO_PAGO,
-    is_recurrent: gasto.is_recurrent // ✅ Preservar is_recurrent
+    is_recurrent: gasto.is_recurrent, // ✅ Preservar is_recurrent
+    tags: gasto.tags
   }
 }
 
@@ -128,6 +129,7 @@ function ExpenseTracker() {
                 groupedExpenses={groupedExpenses}
                 isLoading={loading}
                 onDelete={handleDeleteExpense}
+                onUpdated={refreshExpenses}
                 groupBy={groupBy}
               />
             </CardContent>

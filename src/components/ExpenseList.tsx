@@ -6,6 +6,7 @@ type Props = {
   groupedExpenses: Record<string, Gasto[]>
   isLoading: boolean
   onDelete: (id: string) => void
+  onUpdated?: () => void | Promise<void>
   groupBy: "dia" | "semana" | "mes"
 }
 
@@ -47,7 +48,7 @@ function formatGroupTitle(key: string, groupBy: "dia" | "semana" | "mes"): strin
   return key
 }
 
-export function ExpenseList({ groupedExpenses, isLoading, onDelete, groupBy }: Props) {
+export function ExpenseList({ groupedExpenses, isLoading, onDelete, onUpdated, groupBy }: Props) {
   const groupKeys = Object.keys(groupedExpenses).sort((a, b) => {
     const extractDate = (key: string) => {
       if (groupBy === "semana") return parseISO(key.split("::")[0])
@@ -79,6 +80,7 @@ export function ExpenseList({ groupedExpenses, isLoading, onDelete, groupBy }: P
                 key={expense.id}
                 expense={expense}
                 onDelete={onDelete}
+                onUpdated={onUpdated}
                 showDeleteIcon={true}
               />
             ))}
