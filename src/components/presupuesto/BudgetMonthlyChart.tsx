@@ -34,7 +34,7 @@ export function BudgetMonthlyChart({ monthlyData, activeMonths, year }: {
           </div>
         ) : <p className="py-8 text-center text-sm text-muted-foreground">Todavía no hay montos disponibles para este año.</p>}
         <details className="mt-3 text-xs text-muted-foreground">
-          <summary className="cursor-pointer w-fit rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Ver montos por mes</summary>
+          <summary className="cursor-pointer w-fit rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring">Ver montos por mes</summary>
           <dl className="mt-3 grid grid-cols-1 min-[360px]:grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2">
             {data.map(point => <div key={point.month} className="flex justify-between gap-3"><dt>{point.month}</dt><dd className="tabular-nums text-foreground">{point.amount === null ? 'Sin datos' : formatMoney(point.amount)}</dd></div>)}
           </dl>

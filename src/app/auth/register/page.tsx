@@ -92,7 +92,7 @@ export default function RegisterPage() {
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center items-center p-12 w-full">
           <div className="text-center max-w-md">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-lg mb-8 border border-white/20">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-xs rounded-lg mb-8 border border-white/20">
               <Wallet className="w-8 h-8 text-white" />
             </div>
 
@@ -105,7 +105,7 @@ export default function RegisterPage() {
             </p>
 
             {/* Tips */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20 text-left">
+            <div className="bg-white/10 backdrop-blur-xs rounded-lg p-6 border border-white/20 text-left">
               <p className="text-white/60 text-xs uppercase tracking-wider mb-4">💡 Tip para empezar</p>
               <p className="text-white text-sm leading-relaxed">
                 Comienza registrando tus gastos del día a día. No necesitas ser perfecto, solo constante. Con el tiempo verás patrones que te ayudarán a ahorrar.

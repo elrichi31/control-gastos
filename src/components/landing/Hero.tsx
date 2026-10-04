@@ -228,7 +228,7 @@ export function Hero() {
       {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-white/5 border border-blue-100 dark:border-white/10 backdrop-blur-sm mb-8 animate-fade-in">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-white/5 border border-blue-100 dark:border-white/10 backdrop-blur-xs mb-8 animate-fade-in">
           <Sparkles className="w-4 h-4 text-blue-500 dark:text-blue-400" />
           <span className="text-sm text-blue-600 dark:text-blue-300 font-medium">
             Simple, intuitivo y poderoso
@@ -270,7 +270,7 @@ export function Hero() {
             <Button 
               variant="outline" 
               size="lg" 
-              className="text-gray-700 dark:text-gray-300 border-gray-300 dark:border-white/20 hover:bg-gray-100 dark:hover:bg-white/10 hover:border-gray-400 dark:hover:border-white/30 text-lg px-8 py-6 rounded-xl backdrop-blur-sm"
+              className="text-gray-700 dark:text-gray-300 border-gray-300 dark:border-white/20 hover:bg-gray-100 dark:hover:bg-white/10 hover:border-gray-400 dark:hover:border-white/30 text-lg px-8 py-6 rounded-xl backdrop-blur-xs"
             >
               Conocer más
             </Button>
@@ -279,19 +279,19 @@ export function Hero() {
 
         {/* Feature highlights (responsive: stacked on small screens, compact cards) */}
         <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 animate-fade-in animation-delay-500">
-          <div className="w-full flex items-center gap-3 px-3 py-3 sm:px-4 sm:py-4 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-sm shadow-sm dark:shadow-none">
+          <div className="w-full flex items-center gap-3 px-3 py-3 sm:px-4 sm:py-4 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-xs shadow-xs dark:shadow-none">
             <div className="p-2 rounded-lg bg-green-100 dark:bg-green-500/20 flex-shrink-0">
               <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
             </div>
             <span className="text-gray-700 dark:text-gray-300 font-medium min-w-0 truncate">Seguimiento en tiempo real</span>
           </div>
-          <div className="w-full flex items-center gap-3 px-3 py-3 sm:px-4 sm:py-4 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-sm shadow-sm dark:shadow-none">
+          <div className="w-full flex items-center gap-3 px-3 py-3 sm:px-4 sm:py-4 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-xs shadow-xs dark:shadow-none">
             <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex-shrink-0">
               <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <span className="text-gray-700 dark:text-gray-300 font-medium min-w-0 truncate">100% Gratis</span>
           </div>
-          <div className="w-full flex items-center gap-3 px-3 py-3 sm:px-4 sm:py-4 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-sm shadow-sm dark:shadow-none">
+          <div className="w-full flex items-center gap-3 px-3 py-3 sm:px-4 sm:py-4 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-xs shadow-xs dark:shadow-none">
             <div className="p-2 rounded-lg bg-sky-100 dark:bg-sky-500/20 flex-shrink-0">
               <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-sky-600 dark:text-sky-400" />
             </div>

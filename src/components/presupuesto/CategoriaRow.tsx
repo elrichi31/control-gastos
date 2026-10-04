@@ -52,7 +52,7 @@ export const CategoriaRow: React.FC<Props> = ({
       <div className="group flex items-center gap-3 px-4 sm:px-5 py-3 hover:bg-muted/40 transition-colors">
         <button
           onClick={() => setAbierto(v => !v)}
-          className="flex-1 min-w-0 flex items-center gap-3 text-left rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex-1 min-w-0 flex items-center gap-3 text-left rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
           aria-expanded={abierto}
         >
           <ChevronRight

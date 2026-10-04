@@ -14,7 +14,7 @@ export function AddMonthCard({ availableMonths, isOpen, setIsOpen, onAdd }: AddM
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {/* Misma altura que una MonthCard para que la cuadrícula no se descuadre */}
-        <button className="flex flex-col items-center justify-center gap-2 min-h-[124px] w-full rounded-xl border border-dashed border-border bg-muted/30 p-4 text-center transition-colors hover:bg-muted/60 hover:border-muted-foreground/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <button className="flex flex-col items-center justify-center gap-2 min-h-[124px] w-full rounded-xl border border-dashed border-border bg-muted/30 p-4 text-center transition-colors hover:bg-muted/60 hover:border-muted-foreground/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring">
           <Plus className="w-5 h-5 text-muted-foreground" />
           <span className="text-sm font-medium text-muted-foreground">Agregar mes</span>
         </button>

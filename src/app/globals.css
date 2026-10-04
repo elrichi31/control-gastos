@@ -1,6 +1,121 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+/* Tailwind 4 reading the v3 JS config (colors, radii, tailwindcss-animate) unchanged. */
+@config "../../tailwind.config.ts";
+
+/* Tailwind 3 palette for the shades this app uses: v4 redrew them in oklch (more
+   saturated, red-600 shifts visibly). Delete this block to adopt the v4 colors. */
+@theme {
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #171717;
+  --color-neutral-950: #0a0a0a;
+  --color-red-50: #fef2f2;
+  --color-red-100: #fee2e2;
+  --color-red-200: #fecaca;
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  --color-red-800: #991b1b;
+  --color-red-900: #7f1d1d;
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-500: #f97316;
+  --color-orange-600: #ea580c;
+  --color-orange-800: #9a3412;
+  --color-orange-900: #7c2d12;
+  --color-yellow-100: #fef9c3;
+  --color-yellow-500: #eab308;
+  --color-yellow-800: #854d0e;
+  --color-green-50: #f0fdf4;
+  --color-green-100: #dcfce7;
+  --color-green-400: #4ade80;
+  --color-green-500: #22c55e;
+  --color-green-600: #16a34a;
+  --color-green-800: #166534;
+  --color-green-900: #14532d;
+  --color-emerald-500: #10b981;
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+  --color-teal-900: #134e4a;
+  --color-cyan-400: #22d3ee;
+  --color-cyan-500: #06b6d4;
+  --color-sky-100: #e0f2fe;
+  --color-sky-400: #38bdf8;
+  --color-sky-500: #0ea5e9;
+  --color-sky-600: #0284c7;
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-800: #1e40af;
+  --color-blue-900: #1e3a8a;
+  --color-indigo-50: #eef2ff;
+  --color-indigo-100: #e0e7ff;
+  --color-indigo-400: #818cf8;
+  --color-indigo-500: #6366f1;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-900: #312e81;
+  --color-purple-50: #faf5ff;
+  --color-purple-100: #f3e8ff;
+  --color-purple-500: #a855f7;
+  --color-purple-800: #6b21a8;
+  --color-purple-900: #581c87;
+  --color-pink-100: #fce7f3;
+  --color-pink-800: #9d174d;
+}
+
+/* v3 space-x/y: margin on every child after the first. v4 puts margin-bottom on every
+   child but the last, which an inline first child (a <label>) silently ignores, so
+   label/input gaps collapsed. */
+@utility space-y-* {
+  & > :not([hidden]) ~ :not([hidden]) {
+    margin-top: calc(var(--spacing) * --value(number));
+    margin-bottom: 0;
+  }
+}
+@utility space-x-* {
+  & > :not([hidden]) ~ :not([hidden]) {
+    margin-left: calc(var(--spacing) * --value(number));
+    margin-right: 0;
+  }
+}
+/* Cancel v4's own space-x/y margin (also zero specificity, emitted earlier). A child's
+   own mb-*/mr-* utility still wins, as in v3. */
+@layer utilities {
+  :where([class*="space-y-"] > *) { margin-block-end: 0; }
+  :where([class*="space-x-"] > *) { margin-inline-end: 0; }
+}
+
+/* v3 preflight behaviours that v4 dropped, kept so the UI does not shift. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #9ca3af;
+  }
+}
 
 /* ========================================
    Design tokens — paleta Notion
@@ -341,11 +456,12 @@
     animation-delay: 4000ms;
   }
 
-  /* Glass effect */
+  /* Glass effect. The unprefixed backdrop-filter goes last: Tailwind 4's minifier
+     keeps only the final declaration of the pair. */
   .glass {
     background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.3);
   }
 
@@ -356,8 +472,8 @@
 
   .glass-strong {
     background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
+    backdrop-filter: blur(30px);
     border: 1px solid rgba(255, 255, 255, 0.4);
   }
 

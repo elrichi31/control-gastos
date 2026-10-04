@@ -8,7 +8,7 @@ import { formatDateWithLocale, formatMoney } from '@/lib/utils'
 import type { MonthPlan, PlanAlert } from '@/lib/month-planning'
 
 type PlanningProps = { plan: MonthPlan; loading: boolean; error: string | null; onRetry?: () => void }
-const linkStyle = 'text-xs text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+const linkStyle = 'text-xs text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 
 export function MonthPlanningSummary({ plan, loading, error, onRetry }: PlanningProps) {
   if (loading || error) return (

@@ -30,7 +30,7 @@ export function MonthCard({ month, data, isCurrentMonth, onRemove }: MonthCardPr
     <div className="group relative">
       <Link
         href={`/presupuesto/${data.id}?mes=${encodeURIComponent(month.name)}`}
-        className={`block rounded-xl border p-4 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${actual ? "border-primary/40 bg-primary/5" : "border-border bg-card"}`}
+        className={`block rounded-xl border p-4 transition-colors hover:bg-muted/50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring ${actual ? "border-primary/40 bg-primary/5" : "border-border bg-card"}`}
       >
         <div className={`flex flex-wrap items-center justify-between gap-2 mb-4 ${canRemove ? "pr-10" : ""}`}>
           <h3 className="inline-flex items-center gap-2 font-medium text-foreground"><CalendarDays aria-hidden="true" className={`h-4 w-4 ${actual ? "text-primary" : "text-muted-foreground"}`} />{month.name}</h3>
@@ -57,7 +57,7 @@ export function MonthCard({ month, data, isCurrentMonth, onRemove }: MonthCardPr
       </Link>
       {canRemove && (
         <button type="button" onClick={() => onRemove(month.value)} aria-label={`Quitar ${month.name}`} title={`Quitar ${month.name}`}
-          className="absolute top-2 right-2 h-11 w-11 grid place-items-center rounded-md text-muted-foreground hover:text-destructive hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors">
+          className="absolute top-2 right-2 h-11 w-11 grid place-items-center rounded-md text-muted-foreground hover:text-destructive hover:bg-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring transition-colors">
           <X aria-hidden="true" className="w-4 h-4" />
         </button>
       )}

@@ -218,7 +218,7 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-center items-center p-12 w-full">
           {/* Main Message */}
           <div className="text-center max-w-md">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-lg mb-8 border border-white/20">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-xs rounded-lg mb-8 border border-white/20">
               <Wallet className="w-8 h-8 text-white" />
             </div>
             

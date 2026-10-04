@@ -1,7 +1,8 @@
 import type { Config } from "tailwindcss";
+import animate from "tailwindcss-animate";
 
 export default {
-    darkMode: ["class"],
+    darkMode: "class",
     content: [
     // Un solo glob sobre src/: las listas de clases tambien viven en
     // src/lib/constants y src/types, que antes no se escaneaban.
@@ -88,5 +89,5 @@ export default {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [animate],
 } satisfies Config;

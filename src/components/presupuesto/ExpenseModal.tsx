@@ -46,7 +46,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="mt-1 block w-full border border-border bg-card text-foreground rounded-md focus:ring focus:ring-blue-500 focus:outline-none px-3 py-2"
+                className="mt-1 block w-full border border-border bg-card text-foreground rounded-md focus:ring-3 focus:ring-blue-500 focus:outline-hidden px-3 py-2"
                 placeholder="Ej. Compra en supermercado"
               />
             </div>
@@ -56,7 +56,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 type="number"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                className="mt-1 block w-full border border-border bg-card text-foreground rounded-md focus:ring focus:ring-blue-500 focus:outline-none px-3 py-2"
+                className="mt-1 block w-full border border-border bg-card text-foreground rounded-md focus:ring-3 focus:ring-blue-500 focus:outline-hidden px-3 py-2"
                 placeholder="Ej. 150.00"
                 step="0.01"
               />
@@ -67,7 +67,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 type="date"
                 value={formData.paymentDate}
                 onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
-                className="mt-1 block w-full border border-border bg-card text-foreground rounded-md focus:ring focus:ring-blue-500 focus:outline-none px-3 py-2"
+                className="mt-1 block w-full border border-border bg-card text-foreground rounded-md focus:ring-3 focus:ring-blue-500 focus:outline-hidden px-3 py-2"
               />
             </div>
             {/* El selector de categoría se elimina, ya que la categoría se define al abrir el modal */}
@@ -76,7 +76,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({
               <select
                 value={formData.metodoPago}
                 onChange={(e) => setFormData({ ...formData, metodoPago: e.target.value })}
-                className="mt-1 block w-full border border-border bg-card text-foreground rounded-md focus:ring focus:ring-blue-500 focus:outline-none px-3 py-2"
+                className="mt-1 block w-full border border-border bg-card text-foreground rounded-md focus:ring-3 focus:ring-blue-500 focus:outline-hidden px-3 py-2"
               >
                 <option value="">Selecciona un método de pago</option>
                 {metodosPago.map((metodo) => (
