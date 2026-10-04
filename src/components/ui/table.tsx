@@ -6,7 +6,8 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
+  // Alto fijo: la tabla scrollea por dentro y el encabezado queda pegado arriba.
+  <div className="relative w-full max-h-[min(70vh,640px)] overflow-auto overscroll-contain">
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-[13px]", className)}
@@ -20,7 +21,7 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props} />
+  <thead ref={ref} className={cn("sticky top-0 z-10 bg-card shadow-[inset_0_-1px_0_hsl(var(--border))]", className)} {...props} />
 ))
 TableHeader.displayName = "TableHeader"
 

@@ -88,10 +88,7 @@ function ExpenseTracker() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-7">
           <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold">Registrar gasto</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-5">
               <Tabs defaultValue={tabInicial} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-5">
                   <TabsTrigger value="normal">Normal</TabsTrigger>

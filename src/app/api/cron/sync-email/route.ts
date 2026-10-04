@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { timingSafeEqual } from 'node:crypto'
 import { createServiceClient } from '@/lib/database/service'
 import { isMissingMigration, syncYahoo, yahooImportUserId } from '@/lib/email-sync'
+import { recordCronRun } from '@/lib/cron-runs'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -27,8 +28,10 @@ export async function GET(request: Request) {
   const result = await syncYahoo(supabase, userId, new Date(Date.now() - WINDOW_DAYS * 86_400_000))
   if (!result.ok) {
     console.error('[email-cron] sync failed', { error: result.error, code: result.code })
+    await recordCronRun(supabase, 'sync-email', false)
     const missing = isMissingMigration(result.code)
     return NextResponse.json({ error: missing ? 'Faltan las migraciones de importación de correo' : result.db ? 'No se pudo sincronizar' : result.error }, { status: missing ? 503 : result.status })
   }
+  await recordCronRun(supabase, 'sync-email', true, { nuevos: result.nuevos })
   return NextResponse.json({ nuevos: result.nuevos })
 }

@@ -5,11 +5,10 @@ import { LoaderCircle } from "lucide-react"
 import toast from "react-hot-toast"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ExpenseTagsField } from '@/components/ExpenseTags'
 import { parseExpenseTags } from '@/lib/expense-tags'
+import { getCategoriaColor } from '@/lib/constants'
 import { createExpense } from "@/services/expenses"
 import { fetchCategories, type Category } from "@/services/categories"
 import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
@@ -113,50 +112,78 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
       {!optionsLoading && !optionsError && !ready && <p role="alert" className="text-sm text-muted-foreground">Necesitas al menos una categoría y un método de pago para registrar gastos.</p>}
       {submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}
       <fieldset disabled={isSubmitting} className="space-y-5 min-w-0">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2 min-w-0">
-            <Label htmlFor="amount">Monto (USD) <span className="text-destructive">*</span></Label>
-            <div className="relative"><span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-              <Input ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : undefined} className={`pl-7 h-11 text-base tabular-nums ${errors.amount ? 'border-destructive' : ''}`} />
-            </div>{fieldError('amount')}
+        <div className="rounded-xl border bg-muted/30 px-4 py-4 text-center">
+          <Label htmlFor="amount" className="text-xs font-normal text-muted-foreground">Monto (USD) <span className="text-destructive">*</span></Label>
+          <div className="mt-1 flex items-baseline justify-center gap-1">
+            <span aria-hidden="true" className="text-3xl font-semibold text-muted-foreground">$</span>
+            <Input ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : undefined} className="h-14 w-40 border-0 bg-transparent px-0 text-left text-4xl md:text-4xl font-semibold tracking-tight tabular-nums shadow-none focus-visible:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
           </div>
-          <div className="space-y-2 min-w-0">
+          {fieldError('amount')}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_11rem] gap-4">
+          <div className="space-y-1.5 min-w-0">
+            <Label htmlFor="description">Descripción <span className="text-destructive">*</span></Label>
+            <Input id="description" placeholder="Ej. Almuerzo, gasolina, supermercado" value={formData.description} onChange={e => change('description', e.target.value)} aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? 'description-error' : undefined} className={`text-base sm:text-[13px] ${errors.description ? 'border-destructive' : ''}`} />
+            {fieldError('description')}
+          </div>
+          <div className="space-y-1.5 min-w-0">
             <Label htmlFor="date">Fecha <span className="text-destructive">*</span></Label>
-            <Input id="date" type="date" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className={`h-11 text-base sm:text-sm min-w-0 dark:[color-scheme:dark] ${errors.date ? 'border-destructive' : ''}`} />
+            <Input id="date" type="date" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className={`text-base sm:text-[13px] min-w-0 dark:[color-scheme:dark] ${errors.date ? 'border-destructive' : ''}`} />
             {fieldError('date')}
           </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="description">Descripción <span className="text-destructive">*</span></Label>
-          <Textarea id="description" placeholder="Ej. Almuerzo, gasolina, supermercado" value={formData.description} onChange={e => change('description', e.target.value)} aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? 'description-error' : undefined} rows={2} className={`min-h-[72px] text-base sm:text-sm ${errors.description ? 'border-destructive' : ''}`} />
-          {fieldError('description')}
+
+        <div className="space-y-1.5 min-w-0">
+          <p id="category-label" className="text-sm font-medium">Categoría <span className="text-destructive">*</span></p>
+          <ChipGroup id="category" labelledBy="category-label" value={selection.categoryId} onChange={value => change('categoryId', value)} invalid={Boolean(errors.categoryId)} describedBy={errors.categoryId ? 'categoryId-error' : suggestedCategory ? 'category-suggestion' : undefined}
+            options={categories.map(cat => ({ value: String(cat.id), label: cat.nombre, color: getCategoriaColor(cat.nombre) }))} />
+          {suggestedCategory && <p id="category-suggestion" className="text-muted-foreground text-xs" role="status">Sugerida por tu historial. Puedes cambiarla.</p>}
+          {fieldError('categoryId')}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2 min-w-0">
-            <Label htmlFor="category">Categoría <span className="text-destructive">*</span></Label>
-            <Select value={selection.categoryId} disabled={optionsLoading || Boolean(optionsError)} onValueChange={value => change('categoryId', value)}>
-              <SelectTrigger id="category" aria-invalid={Boolean(errors.categoryId)} aria-describedby={errors.categoryId ? 'categoryId-error' : suggestedCategory ? 'category-suggestion' : undefined} className={`h-11 ${errors.categoryId ? 'border-destructive' : ''}`}><SelectValue placeholder="Selecciona categoría" /></SelectTrigger>
-              <SelectContent>{categories.map(cat => <SelectItem key={cat.id} value={String(cat.id)}>{cat.nombre}</SelectItem>)}</SelectContent>
-            </Select>
-            {suggestedCategory && <p id="category-suggestion" className="text-muted-foreground text-xs" role="status">Sugerida por tu historial. Puedes cambiarla.</p>}
-            {fieldError('categoryId')}
-          </div>
-          <div className="space-y-2 min-w-0">
-            <Label htmlFor="paymentMethod">Método de pago <span className="text-destructive">*</span></Label>
-            <Select value={selection.paymentMethodId} disabled={optionsLoading || Boolean(optionsError)} onValueChange={value => change('paymentMethodId', value)}>
-              <SelectTrigger id="paymentMethod" aria-invalid={Boolean(errors.paymentMethodId)} aria-describedby={errors.paymentMethodId ? 'paymentMethodId-error' : suggestedPayment ? 'payment-suggestion' : undefined} className={`h-11 ${errors.paymentMethodId ? 'border-destructive' : ''}`}><SelectValue placeholder="¿Cómo pagaste?" /></SelectTrigger>
-              <SelectContent>{paymentMethods.map(method => <SelectItem key={method.id} value={String(method.id)}>{method.nombre}</SelectItem>)}</SelectContent>
-            </Select>
-            {suggestedPayment && <p id="payment-suggestion" className="text-muted-foreground text-xs" role="status">Sugerido por tu historial. Puedes cambiarlo.</p>}
-            {fieldError('paymentMethodId')}
-          </div>
+
+        <div className="space-y-1.5 min-w-0">
+          <p id="paymentMethod-label" className="text-sm font-medium">Método de pago <span className="text-destructive">*</span></p>
+          <ChipGroup id="paymentMethod" labelledBy="paymentMethod-label" value={selection.paymentMethodId} onChange={value => change('paymentMethodId', value)} invalid={Boolean(errors.paymentMethodId)} describedBy={errors.paymentMethodId ? 'paymentMethodId-error' : suggestedPayment ? 'payment-suggestion' : undefined}
+            options={paymentMethods.map(method => ({ value: String(method.id), label: method.nombre }))} />
+          {suggestedPayment && <p id="payment-suggestion" className="text-muted-foreground text-xs" role="status">Sugerido por tu historial. Puedes cambiarlo.</p>}
+          {fieldError('paymentMethodId')}
         </div>
+
         <ExpenseTagsField value={formData.tags} onChange={value => change("tags", value)} error={errors.tags} />
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Button type="submit" value="save" disabled={!ready || isSubmitting} className="h-11 flex-1">{isSubmitting ? <><LoaderCircle aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />Guardando…</> : 'Guardar gasto'}</Button>
-          <Button type="submit" value="another" variant="outline" disabled={!ready || isSubmitting} className="h-11 flex-1">Guardar y agregar otro</Button>
+        <div className="flex flex-col-reverse sm:flex-row gap-2 border-t pt-4">
+          <Button type="submit" value="another" variant="outline" disabled={!ready || isSubmitting} className="h-10 sm:flex-1">Guardar y agregar otro</Button>
+          <Button type="submit" value="save" disabled={!ready || isSubmitting} className="h-10 sm:flex-1">{isSubmitting ? <><LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />Guardando…</> : 'Guardar gasto'}</Button>
         </div>
       </fieldset>
     </form>
+  )
+}
+
+/** Selección única como chips: todas las opciones a la vista, un clic en vez de abrir un menú. */
+function ChipGroup({ id, labelledBy, value, onChange, options, invalid, describedBy }: {
+  id: string
+  labelledBy: string
+  value: string
+  onChange: (value: string) => void
+  options: { value: string; label: string; color?: string }[]
+  invalid: boolean
+  describedBy?: string
+}) {
+  return (
+    <div id={id} role="radiogroup" tabIndex={-1} aria-labelledby={labelledBy} aria-invalid={invalid} aria-describedby={describedBy}
+      className={`flex flex-wrap gap-1.5 rounded-lg outline-none ${invalid ? 'ring-1 ring-destructive ring-offset-4 ring-offset-card' : ''}`}>
+      {options.map(option => {
+        const active = option.value === value
+        return (
+          <button key={option.value} type="button" role="radio" aria-checked={active} onClick={() => onChange(option.value)}
+            className={`inline-flex h-8 items-center rounded-lg border px-3 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-ring ${active
+              ? option.color ?? 'border-primary/40 bg-primary/15 text-primary'
+              : 'border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground'} ${active ? 'font-medium' : ''}`}>
+            {option.label}
+          </button>
+        )
+      })}
+    </div>
   )
 }

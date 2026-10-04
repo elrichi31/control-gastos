@@ -7,6 +7,7 @@ import { clearPrivateCaches } from "@/lib/pwa/cache-policy"
 import { Home, Calculator, BarChart3, Receipt, LogOut, Repeat, Plus, Wallet, Plug, Mail, PanelLeft, X, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ModeToggle } from "@/components/mode-toggle"
+import { CronStatus } from "@/components/CronStatus"
 
 type NavItem = { name: string; href: string; icon: LucideIcon }
 
@@ -108,6 +109,7 @@ export function Sidebar({ isOpen, onClose, isMobile, isCollapsed, onToggleCollap
 			</nav>
 
 			<div className="border-t border-sidebar-border p-2">
+				{!collapsed && <div className="pt-1"><CronStatus /></div>}
 				<div className={cn("flex items-center gap-1", collapsed ? "flex-col" : "justify-between px-1")}>
 					<ModeToggle />
 					{!isMobile && (

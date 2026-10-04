@@ -2,8 +2,8 @@ require('./helpers/register-ts.cjs')
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
 const Module = require('node:module')
-let writes=0, rpcError=null
-const db={rpc:async()=>{writes++;return {data:{created:1,pending:false},error:rpcError}},from(){writes++;const query={select(){return query},eq(){return query},lte(){return query},then(resolve){return Promise.resolve({data:[],error:null}).then(resolve)}};return query}}
+let writes=0, rpcError=null, cronRuns=[]
+const db={rpc:async()=>{writes++;return {data:{created:1,pending:false},error:rpcError}},from(table){if(table==='cron_run')cronRuns.push(table);else writes++;const query={select(){return query},eq(){return query},lte(){return query},upsert(){return query},then(resolve){return Promise.resolve({data:[],error:null}).then(resolve)}};return query}}
 const load=Module._load
 Module._load=function(name,...args){if(name==='@supabase/supabase-js')return {createClient:()=>db};return load.call(this,name,...args)}
 const { GET }=require('../src/app/api/cron/process-recurring-expenses/route.ts')
@@ -23,7 +23,7 @@ test('cron fails closed without configuration, executes one RPC and surfaces dat
   process.env.SUPABASE_SERVICE_ROLE_KEY=key
   writes=0
   const result=await GET(request('Bearer fixture-secret'))
-  assert.equal(result.status,200);assert.equal((await result.json()).created,1);assert.equal(writes,1)
+  assert.equal(result.status,200);assert.equal((await result.json()).created,1);assert.equal(writes,1);assert.equal(cronRuns.length,1)
   rpcError={code:'PGRST202',message:'fixture private database details'}
   const missing=await GET(request('Bearer fixture-secret'))
   assert.equal(missing.status,503);assert.doesNotMatch(await missing.text(),/private database details/)
