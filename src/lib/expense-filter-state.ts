@@ -2,6 +2,7 @@ export interface FilterOptions {
   search: string
   category: string
   paymentMethod: string
+  origin: '' | 'manual' | 'email'
   dateRange: 'current-month' | 'year' | 'all-time' | 'custom'
   year: string
   dateFrom: string
@@ -14,7 +15,7 @@ export interface FilterOptions {
 }
 
 export const initialFilters: FilterOptions = {
-  search: '', category: '', paymentMethod: '', dateRange: 'current-month', year: '',
+  search: '', category: '', paymentMethod: '', origin: '', dateRange: 'current-month', year: '',
   dateFrom: '', dateTo: '', minAmount: '', maxAmount: '', sortBy: 'date', sortOrder: 'desc', groupBy: 'none',
 }
 
@@ -38,7 +39,7 @@ export function normalizeExpenseFilters(value: unknown): FilterOptions {
     if (date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) result[key] = value
   }
   const choices = {
-    dateRange: ['current-month', 'year', 'all-time', 'custom'], sortBy: ['date', 'amount', 'category', 'description'],
+    origin: ['manual', 'email'], dateRange: ['current-month', 'year', 'all-time', 'custom'], sortBy: ['date', 'amount', 'category', 'description'],
     sortOrder: ['asc', 'desc'], groupBy: ['none', 'day', 'week', 'month'],
   }
   for (const key of Object.keys(choices) as (keyof typeof choices)[]) {
@@ -49,7 +50,7 @@ export function normalizeExpenseFilters(value: unknown): FilterOptions {
 
 /** Count applied criteria, not dormant date fields or presentation preferences. */
 export function countActiveExpenseFilters(filters: FilterOptions) {
-  return ['search', 'category', 'paymentMethod', 'minAmount', 'maxAmount'].filter(key => Boolean(filters[key as keyof FilterOptions])).length
+  return ['search', 'category', 'paymentMethod', 'origin', 'minAmount', 'maxAmount'].filter(key => Boolean(filters[key as keyof FilterOptions])).length
     + (filters.dateRange === 'current-month' ? 0 : 1)
 }
 

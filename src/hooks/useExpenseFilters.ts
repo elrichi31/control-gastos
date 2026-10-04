@@ -4,6 +4,7 @@ import { initialFilters, countActiveExpenseFilters, readExpenseFilters, writeExp
 export type { FilterOptions } from '@/lib/expense-filter-state'
 import { startOfYear, endOfYear } from 'date-fns'
 import { toLocalDateFromString } from '@/lib/utils'
+import { AUTO_EXPENSE_TAG } from '@/lib/expense-tags'
 import type { Expense } from '@/services/expenses'
 
 export function useExpenseFilters(gastos: Expense[], userId?: string) {
@@ -55,6 +56,12 @@ export function useExpenseFilters(gastos: Expense[], userId?: string) {
       filtered = filtered.filter(gasto => 
         gasto.metodo_pago?.id?.toString() === filters.paymentMethod
       )
+    }
+
+    // Filtro por origen: los importados del correo llevan el tag "auto"
+    if (filters.origin) {
+      const wantsEmail = filters.origin === 'email'
+      filtered = filtered.filter(gasto => (gasto.tags?.includes(AUTO_EXPENSE_TAG) ?? false) === wantsEmail)
     }
 
     // Filtro por monto mínimo

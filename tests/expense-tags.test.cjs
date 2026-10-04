@@ -88,3 +88,16 @@ test('search matches tags without changing other expense filters', () => {
   function Probe() { const { filteredGastos } = useExpenseFilters([{ ...base, tags: ['viaje'], categoria: { id: 1, nombre: 'Comida' } }]); return React.createElement('span', null, filteredGastos.length) }
   try { assert.equal(renderToStaticMarkup(React.createElement(Probe)), '<span>1</span>') } finally { React.useState = originalState }
 })
+test('origin filter separates email-imported ("auto") from manual expenses', () => {
+  const gastos = [
+    { ...base, id: 1, tags: ['auto'], categoria: { id: 1, nombre: 'Comida' } },
+    { ...base, id: 2, tags: ['viaje'], categoria: { id: 1, nombre: 'Comida' } },
+    { ...base, id: 3, categoria: { id: 1, nombre: 'Comida' } },
+  ]
+  const originalState = React.useState
+  for (const [origin, expected] of [['email', '1'], ['manual', '2,3'], ['', '1,2,3']]) {
+    React.useState = initial => typeof initial === 'object' && initial.filters ? [{ ...initial, filters: { ...initial.filters, origin, dateRange: 'all-time' } }, () => {}] : originalState(initial)
+    function Probe() { const { filteredGastos } = useExpenseFilters(gastos); return React.createElement('span', null, filteredGastos.map(g => g.id).sort().join(',')) }
+    try { assert.equal(renderToStaticMarkup(React.createElement(Probe)), `<span>${expected}</span>`) } finally { React.useState = originalState }
+  }
+})
