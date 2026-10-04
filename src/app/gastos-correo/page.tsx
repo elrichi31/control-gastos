@@ -18,7 +18,7 @@ type Categoria = { id: number; nombre: string }
 type Tab = 'nuevos' | 'duplicados' | 'recibidos'
 const API = '/api/email-import/yahoo'
 const money = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' })
-const selectClass = 'h-11 w-full min-w-0 rounded-md border border-input bg-background px-2 text-base focus-visible:outline-2 focus-visible:outline-ring sm:h-9 sm:text-sm'
+const selectClass = 'h-11 w-full min-w-0 rounded-lg border border-input bg-card px-2.5 text-base shadow-xs dark:[color-scheme:dark] focus-visible:outline-2 focus-visible:outline-ring sm:h-8 sm:text-[13px]'
 const half = (n: number) => Math.round(n * 50) / 100
 
 export default function EmailExpensesPage() {
@@ -140,69 +140,69 @@ export default function EmailExpensesPage() {
   const description = { nuevos: 'Elige la categoría y registra solo los gastos que correspondan.', duplicados: 'Compara antes de registrar: vincular conserva tu gasto sin crear otro.', recibidos: 'Descuenta una devolución de un gasto existente o descártala.' }
 
   return (
-    <PageShell className={styles.surface}>
+    <PageShell>
       <PageTitle customTitle="Correo - BethaSpend" />
       <PageHeader title="Correo" description="Revisa tus movimientos antes de registrarlos."
-        actions={<Button variant="outline" disabled={enabled !== true || syncing || inFlight > 0} onClick={sync}><RefreshCw className={`mr-2 h-4 w-4 ${syncing ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />{syncing ? 'Sincronizando…' : 'Sincronizar'}</Button>} />
+        actions={<Button variant="outline" disabled={enabled !== true || syncing || inFlight > 0} onClick={sync}><RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />{syncing ? 'Sincronizando…' : 'Sincronizar'}</Button>} />
       {loadError && <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-destructive/30 p-3" role="alert"><p className="min-w-0 flex-1 text-sm">{loadError}</p><Button variant="outline" size="sm" disabled={inFlight > 0 || syncing} onClick={() => void load()}>Reintentar</Button></div>}
       {message && <p className="mb-4 text-sm" role="status">{message}</p>}
       {enabled === false ? <Empty title="Correo no habilitado" text="La importación desde Yahoo no está habilitada para esta cuenta." /> : enabled === null ? (
         !loadError && <div className="flex min-h-48 items-center justify-center gap-2 text-sm" role="status"><Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />Cargando movimientos…</div>
       ) : <Tabs value={tab} onValueChange={value => setTab(value as Tab)}>
-        <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <TabsList aria-label="Clasificación de movimientos" className="grid h-auto w-full grid-cols-3 sm:w-auto">
             {([['nuevos', 'Nuevos'], ['duplicados', 'Duplicados'], ['recibidos', 'Recibidos']] as const).map(([value, label]) => (
-              <TabsTrigger key={value} value={value} data-review-tab className="min-h-11 min-w-0 gap-1.5 px-2 text-xs sm:px-3 sm:text-sm"><span>{label}</span><span className="rounded bg-background/70 px-1.5 py-0.5 text-xs tabular-nums">{groups[value].length}</span></TabsTrigger>
+              <TabsTrigger key={value} value={value} data-review-tab className="min-h-11 min-w-0 gap-1.5 px-2 text-xs sm:min-h-0 sm:px-3 sm:text-[13px]"><span>{label}</span><span className="rounded bg-muted px-1.5 text-[11px] tabular-nums text-muted-foreground">{groups[value].length}</span></TabsTrigger>
             ))}
           </TabsList>
-          <div className="relative w-full sm:max-w-60"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4" aria-hidden="true" /><Input aria-label="Buscar movimientos" placeholder="Buscar movimiento…" value={search} onChange={event => setSearch(event.target.value)} className="h-11 pl-9 text-base sm:text-sm" /></div>
+          <div className="relative w-full sm:max-w-60"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /><Input aria-label="Buscar movimientos" placeholder="Buscar movimiento…" value={search} onChange={event => setSearch(event.target.value)} className="h-11 pl-9 text-base sm:h-9 sm:text-[13px]" /></div>
         </div>
         <div className="flex min-h-12 flex-wrap items-center justify-between gap-2 py-3">
-          <p className="text-sm">{description[tab]}</p>
+          <p className="text-[13px] text-muted-foreground">{description[tab]}</p>
           {inFlight > 0 && <span className="inline-flex items-center gap-1.5 text-xs" role="status"><Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />{inFlight} en cola · no cierres esta pestaña</span>}
         </div>
         {(['nuevos', 'duplicados', 'recibidos'] as const).map(value => <TabsContent key={value} value={value} className="mt-0">
           {value === tab && <>
-            {tab === 'nuevos' && rows.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg bg-muted/40 px-3 py-2">
-              <label className="mr-auto flex min-h-11 cursor-pointer items-center gap-2 text-sm"><input type="checkbox" className="h-4 w-4 accent-primary" aria-label="Seleccionar todos los nuevos visibles" checked={allSelected} disabled={syncing} onChange={() => setSelected(prev => { const next = new Set(prev); visibleNew.forEach(p => allSelected ? next.delete(p.id) : next.add(p.id)); return next })} />{chosen.length ? `${chosen.length} seleccionados · ${money.format(total)}` : 'Seleccionar visibles'}</label>
-              <Button data-review-primary size="sm" className="min-h-11" disabled={syncing || !chosen.length || chosen.some(p => !validCategory(p))} onClick={() => aceptar(chosen)}>Aceptar selección</Button>
-              <Button size="sm" variant="outline" className="min-h-11" disabled={syncing || !chosen.length} onClick={() => chosen.forEach(descartar)}>Descartar selección</Button>
+            {tab === 'nuevos' && rows.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border bg-card px-4 py-2">
+              <label className="mr-auto flex min-h-11 cursor-pointer items-center gap-2.5 text-[13px] sm:min-h-9"><input type="checkbox" className="h-4 w-4 accent-primary" aria-label="Seleccionar todos los nuevos visibles" checked={allSelected} disabled={syncing} onChange={() => setSelected(prev => { const next = new Set(prev); visibleNew.forEach(p => allSelected ? next.delete(p.id) : next.add(p.id)); return next })} />{chosen.length ? `${chosen.length} seleccionados · ${money.format(total)}` : 'Seleccionar visibles'}</label>
+              <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || !chosen.length || chosen.some(p => !validCategory(p))} onClick={() => aceptar(chosen)}>Aceptar selección</Button>
+              <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" disabled={syncing || !chosen.length} onClick={() => chosen.forEach(descartar)}>Descartar selección</Button>
             </div>}
             {!rows.length ? <Empty title={search ? 'Sin coincidencias' : inFlight ? 'Guardando tus decisiones' : gruposEmpty(tab)} text={search ? 'Prueba con otra descripción, fecha o banco.' : inFlight ? 'Puedes cambiar de clasificación mientras terminan de guardarse.' : 'Los movimientos de esta clasificación aparecerán aquí.'} /> : (
-              <table className={styles.table} data-classification={tab}>
+              <div className={styles.wrap}><table className={styles.table} data-classification={tab}>
                 <caption className="sr-only">Movimientos de correo: {tab}</caption>
                 <thead><tr>{tab === 'nuevos' && <th scope="col"><span className="sr-only">Selección</span></th>}<th scope="col">Movimiento</th>{tab === 'nuevos' ? <><th scope="col">Categoría</th><th scope="col">Tu parte</th></> : <th scope="col">{tab === 'duplicados' ? 'Gasto existente' : 'Descontar de'}</th>}<th scope="col" className="text-right">Importe</th><th scope="col">Acciones</th></tr></thead>
                 <tbody>{rows.map(p => {
                   const elegido = p.coincidencias.find(c => c.gasto.id === elegidoPor[p.id]) ?? p.coincidencias[0]
                   return <tr key={p.id}>
-                    {tab === 'nuevos' && <td className={styles.selection}><label className="inline-flex min-h-11 min-w-11 items-center justify-center"><input type="checkbox" className="h-4 w-4 accent-primary" disabled={syncing} checked={selected.has(p.id)} onChange={() => toggle(p.id)} aria-label={`Seleccionar ${p.descripcion}`} /></label></td>}
-                    <td data-label="Movimiento" className={styles.movement}><p className="font-medium break-words">{p.descripcion}</p><p className="mt-1 text-xs">{p.fecha} · {p.origen}</p>{errors.get(p.id) && <p className="mt-2 text-xs text-destructive" role="alert">{errors.get(p.id)}</p>}</td>
+                    {tab === 'nuevos' && <td className={styles.selection}><label className="inline-flex min-h-11 min-w-6 items-center"><input type="checkbox" className="h-4 w-4 accent-primary" disabled={syncing} checked={selected.has(p.id)} onChange={() => toggle(p.id)} aria-label={`Seleccionar ${p.descripcion}`} /></label></td>}
+                    <td data-label="Movimiento" className={styles.movement}><p className="font-medium text-foreground break-words">{p.descripcion}</p><p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"><span className="tabular-nums">{p.fecha}</span><span className="rounded-md border bg-muted/50 px-1.5 text-[11px] leading-4">{p.origen}</span></p>{errors.get(p.id) && <p className="mt-2 text-xs text-destructive" role="alert">{errors.get(p.id)}</p>}</td>
                     {tab === 'nuevos' ? <>
                       <td data-label="Categoría"><select className={selectClass} disabled={syncing} aria-label={`Categoría de ${p.descripcion}`} value={category(p) ?? ''} onChange={e => setCategoriaPor(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}><option value="" disabled>Elegir categoría</option>{categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></td>
                       <td data-label="Tu parte"><select className={selectClass} disabled={syncing} aria-label={`Parte de ${p.descripcion}`} value={mitadPor[p.id] ? 'mitad' : 'todo'} onChange={e => setMitadPor(prev => ({ ...prev, [p.id]: e.target.value === 'mitad' }))}><option value="todo">Total</option><option value="mitad">Mitad</option></select></td>
                     </> : <td data-label={tab === 'duplicados' ? 'Gasto existente' : 'Descontar de'} className={styles.match}>
                       {elegido ? <>
                         <select className={selectClass} disabled={syncing} aria-label={`Gasto existente para ${p.descripcion}`} value={elegido.gasto.id} onChange={e => setElegidoPor(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}>{p.coincidencias.map(c => <option key={c.gasto.id} value={c.gasto.id}>{c.gasto.descripcion} · {money.format(c.gasto.monto)}</option>)}</select>
-                        <p className="mt-2 text-xs">{elegido.gasto.fecha}{tab === 'recibidos' ? ` · Quedará en ${money.format(elegido.gasto.monto - p.monto)}` : ` · ${elegido.kind === 'mitad' ? 'Registraste la mitad' : 'Mismo monto'} · ${elegido.dias ? `${elegido.dias} día(s) de diferencia` : 'Mismo día'}`}</p>
-                        {tab === 'duplicados' && <details className="mt-1 text-xs"><summary className="cursor-pointer py-1 underline underline-offset-4">Ver comparación</summary><p className="py-1 break-words">{elegido.gasto.descripcion}{elegido.gasto.categoria ? ` · ${elegido.gasto.categoria.nombre}` : ''}. {elegido.veredicto === 'encaja' ? 'El comercio encaja con tu descripción.' : elegido.veredicto === 'desconocido' ? 'El correo no especifica qué se compró.' : 'Coincidencia por fecha e importe; confirma antes de vincular.'}</p></details>}
-                      </> : <p className="text-xs">No hay un gasto compatible de los últimos 20 días.</p>}
+                        <p className="mt-1.5 text-xs text-muted-foreground">{elegido.gasto.fecha}{tab === 'recibidos' ? ` · Quedará en ${money.format(elegido.gasto.monto - p.monto)}` : ` · ${elegido.kind === 'mitad' ? 'Registraste la mitad' : 'Mismo monto'} · ${elegido.dias ? `${elegido.dias} día(s) de diferencia` : 'Mismo día'}`}</p>
+                        {tab === 'duplicados' && <details className="mt-1 text-xs text-muted-foreground"><summary className="cursor-pointer py-1 hover:text-foreground">Ver comparación</summary><p className="py-1 break-words">{elegido.gasto.descripcion}{elegido.gasto.categoria ? ` · ${elegido.gasto.categoria.nombre}` : ''}. {elegido.veredicto === 'encaja' ? 'El comercio encaja con tu descripción.' : elegido.veredicto === 'desconocido' ? 'El correo no especifica qué se compró.' : 'Coincidencia por fecha e importe; confirma antes de vincular.'}</p></details>}
+                      </> : <p className="text-xs text-muted-foreground">No hay un gasto compatible de los últimos 20 días.</p>}
                     </td>}
-                    <td data-label={tab === 'recibidos' ? 'Recibido' : 'Importe'} className={styles.amount}><span className="font-semibold tabular-nums">{tab === 'recibidos' ? '+' : ''}{money.format(tab === 'nuevos' && mitadPor[p.id] ? half(p.monto) : p.monto)}</span>{tab === 'nuevos' && mitadPor[p.id] && <span className="mt-1 block text-xs">de {money.format(p.monto)}</span>}</td>
+                    <td data-label={tab === 'recibidos' ? 'Recibido' : 'Importe'} className={styles.amount}><span className="font-semibold tabular-nums">{tab === 'recibidos' ? '+' : ''}{money.format(tab === 'nuevos' && mitadPor[p.id] ? half(p.monto) : p.monto)}</span>{tab === 'nuevos' && mitadPor[p.id] && <span className="mt-0.5 block text-xs text-muted-foreground">de {money.format(p.monto)}</span>}</td>
                     <td data-label="Acciones" className={styles.actions}>
-                      <div className="flex flex-wrap gap-2">
+                      <div className={`flex items-center gap-1.5 ${tab === 'nuevos' ? '' : 'flex-wrap'}`}>
                         {tab === 'nuevos' ? <>
-                          <Button data-review-primary size="sm" className="min-h-11" disabled={syncing || !validCategory(p)} aria-label={`Aceptar ${p.descripcion}`} onClick={() => aceptar([p])}><Check className="mr-1 h-3.5 w-3.5" aria-hidden="true" />Aceptar</Button>
-                          <Button size="sm" variant="outline" className="min-h-11" disabled={syncing} aria-label={`Descartar ${p.descripcion}`} onClick={() => descartar(p)}><X className="mr-1 h-3.5 w-3.5" aria-hidden="true" />Descartar</Button>
+                          <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || !validCategory(p)} aria-label={`Aceptar ${p.descripcion}`} onClick={() => aceptar([p])}><Check aria-hidden="true" />Aceptar</Button>
+                          <Button size="sm" variant="ghost" className="min-h-11 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:min-h-0 sm:w-8 sm:px-0" disabled={syncing} aria-label={`Descartar ${p.descripcion}`} title="Descartar" onClick={() => descartar(p)}><X aria-hidden="true" /><span className="sm:sr-only">Descartar</span></Button>
                         </> : <>
-                          {elegido && <Button data-review-primary size="sm" className="min-h-11" disabled={syncing || (tab === 'recibidos' && elegido.gasto.monto <= p.monto)} onClick={() => enqueue(p, { vincular: [{ id: p.id, gasto_id: elegido.gasto.id }] }, 'vinculados', `${tab === 'duplicados' ? 'Vinculado sin duplicar' : 'Devolución descontada'} · ${p.descripcion}`)}>{tab === 'duplicados' ? 'Es el mismo' : 'Descontar'}</Button>}
-                          {tab === 'duplicados' ? <Button size="sm" variant="outline" className="min-h-11" disabled={syncing} onClick={() => { setNoEsDuplicado(prev => new Set(prev).add(p.id)); setTab('nuevos') }}>Es otro gasto</Button> : null}
-                          <Button size="sm" variant="ghost" className="min-h-11" disabled={syncing} onClick={() => descartar(p)}>Descartar</Button>
+                          {elegido && <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || (tab === 'recibidos' && elegido.gasto.monto <= p.monto)} onClick={() => enqueue(p, { vincular: [{ id: p.id, gasto_id: elegido.gasto.id }] }, 'vinculados', `${tab === 'duplicados' ? 'Vinculado sin duplicar' : 'Devolución descontada'} · ${p.descripcion}`)}>{tab === 'duplicados' ? 'Es el mismo' : 'Descontar'}</Button>}
+                          {tab === 'duplicados' ? <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" disabled={syncing} onClick={() => { setNoEsDuplicado(prev => new Set(prev).add(p.id)); setTab('nuevos') }}>Es otro gasto</Button> : null}
+                          <Button size="sm" variant="ghost" className="min-h-11 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:min-h-0" disabled={syncing} onClick={() => descartar(p)}>Descartar</Button>
                         </>}
                       </div>
                     </td>
                   </tr>
                 })}</tbody>
-              </table>
+              </table></div>
             )}
           </>}
         </TabsContent>)}
@@ -212,5 +212,5 @@ export default function EmailExpensesPage() {
 }
 function gruposEmpty(tab: Tab) { return { nuevos: 'No hay gastos nuevos por revisar', duplicados: 'No hay posibles duplicados', recibidos: 'No hay transferencias recibidas' }[tab] }
 function Empty({ title, text }: { title: string; text: string }) {
-  return <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-6 py-8 text-center"><Inbox className="mb-1 h-6 w-6" aria-hidden="true" /><h2 className="text-sm font-medium">{title}</h2><p className="max-w-sm text-sm">{text}</p></div>
+  return <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-6 py-8 text-center"><Inbox className="mb-1 h-6 w-6 text-muted-foreground" aria-hidden="true" /><h2 className="text-sm font-medium">{title}</h2><p className="max-w-sm text-sm text-muted-foreground">{text}</p></div>
 }
