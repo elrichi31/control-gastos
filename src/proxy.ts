@@ -6,7 +6,7 @@ import { sessionWithinPolicy } from "./lib/auth/session-policy"
 const publicRoutes = ['/', '/auth/login', '/auth/register']
 
 export default withAuth(
-  function middleware(req) {
+  function proxy(req) {
     const { pathname } = req.nextUrl
     
     // Verificar si el usuario está intentando acceder a rutas de auth cuando ya está autenticado

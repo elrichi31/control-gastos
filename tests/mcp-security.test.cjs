@@ -46,7 +46,7 @@ test('list, get, edit and delete are restricted to the authenticated owner',asyn
 })
 test('discovery endpoints bypass login middleware without exposing private data',()=>{
  const fs=require('node:fs'),path=require('node:path')
- const source=fs.readFileSync(path.join(__dirname,'../src/middleware.ts'),'utf8')
+ const source=fs.readFileSync(path.join(__dirname,'../src/proxy.ts'),'utf8')
  const literal=source.match(/'(\/\(\(\?![^']+)'/)[1]
  const matcher=new RegExp('^'+JSON.parse('"'+literal+'"')+'$')
  for(const url of ['/.well-known/oauth-protected-resource','/.well-known/oauth-authorization-server','/api/mcp']) assert.equal(matcher.test(url),false,url)

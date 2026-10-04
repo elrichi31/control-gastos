@@ -18,7 +18,7 @@ export async function clearPrivateCaches(
 export const runtimeCaching = [
   {
     // Must be first: even private URLs ending in .png must never reach asset caching.
-    // Keep this matcher self-contained: Workbox serializes it into the generated worker.
+    // Plain data so it stays testable; src/app/sw.ts maps it to Serwist strategies.
     urlPattern: ({ url, request }: { url: URL; request: Request }) =>
       url.pathname === '/api' || url.pathname.startsWith('/api/') ||
       /(?:^|\.)supabase\.co$/i.test(url.hostname) ||
