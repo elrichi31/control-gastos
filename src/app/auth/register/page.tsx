@@ -68,8 +68,10 @@ export default function RegisterPage() {
         throw new Error(data.error || 'Error al crear la cuenta')
       }
 
-      if (data.needsEmailConfirmation !== true) throw new Error('No se pudo iniciar la confirmación de correo')
-      setSuccess(data.message || 'Revisa tu correo para confirmar tu cuenta antes de iniciar sesión.')
+      if (typeof data.needsEmailConfirmation !== 'boolean') throw new Error('Respuesta de registro inválida')
+      setSuccess(data.message || (data.needsEmailConfirmation
+        ? 'Revisa tu correo para confirmar tu cuenta antes de iniciar sesión.'
+        : 'Cuenta creada. Ya puedes iniciar sesión.'))
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Error al crear la cuenta')
     } finally {

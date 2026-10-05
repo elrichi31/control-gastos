@@ -9,7 +9,7 @@ const schema = z.object({
   password: z.string().min(6).max(128),
 })
 const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } })
-const unavailable = () => json({ error: 'El registro no está disponible. Deben estar habilitados el registro y la confirmación de correo en Supabase.' }, 503)
+const unavailable = () => json({ error: 'El registro no está disponible. Revisa que el registro esté habilitado en Supabase.' }, 503)
 
 export async function POST(request: NextRequest) {
   let input: unknown
@@ -27,7 +27,8 @@ export async function POST(request: NextRequest) {
     })
     if (!settingsResponse.ok) return unavailable()
     const settings = await settingsResponse.json()
-    if (settings?.disable_signup !== false || settings?.mailer_autoconfirm !== false) return unavailable()
+    if (settings?.disable_signup !== false || typeof settings?.mailer_autoconfirm !== 'boolean') return unavailable()
+    const needsEmailConfirmation = !settings.mailer_autoconfirm
     // Production mail destinations come from server configuration, never request Host.
     const origin = new URL(process.env.NEXTAUTH_URL || (process.env.NODE_ENV !== 'production' ? request.nextUrl.origin : ''))
     if (!['https:', 'http:'].includes(origin.protocol) || (process.env.NODE_ENV === 'production' && origin.protocol !== 'https:')) return unavailable()
@@ -41,10 +42,12 @@ export async function POST(request: NextRequest) {
       },
     })
     if (error) return json({ error: 'No se pudo crear la cuenta. Revisa tus datos o inténtalo más tarde.' }, 400)
-    if (!data.user || data.session) return unavailable()
+    if (!data.user || (needsEmailConfirmation && data.session)) return unavailable()
     return json({
-      message: 'Revisa tu correo para confirmar tu cuenta antes de iniciar sesión.',
-      needsEmailConfirmation: true,
+      message: needsEmailConfirmation
+        ? 'Revisa tu correo para confirmar tu cuenta antes de iniciar sesión.'
+        : 'Cuenta creada. Ya puedes iniciar sesión.',
+      needsEmailConfirmation,
       user: { id: data.user.id, email: data.user.email, name: `${firstName} ${lastName}` },
     })
   } catch { return unavailable() }
