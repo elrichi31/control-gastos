@@ -13,7 +13,7 @@ export function Footer() {
           {/* Logo and description */}
           <div className="flex flex-col items-center md:items-start gap-3">
             <Link href="/" className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-blue-500 text-white">
+              <div className="p-2 rounded-xl bg-primary text-white">
                 <Wallet className="w-4 h-4" />
               </div>
               <span className="text-base font-semibold text-gray-900 dark:text-white">
@@ -60,7 +60,7 @@ export function Footer() {
                 href="https://bethalabs.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-sm font-medium text-blue-500 hover:text-blue-600 transition-colors"
+                className="text-sm font-medium text-primary hover:text-primary transition-colors"
               >
                 Bethalabs
               </a>

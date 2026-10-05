@@ -50,34 +50,34 @@ const features = [
 
 const colorClasses = {
   blue: {
-    bg: "bg-blue-50 dark:bg-blue-900/20",
-    icon: "text-blue-500",
-    hover: "group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30"
+    bg: "bg-green-50 dark:bg-green-900/20",
+    icon: "text-primary",
+    hover: "group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
   },
   purple: {
-    bg: "bg-purple-50 dark:bg-purple-900/20",
-    icon: "text-purple-500",
-    hover: "group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30"
+    bg: "bg-green-50 dark:bg-green-900/20",
+    icon: "text-primary",
+    hover: "group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
   },
   green: {
     bg: "bg-green-50 dark:bg-green-900/20",
-    icon: "text-green-500",
+    icon: "text-primary",
     hover: "group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
   },
   orange: {
-    bg: "bg-orange-50 dark:bg-orange-900/20",
-    icon: "text-orange-500",
-    hover: "group-hover:bg-orange-100 dark:group-hover:bg-orange-900/30"
+    bg: "bg-green-50 dark:bg-green-900/20",
+    icon: "text-primary",
+    hover: "group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
   },
   indigo: {
-    bg: "bg-indigo-50 dark:bg-indigo-900/20",
-    icon: "text-indigo-500",
-    hover: "group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30"
+    bg: "bg-green-50 dark:bg-green-900/20",
+    icon: "text-primary",
+    hover: "group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
   },
   teal: {
-    bg: "bg-teal-50 dark:bg-teal-900/20",
-    icon: "text-teal-500",
-    hover: "group-hover:bg-teal-100 dark:group-hover:bg-teal-900/30"
+    bg: "bg-green-50 dark:bg-green-900/20",
+    icon: "text-primary",
+    hover: "group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
   }
 }
 
@@ -89,7 +89,7 @@ export function Features() {
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             Todo lo que necesitas para{" "}
-            <span className="text-gradient-blue">controlar tus gastos</span>
+            <span className="text-gradient-green">controlar tus gastos</span>
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             Herramientas simples pero poderosas diseñadas para ayudarte a 

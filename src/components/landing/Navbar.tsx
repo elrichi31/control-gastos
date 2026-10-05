@@ -31,7 +31,7 @@ export function Navbar() {
             <div className="flex items-center justify-between">
               {/* Logo */}
               <Link href="/" className="flex items-center gap-2 group">
-                <div className="p-1.5 rounded-lg bg-blue-500 text-white group-hover:bg-blue-600 transition-colors">
+                <div className="p-1.5 rounded-lg bg-primary text-white group-hover:bg-primary/90 transition-colors">
                   <Wallet className="w-4 h-4" />
                 </div>
                 <span className="text-base font-semibold text-gray-900 dark:text-white">
@@ -61,14 +61,14 @@ export function Navbar() {
                 {isAuthenticated ? (
                   <>
                     <Link href="/dashboard">
-                      <Button size="sm" className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 transition-all gap-2">
+                      <Button size="sm" className="bg-primary hover:bg-primary/90 text-white rounded-lg shadow-md shadow-green-500/25 hover:shadow-green-500/40 transition-all gap-2">
                         <LayoutDashboard className="w-4 h-4" />
                         Dashboard
                       </Button>
                     </Link>
                     <Link href="/dashboard">
-                      <Avatar className="w-8 h-8 cursor-pointer ring-2 ring-blue-500/20 hover:ring-blue-500/40 transition-all">
-                        <AvatarFallback className="bg-blue-500 text-white text-xs font-medium">
+                      <Avatar className="w-8 h-8 cursor-pointer ring-2 ring-green-500/20 hover:ring-green-500/40 transition-all">
+                        <AvatarFallback className="bg-primary text-white text-xs font-medium">
                           {getUserInitials()}
                         </AvatarFallback>
                       </Avatar>
@@ -86,7 +86,7 @@ export function Navbar() {
                       </Button>
                     </Link>
                     <Link href="/auth/register">
-                      <Button size="sm" className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 transition-all">
+                      <Button size="sm" className="bg-primary hover:bg-primary/90 text-white rounded-lg shadow-md shadow-green-500/25 hover:shadow-green-500/40 transition-all">
                         Comenzar gratis
                       </Button>
                     </Link>
@@ -130,7 +130,7 @@ export function Navbar() {
                 <div className="flex flex-col gap-2 pt-2">
                   {isAuthenticated ? (
                     <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>
-                      <Button size="sm" className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 transition-all gap-2">
+                      <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white rounded-lg shadow-md shadow-green-500/25 hover:shadow-green-500/40 transition-all gap-2">
                         <LayoutDashboard className="w-4 h-4" />
                         Dashboard
                       </Button>
@@ -147,7 +147,7 @@ export function Navbar() {
                         </Button>
                       </Link>
                       <Link href="/auth/register" onClick={() => setIsMenuOpen(false)}>
-                        <Button size="sm" className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 transition-all">
+                        <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white rounded-lg shadow-md shadow-green-500/25 hover:shadow-green-500/40 transition-all">
                           Comenzar gratis
                         </Button>
                       </Link>

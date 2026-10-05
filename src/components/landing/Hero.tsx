@@ -91,21 +91,21 @@ export function Hero() {
 
   // Colores dinámicos según el tema
   const colors = mounted ? {
-    gradientStart: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.15)',
-    gradientMid: isDark ? 'rgba(14, 165, 233, 0.25)' : 'rgba(14, 165, 233, 0.12)',
-    gradientEnd: isDark ? 'rgba(6, 182, 212, 0.2)' : 'rgba(6, 182, 212, 0.1)',
-    spotlightColor: isDark ? 'rgba(59, 130, 246, 0.08)' : 'rgba(59, 130, 246, 0.06)',
-    particleColor: isDark ? 'bg-white' : 'bg-blue-500',
+    gradientStart: isDark ? 'rgba(56, 148, 90, 0.3)' : 'rgba(56, 148, 90, 0.15)',
+    gradientMid: isDark ? 'rgba(34, 197, 94, 0.25)' : 'rgba(34, 197, 94, 0.12)',
+    gradientEnd: isDark ? 'rgba(74, 222, 128, 0.2)' : 'rgba(74, 222, 128, 0.1)',
+    spotlightColor: isDark ? 'rgba(56, 148, 90, 0.08)' : 'rgba(56, 148, 90, 0.06)',
+    particleColor: isDark ? 'bg-white' : 'bg-primary',
     gridOpacity: isDark ? '0.03' : '0.04',
-    rayColor: isDark ? 'via-blue-500/20' : 'via-blue-500/10',
+    rayColor: isDark ? 'via-green-500/20' : 'via-green-500/10',
   } : {
-    gradientStart: 'rgba(59, 130, 246, 0.15)',
-    gradientMid: 'rgba(14, 165, 233, 0.12)',
-    gradientEnd: 'rgba(6, 182, 212, 0.1)',
-    spotlightColor: 'rgba(59, 130, 246, 0.06)',
-    particleColor: 'bg-blue-500',
+    gradientStart: 'rgba(56, 148, 90, 0.15)',
+    gradientMid: 'rgba(34, 197, 94, 0.12)',
+    gradientEnd: 'rgba(74, 222, 128, 0.1)',
+    spotlightColor: 'rgba(56, 148, 90, 0.06)',
+    particleColor: 'bg-primary',
     gridOpacity: '0.04',
-    rayColor: 'via-blue-500/10',
+    rayColor: 'via-green-500/10',
   }
 
   return (
@@ -113,7 +113,7 @@ export function Hero() {
       {/* Animated gradient mesh background */}
       <div className="absolute inset-0">
         {/* Base gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 via-white to-white dark:from-neutral-900 dark:via-neutral-950 dark:to-neutral-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-green-50/50 via-white to-white dark:from-neutral-900 dark:via-neutral-950 dark:to-neutral-950" />
         
         {/* Animated mesh gradient */}
         <div 
@@ -128,9 +128,9 @@ export function Hero() {
           }}
         />
 
-        {/* Floating orbs with parallax - solo azules y cyan */}
+        {/* Floating orbs with parallax - verdes */}
         <div
-          className="absolute rounded-full bg-gradient-to-br from-blue-500/25 to-cyan-500/15 dark:from-blue-500/30 dark:to-cyan-500/20 blur-3xl animate-float-orb"
+          className="absolute rounded-full bg-gradient-to-br from-green-500/25 to-green-500/15 dark:from-green-500/30 dark:to-green-500/20 blur-3xl animate-float-orb"
           style={{
             width: 300,
             height: 300,
@@ -141,7 +141,7 @@ export function Hero() {
           }}
         />
         <div
-          className="absolute rounded-full bg-gradient-to-br from-sky-400/20 to-blue-500/10 dark:from-sky-500/25 dark:to-blue-500/15 blur-3xl animate-float-orb"
+          className="absolute rounded-full bg-gradient-to-br from-green-400/20 to-green-500/10 dark:from-green-500/25 dark:to-green-500/15 blur-3xl animate-float-orb"
           style={{
             width: 350,
             height: 350,
@@ -153,7 +153,7 @@ export function Hero() {
           }}
         />
         <div
-          className="absolute rounded-full bg-gradient-to-br from-blue-400/15 to-sky-400/10 dark:from-blue-400/20 dark:to-sky-400/10 blur-3xl animate-float-orb"
+          className="absolute rounded-full bg-gradient-to-br from-green-400/15 to-green-400/10 dark:from-green-400/20 dark:to-green-400/10 blur-3xl animate-float-orb"
           style={{
             width: 400,
             height: 400,
@@ -165,7 +165,7 @@ export function Hero() {
           }}
         />
         <div
-          className="absolute rounded-full bg-gradient-to-br from-cyan-400/20 to-blue-400/10 dark:from-cyan-400/25 dark:to-blue-400/15 blur-2xl animate-float-orb"
+          className="absolute rounded-full bg-gradient-to-br from-green-400/20 to-green-400/10 dark:from-green-400/25 dark:to-green-400/15 blur-2xl animate-float-orb"
           style={{
             width: 250,
             height: 250,
@@ -228,9 +228,9 @@ export function Hero() {
       {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-white/5 border border-blue-100 dark:border-white/10 backdrop-blur-xs mb-8 animate-fade-in">
-          <Sparkles className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-          <span className="text-sm text-blue-600 dark:text-blue-300 font-medium">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 dark:bg-white/5 border border-green-100 dark:border-white/10 backdrop-blur-xs mb-8 animate-fade-in">
+          <Sparkles className="w-4 h-4 text-primary dark:text-green-400" />
+          <span className="text-sm text-primary dark:text-green-300 font-medium">
             Simple, intuitivo y poderoso
           </span>
         </div>
@@ -239,9 +239,9 @@ export function Hero() {
         <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 animate-slide-up">
           <span className="text-gray-900 dark:text-white">Tus finanzas personales,</span>
           <br />
-          <span className="bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-green-500 via-green-600 to-green-500 bg-clip-text text-transparent">
             {displayText}
-            <span className="text-blue-500 animate-pulse">|</span>
+            <span className="text-primary animate-pulse">|</span>
           </span>
         </h1>
 
@@ -256,7 +256,7 @@ export function Hero() {
           <Link href="/auth/register">
             <Button 
               size="lg" 
-              className="relative bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-lg px-8 py-6 rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transition-all duration-300 group overflow-hidden"
+              className="relative bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-lg px-8 py-6 rounded-xl shadow-lg shadow-green-500/25 hover:shadow-green-500/40 hover:scale-105 transition-all duration-300 group overflow-hidden"
             >
               <span className="relative z-10 flex items-center">
                 Comenzar gratis
@@ -281,19 +281,19 @@ export function Hero() {
         <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 animate-fade-in animation-delay-500">
           <div className="w-full flex items-center gap-3 px-3 py-3 sm:px-4 sm:py-4 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-xs shadow-xs dark:shadow-none">
             <div className="p-2 rounded-lg bg-green-100 dark:bg-green-500/20 flex-shrink-0">
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary dark:text-green-400" />
             </div>
             <span className="text-gray-700 dark:text-gray-300 font-medium min-w-0 truncate">Seguimiento en tiempo real</span>
           </div>
           <div className="w-full flex items-center gap-3 px-3 py-3 sm:px-4 sm:py-4 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-xs shadow-xs dark:shadow-none">
-            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex-shrink-0">
-              <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-500/20 flex-shrink-0">
+              <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-primary dark:text-green-400" />
             </div>
             <span className="text-gray-700 dark:text-gray-300 font-medium min-w-0 truncate">100% Gratis</span>
           </div>
           <div className="w-full flex items-center gap-3 px-3 py-3 sm:px-4 sm:py-4 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-xs shadow-xs dark:shadow-none">
-            <div className="p-2 rounded-lg bg-sky-100 dark:bg-sky-500/20 flex-shrink-0">
-              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-sky-600 dark:text-sky-400" />
+            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-500/20 flex-shrink-0">
+              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-primary dark:text-green-400" />
             </div>
             <span className="text-gray-700 dark:text-gray-300 font-medium min-w-0 truncate">Datos 100% seguros</span>
           </div>
