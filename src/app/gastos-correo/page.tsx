@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Check, Inbox, Loader2, RefreshCw, Search, X } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { toast } from "sonner"
 import { PageShell, PageHeader } from '@/components/ui/page-layout'
 import { PageTitle } from '@/components/PageTitle'
 import { Button } from '@/components/ui/button'
@@ -76,10 +76,9 @@ export default function EmailExpensesPage() {
 
   if (!queue.current) queue.current = getSessionEmailReviewQueue(job => {
       const id = `correo-${job.id}`
-      const theme = { background: 'hsl(var(--background))', color: 'hsl(var(--foreground))' }
-      if (job.status === 'queued' || job.status === 'saving') toast.loading(`${job.status === 'queued' ? 'En cola' : 'Guardando'} · ${job.label}`, { id, style: theme })
-      else if (job.status === 'success') toast.success(job.label, { id, duration: 3500, style: { ...theme, border: '1px solid #16a34a', background: 'color-mix(in srgb, hsl(var(--background)) 92%, #16a34a)' }, iconTheme: { primary: '#16a34a', secondary: 'white' } })
-      else toast.error(`${job.label}: ${job.error}`, { id, duration: 7000, style: theme })
+      if (job.status === 'queued' || job.status === 'saving') toast.loading(`${job.status === 'queued' ? 'En cola' : 'Guardando'} · ${job.label}`, { id })
+      else if (job.status === 'success') toast.success(job.label, { id, duration: 3500 })
+      else toast.error(`${job.label}: ${job.error}`, { id, duration: 7000 })
   })
   useEffect(() => {
     mounted.current = true

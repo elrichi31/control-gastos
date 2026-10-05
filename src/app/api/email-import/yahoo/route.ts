@@ -37,7 +37,14 @@ export async function GET(request: Request) {
   if (auth.error) return auth.error
   if (yahooImportUserId() !== auth.userId) return NextResponse.json({ enabled: false, pendientes: [] })
   const { supabase, userId } = auth
-  const query = parseReviewQuery(new URL(request.url))
+  const url = new URL(request.url)
+  if (url.searchParams.has('resumen')) {
+    const { count, error } = await supabase.from('correo_consumo').select('id', { count: 'exact', head: true })
+      .eq('user_id', userId).eq('estado', 'pendiente')
+    if (error) return dbFailure('count', error.code)
+    return NextResponse.json({ enabled: true, total: count ?? 0 })
+  }
+  const query = parseReviewQuery(url)
   const { data, error } = await supabase.from('correo_consumo')
     .select('id, tipo, origen, fecha, descripcion, monto, categoria_id, metodo_pago_id')
     .eq('user_id', userId).eq('estado', 'pendiente')

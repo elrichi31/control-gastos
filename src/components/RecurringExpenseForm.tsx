@@ -17,7 +17,7 @@ import { createRecurringExpense } from "@/services/recurring-expenses"
 import { fetchCategories, type Category } from "@/services/categories"
 import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
 import { Frecuencia, MESES } from "@/types/recurring-expense"
-import toast from "react-hot-toast"
+import { toast } from "sonner"
 
 export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
   // Calcular el primer día del mes actual

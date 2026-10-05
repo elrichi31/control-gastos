@@ -19,6 +19,8 @@ import { getDaysInMonth, differenceInCalendarDays } from "date-fns"
 import { MonthPlanning, MonthPlanningSummary } from "@/components/dashboard/MonthPlanning"
 import { buildMonthPlan } from "@/lib/month-planning"
 import type { PlanningRule } from "@/lib/month-planning"
+import { CategoryRanking } from "@/components/stats/category-ranking"
+import { EmailPendingBanner } from "@/components/dashboard/EmailPendingBanner"
 
 export default function DashboardPage() {
     const { gastos, loading, error: expensesError } = useGastosFiltrados()
@@ -173,6 +175,30 @@ export default function DashboardPage() {
         })
     }, [budgetCategories, currentMonthExpenses])
 
+    // Ranking por categoría del mes contra el mes anterior (mismo formato que Estadísticas).
+    const categoryRanking = useMemo(() => {
+        const sumBy = (list: typeof gastos) => list.reduce<Record<string, { total: number; conteo: number }>>((acc, g) => {
+            const nombre = g.categoria?.nombre ?? "Sin categoría"
+            acc[nombre] ??= { total: 0, conteo: 0 }
+            acc[nombre].total += g.monto
+            acc[nombre].conteo++
+            return acc
+        }, {})
+        const actual = sumBy(currentMonthExpenses)
+        const previo = sumBy(lastMonthExpenses)
+        const categorias = Object.entries(actual)
+            .map(([nombre, { total, conteo }]) => {
+                const antes = previo[nombre]?.total ?? 0
+                return {
+                    nombre, total, conteo, previo: antes,
+                    porcentaje: currentMonthTotal > 0 ? (total / currentMonthTotal) * 100 : 0,
+                    delta: antes > 0 ? ((total - antes) / antes) * 100 : null,
+                }
+            })
+            .sort((a, b) => b.total - a.total)
+        return { categorias, concentracion: categorias.slice(0, 3).reduce((s, c) => s + c.porcentaje, 0) }
+    }, [currentMonthExpenses, lastMonthExpenses, currentMonthTotal])
+
     const monthPlan = useMemo(() => buildMonthPlan({
         today,
         budget: budgetTotal,
@@ -207,6 +233,8 @@ export default function DashboardPage() {
             <DashboardHeader currentDate={currentDate} />
 
             <div className="space-y-4">
+                <EmailPendingBanner />
+
                 {/* Misma fila de KPIs que en Estadisticas, para que ambas pantallas se lean igual */}
                 <StatTileRow>
                     <StatTile
@@ -241,9 +269,12 @@ export default function DashboardPage() {
                 <MonthPlanningSummary plan={monthPlan} loading={planLoading} error={planError}
                     onRetry={() => setRetry(value => value + 1)} />
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
                     <ExpenseCalendar currentDate={currentDate} expenses={currentMonthExpenses} />
-                    <RecentExpenses expenses={recentExpenses} totalCount={gastos.length} />
+                    <CategoryRanking categorias={categoryRanking.categorias} concentracion={categoryRanking.concentracion} />
+                    <div className="lg:col-span-2 xl:col-span-1">
+                        <RecentExpenses expenses={recentExpenses} totalCount={gastos.length} />
+                    </div>
                 </div>
 
                 <MonthPlanning plan={monthPlan} loading={planLoading} error={planError} />

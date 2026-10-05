@@ -1,7 +1,7 @@
 // Hook para gestión de datos del detalle de presupuesto
 import { useState, useEffect } from "react"
 import { parseExpenseTags } from "@/lib/expense-tags"
-import { toast } from "react-hot-toast"
+import { toast } from "sonner"
 import {
   PresupuestoCategoriaDetalle,
   CategoriaDB,

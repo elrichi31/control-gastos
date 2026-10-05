@@ -8,7 +8,7 @@ const toast = { loading: (text, opts) => events.push(['loading', text, opts]), s
 Module._load = function(name, ...args) {
   if (name.endsWith('.module.css')) return {}
   if (name === '@/components/PageTitle') return { PageTitle: () => null }
-  if (name === 'react-hot-toast') return { __esModule: true, default: toast }
+  if (name === 'sonner') return { toast }
   return originalLoad.call(this, name, ...args)
 }
 const Page = require('../src/app/gastos-correo/page.tsx').default

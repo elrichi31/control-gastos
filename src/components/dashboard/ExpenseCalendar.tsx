@@ -45,9 +45,9 @@ export function ExpenseCalendar({ currentDate, expenses }: ExpenseCalendarProps)
   const intensidad = (total: number) => {
     if (total === 0 || maximo === 0) return "bg-muted/40"
     const r = total / maximo
-    if (r > 0.66) return "bg-chart-1/70"
-    if (r > 0.33) return "bg-chart-1/45"
-    return "bg-chart-1/20"
+    if (r > 0.66) return "bg-primary/70"
+    if (r > 0.33) return "bg-primary/45"
+    return "bg-primary/20"
   }
 
   return (
@@ -98,9 +98,9 @@ export function ExpenseCalendar({ currentDate, expenses }: ExpenseCalendarProps)
         <div className="flex items-center justify-end gap-1.5 mt-4 text-[11px] text-muted-foreground">
           <span>Menos</span>
           <span className="w-3 h-3 rounded-sm bg-muted/40" />
-          <span className="w-3 h-3 rounded-sm bg-chart-1/20" />
-          <span className="w-3 h-3 rounded-sm bg-chart-1/45" />
-          <span className="w-3 h-3 rounded-sm bg-chart-1/70" />
+          <span className="w-3 h-3 rounded-sm bg-primary/20" />
+          <span className="w-3 h-3 rounded-sm bg-primary/45" />
+          <span className="w-3 h-3 rounded-sm bg-primary/70" />
           <span>Más</span>
         </div>
       </CardContent>

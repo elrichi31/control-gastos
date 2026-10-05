@@ -8,7 +8,7 @@ const services = { createExpense: async data => { if (failSave) throw new Error(
 const load = Module._load
 Module._load = function(name, ...args) {
   if (name.startsWith('@/services/')) return services
-  if (name === 'react-hot-toast') return { __esModule: true, default: { success() {}, error() {} }, toast: { success() {}, error() {} } }
+  if (name === 'sonner') return { toast: { success() {}, error() {} } }
   return load.call(this, name, ...args)
 }
 const { ExpenseForm } = require('../src/components/ExpenseForm.tsx')

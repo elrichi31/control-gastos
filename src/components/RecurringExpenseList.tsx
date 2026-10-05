@@ -25,7 +25,7 @@ import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMetho
 import { ConfirmModal } from "@/components/ConfirmModal"
 import { EditRecurringExpenseModal } from "@/components/EditRecurringExpenseModal"
 import { getCategoriaColor } from "@/lib/constants"
-import toast from "react-hot-toast"
+import { toast } from "sonner"
 import { format, parseISO, addDays } from "date-fns"
 import { es } from "date-fns/locale"
 

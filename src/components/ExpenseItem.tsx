@@ -9,7 +9,7 @@ import { ExpenseTags } from "./ExpenseTags"
 import { EditExpenseDialog } from "./EditExpenseDialog"
 import { DeleteRecurringExpenseModal } from "./DeleteRecurringExpenseModal"
 import { getRecurringExpenseId, deleteExpense, deactivateRecurringExpense } from "@/services/expenses"
-import toast from "react-hot-toast"
+import { toast } from "sonner"
 
 type Props = {
   expense: Gasto

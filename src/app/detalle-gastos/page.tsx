@@ -4,7 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { Plus } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { toast } from "sonner"
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from "@/components/ui/card"
 import { PageShell, PageHeader } from "@/components/ui/page-layout"

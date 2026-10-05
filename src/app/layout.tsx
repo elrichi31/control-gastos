@@ -12,7 +12,7 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt"
 import { MobileRedirect } from "@/components/MobileRedirect"
 import { useSidebar } from "@/hooks/useSidebar"
 import { cn } from "@/lib/utils"
-import { Toaster } from "react-hot-toast"
+import { Toaster } from "@/components/ui/sonner"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -79,7 +79,7 @@ export default function RootLayout({
             </div>
           )}
 
-          <Toaster position="top-right" />
+          <Toaster position="top-center" richColors />
           <PWAInstallPrompt />
           <MobileRedirect />
         </Providers>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { LoaderCircle } from "lucide-react"
-import toast from "react-hot-toast"
+import { toast } from "sonner"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
