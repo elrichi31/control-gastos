@@ -4,6 +4,7 @@ import { scoreSameExpense } from '@/lib/jev'
 import { AUTO_EXPENSE_TAG, MAX_EXPENSE_TAGS, SHARED_EXPENSE_TAG } from '@/lib/expense-tags'
 import { findCandidates, type Candidate, type ExistingExpense } from '@/lib/email-matches'
 import { isMissingMigration, syncYahoo, yahooImportUserId } from '@/lib/email-sync'
+import { pageReviewRows, parseReviewQuery } from '@/lib/email-review-page'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -29,19 +30,21 @@ async function authorize(request: Request) {
 const shiftDate = (fecha: string, days: number) => new Date(Date.parse(fecha) + days * 86_400_000).toISOString().slice(0, 10)
 const round2 = (n: number) => Math.round(n * 100) / 100
 
-/** Pendientes de revisión, cada uno con los gastos existentes que podrían ser el mismo. */
+/** Una página de pendientes de la pestaña pedida (?tab, ?page, ?q, ?otros), con sus posibles
+ *  duplicados y los contadores de cada pestaña. */
 export async function GET(request: Request) {
   const auth = await getAuthenticatedSupabaseClient(request)
   if (auth.error) return auth.error
   if (yahooImportUserId() !== auth.userId) return NextResponse.json({ enabled: false, pendientes: [] })
   const { supabase, userId } = auth
+  const query = parseReviewQuery(new URL(request.url))
   const { data, error } = await supabase.from('correo_consumo')
     .select('id, tipo, origen, fecha, descripcion, monto, categoria_id, metodo_pago_id')
     .eq('user_id', userId).eq('estado', 'pendiente')
     .order('fecha', { ascending: false })
   if (error) return dbFailure('list', error.code)
   const pendientes = (data ?? []).map(row => ({ ...row, monto: Number(row.monto) }))
-  if (!pendientes.length) return NextResponse.json({ enabled: true, pendientes: [] })
+  if (!pendientes.length) return NextResponse.json({ enabled: true, pendientes: [], counts: { nuevos: 0, duplicados: 0, recibidos: 0 }, total: 0, page: 1, pages: 1 })
 
   const fechas = pendientes.map(p => p.fecha).sort()
   const [gastos, vinculados] = await Promise.all([
@@ -60,22 +63,26 @@ export async function GET(request: Request) {
   const manuales = todos.filter(g => !g.tags?.includes(AUTO_EXPENSE_TAG) && !yaVinculados.has(g.id))
 
   const withCandidates = pendientes.map(p => ({ ...p, coincidencias: findCandidates(p, p.tipo === 'ingreso' ? todos : manuales) as Candidate[] }))
-  const pairs = withCandidates.flatMap(p => p.tipo === 'gasto' ? p.coincidencias.map(c => ({ p, c })) : [])
+  const page = pageReviewRows(withCandidates, query)
+  // Jev (API externa, lenta) solo para los duplicados de esta página, no para todos.
+  const pairs = page.rows.flatMap(p => p.tipo === 'gasto' ? p.coincidencias.map(c => ({ p, c })) : [])
   if (pairs.length) {
     const verdicts = await scoreSameExpense(pairs.map(({ p, c }) => ({
       correo: { descripcion: p.descripcion },
       gasto: { descripcion: c.gasto.descripcion, categoria: c.gasto.categoria?.nombre },
     })))
     pairs.forEach(({ c }, i) => { if (verdicts[i]) Object.assign(c, verdicts[i]) })
-    for (const p of withCandidates) {
+    for (const p of page.rows) {
       if (p.tipo !== 'gasto') continue
       // Mismo monto y día pero rubros distintos (gasolinera vs. "almuerzo"): coincidencia casual.
-      p.coincidencias = p.coincidencias
-        .filter(c => c.veredicto !== 'no_encaja')
+      // Se descarta solo si queda otra; si no, la fila sigue en Duplicados con el aviso de confirmar,
+      // porque la pestaña se decidió antes de consultar a Jev.
+      const plausibles = p.coincidencias.filter(c => c.veredicto !== 'no_encaja')
+      p.coincidencias = (plausibles.length ? plausibles : p.coincidencias)
         .sort((a, b) => (b.probabilidad ?? 0) - (a.probabilidad ?? 0))
     }
   }
-  return NextResponse.json({ enabled: true, pendientes: withCandidates })
+  return NextResponse.json({ enabled: true, pendientes: page.rows, counts: page.counts, total: page.total, page: page.page, pages: page.pages })
 }
 
 /** Lee el correo y guarda los movimientos nuevos como pendientes. No crea gastos. */

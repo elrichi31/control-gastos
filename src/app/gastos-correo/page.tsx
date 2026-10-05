@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { getSessionEmailReviewQueue, type ReviewJob } from '@/lib/email-review-queue'
+import { REVIEW_PAGE_SIZE as PAGE_SIZE } from '@/lib/email-review-page'
 import styles from './review.module.css'
 
 type Gasto = { id: number; descripcion: string; monto: number; fecha: string; categoria?: { nombre: string } | null }
@@ -16,6 +17,8 @@ type Coincidencia = { gasto: Gasto; kind: 'igual' | 'mitad' | 'otro'; dias: numb
 type Pendiente = { id: number; tipo: 'gasto' | 'ingreso'; origen: string; fecha: string; descripcion: string; monto: number; categoria_id: number | null; coincidencias: Coincidencia[] }
 type Categoria = { id: number; nombre: string }
 type Tab = 'nuevos' | 'duplicados' | 'recibidos'
+type PageMeta = { counts: Record<Tab, number>; total: number; page: number; pages: number }
+const tabOf = (p: Pendiente, otros: Set<number>): Tab => p.tipo === 'ingreso' ? 'recibidos' : p.coincidencias.length && !otros.has(p.id) ? 'duplicados' : 'nuevos'
 const API = '/api/email-import/yahoo'
 const money = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' })
 const selectClass = 'h-11 w-full min-w-0 rounded-lg border border-input bg-card px-2.5 text-base shadow-xs dark:[color-scheme:dark] focus-visible:outline-2 focus-visible:outline-ring sm:h-8 sm:text-[13px]'
@@ -36,24 +39,38 @@ export default function EmailExpensesPage() {
   const [loadError, setLoadError] = useState('')
   const [tab, setTab] = useState<Tab>('nuevos')
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [query, setQuery] = useState('')
+  const [meta, setMeta] = useState<PageMeta | null>(null)
+  const [loading, setLoading] = useState(false)
   const mounted = useRef(true)
   const loadVersion = useRef(0)
   const queue = useRef<ReturnType<typeof getSessionEmailReviewQueue> | null>(null)
+  // load() es estable (lo usa la cola); lee la página pedida de aquí.
+  const params = useRef({ tab, page, query, otros: noEsDuplicado })
+  params.current = { tab, page, query, otros: noEsDuplicado }
 
   const load = useCallback(async () => {
     const version = ++loadVersion.current
+    const { tab, page, query, otros } = params.current
+    const url = `${API}?${new URLSearchParams({ tab, page: String(page), ...(query ? { q: query } : {}), ...(otros.size ? { otros: [...otros].join(',') } : {}) })}`
+    setLoading(true)
     try {
-      const response = await fetch(API, { cache: 'no-store' })
+      const response = await fetch(url, { cache: 'no-store' })
       const body = await response.json().catch(() => null)
       if (!response.ok || !body || !Array.isArray(body.pendientes)) throw new Error(body?.error || 'No se pudieron cargar los movimientos.')
       if (!mounted.current || version !== loadVersion.current) return
       setEnabled(body.enabled === true)
       setPendientes(body.pendientes)
+      setMeta(body.counts ? { counts: body.counts, total: body.total, page: body.page, pages: body.pages } : null)
+      if (body.page && body.page !== page) setPage(body.page)
       const available = new Set<number>(body.pendientes.map((p: Pendiente) => p.id))
       setSelected(prev => new Set([...prev].filter(id => available.has(id))))
       setLoadError('')
     } catch (cause) {
       if (mounted.current && version === loadVersion.current) setLoadError((cause as Error).message || 'No se pudo conectar. Intenta de nuevo.')
+    } finally {
+      if (mounted.current && version === loadVersion.current) setLoading(false)
     }
   }, [])
 
@@ -75,12 +92,17 @@ export default function EmailExpensesPage() {
 
   useEffect(() => {
     mounted.current = true
-    void load()
     fetch('/api/categorias').then(r => { if (!r.ok) throw new Error(); return r.json() }).then(data => {
       if (mounted.current) setCategorias(Array.isArray(data) ? data : [])
     }).catch(() => { if (mounted.current) setMessage('No se cargaron las categorías. Recarga antes de aceptar gastos.') })
     return () => { mounted.current = false }
   }, [load])
+  // Cada cambio de pestaña, página, búsqueda o "es otro gasto" pide esa página al servidor.
+  useEffect(() => { void load() }, [tab, page, query, noEsDuplicado, load])
+  useEffect(() => {
+    const timer = setTimeout(() => { setQuery(search.trim()); setPage(1) }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
 
   const inFlight = jobs.filter(job => job.status === 'queued' || job.status === 'saving').length
   const hidden = useMemo(() => new Set(jobs.filter(job => job.status !== 'error').map(job => job.id)), [jobs])
@@ -94,6 +116,9 @@ export default function EmailExpensesPage() {
     }
   }, [pendientes, hidden, noEsDuplicado])
   const groups = { nuevos, duplicados, recibidos }
+  // Contador del servidor menos lo que ya se está guardando en esta página.
+  const tabCount = (value: Tab) => meta ? meta.counts[value] - pendientes.filter(p => hidden.has(p.id) && tabOf(p, noEsDuplicado) === value).length : groups[value].length
+  const goTo = (next: Tab) => { setTab(next); setPage(1) }
   const matchesSearch = (p: Pendiente) => `${p.descripcion} ${p.origen} ${p.fecha}`.toLocaleLowerCase('es').includes(search.trim().toLocaleLowerCase('es'))
   const rows = groups[tab].filter(matchesSearch)
   const chosen = nuevos.filter(p => selected.has(p.id))
@@ -148,11 +173,11 @@ export default function EmailExpensesPage() {
       {message && <p className="mb-4 text-sm" role="status">{message}</p>}
       {enabled === false ? <Empty title="Correo no habilitado" text="La importación desde Yahoo no está habilitada para esta cuenta." /> : enabled === null ? (
         !loadError && <div className="flex min-h-48 items-center justify-center gap-2 text-sm" role="status"><Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />Cargando movimientos…</div>
-      ) : <Tabs value={tab} onValueChange={value => setTab(value as Tab)} className="lg:fill-y">
+      ) : <Tabs value={tab} onValueChange={value => goTo(value as Tab)} className="lg:fill-y">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <TabsList aria-label="Clasificación de movimientos" className="grid h-auto w-full grid-cols-3 sm:w-auto">
             {([['nuevos', 'Nuevos'], ['duplicados', 'Duplicados'], ['recibidos', 'Recibidos']] as const).map(([value, label]) => (
-              <TabsTrigger key={value} value={value} data-review-tab className="min-h-11 min-w-0 gap-1.5 px-2 text-xs sm:min-h-0 sm:px-3 sm:text-[13px]"><span>{label}</span><span className="rounded bg-muted px-1.5 text-[11px] tabular-nums text-muted-foreground">{groups[value].length}</span></TabsTrigger>
+              <TabsTrigger key={value} value={value} data-review-tab className="min-h-11 min-w-0 gap-1.5 px-2 text-xs sm:min-h-0 sm:px-3 sm:text-[13px]"><span>{label}</span><span className="rounded bg-muted px-1.5 text-[11px] tabular-nums text-muted-foreground">{tabCount(value)}</span></TabsTrigger>
             ))}
           </TabsList>
           <div className="relative w-full sm:max-w-60"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /><Input aria-label="Buscar movimientos" placeholder="Buscar movimiento…" value={search} onChange={event => setSearch(event.target.value)} className="h-11 pl-9 text-base sm:h-9 sm:text-[13px]" /></div>
@@ -168,8 +193,8 @@ export default function EmailExpensesPage() {
               <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || !chosen.length || chosen.some(p => !validCategory(p))} onClick={() => aceptar(chosen)}>Aceptar selección</Button>
               <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" disabled={syncing || !chosen.length} onClick={() => chosen.forEach(descartar)}>Descartar selección</Button>
             </div>}
-            {!rows.length ? <Empty title={search ? 'Sin coincidencias' : inFlight ? 'Guardando tus decisiones' : gruposEmpty(tab)} text={search ? 'Prueba con otra descripción, fecha o banco.' : inFlight ? 'Puedes cambiar de clasificación mientras terminan de guardarse.' : 'Los movimientos de esta clasificación aparecerán aquí.'} /> : (
-              <div className={styles.wrap}><table className={styles.table} data-classification={tab}>
+            {!rows.length && loading ? <div className="flex min-h-48 items-center justify-center gap-2 text-sm text-muted-foreground" role="status"><Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />Cargando…</div> : !rows.length ? <Empty title={search ? 'Sin coincidencias' : inFlight ? 'Guardando tus decisiones' : gruposEmpty(tab)} text={search ? 'Prueba con otra descripción, fecha o banco.' : inFlight ? 'Puedes cambiar de clasificación mientras terminan de guardarse.' : 'Los movimientos de esta clasificación aparecerán aquí.'} /> : (
+              <div key={`${tab}-${page}`} className={`${styles.wrap} transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}><table className={styles.table} data-classification={tab}>
                 <caption className="sr-only">Movimientos de correo: {tab}</caption>
                 <thead><tr>{tab === 'nuevos' && <th scope="col"><span className="sr-only">Selección</span></th>}<th scope="col">Movimiento</th>{tab === 'nuevos' ? <><th scope="col">Categoría</th><th scope="col">Tu parte</th></> : <th scope="col">{tab === 'duplicados' ? 'Gasto existente' : 'Descontar de'}</th>}<th scope="col" className="text-right">Importe</th><th scope="col">Acciones</th></tr></thead>
                 <tbody>{rows.map(p => {
@@ -195,7 +220,7 @@ export default function EmailExpensesPage() {
                           <Button size="sm" variant="ghost" className="min-h-11 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:min-h-0 sm:w-8 sm:px-0" disabled={syncing} aria-label={`Descartar ${p.descripcion}`} title="Descartar" onClick={() => descartar(p)}><X aria-hidden="true" /><span className="sm:sr-only">Descartar</span></Button>
                         </> : <>
                           {elegido && <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || (tab === 'recibidos' && elegido.gasto.monto <= p.monto)} onClick={() => enqueue(p, { vincular: [{ id: p.id, gasto_id: elegido.gasto.id }] }, 'vinculados', `${tab === 'duplicados' ? 'Vinculado sin duplicar' : 'Devolución descontada'} · ${p.descripcion}`)}>{tab === 'duplicados' ? 'Es el mismo' : 'Descontar'}</Button>}
-                          {tab === 'duplicados' ? <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" disabled={syncing} onClick={() => { setNoEsDuplicado(prev => new Set(prev).add(p.id)); setTab('nuevos') }}>Es otro gasto</Button> : null}
+                          {tab === 'duplicados' ? <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" disabled={syncing} onClick={() => { setNoEsDuplicado(prev => new Set(prev).add(p.id)); goTo('nuevos') }}>Es otro gasto</Button> : null}
                           <Button size="sm" variant="ghost" className="min-h-11 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:min-h-0" disabled={syncing} onClick={() => descartar(p)}>Descartar</Button>
                         </>}
                       </div>
@@ -204,6 +229,14 @@ export default function EmailExpensesPage() {
                 })}</tbody>
               </table></div>
             )}
+            {meta && meta.pages > 1 && <nav aria-label="Paginación" className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+              <span className="tabular-nums">{(meta.page - 1) * PAGE_SIZE + 1}–{Math.min(meta.page * PAGE_SIZE, meta.total)} de {meta.total}</span>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" disabled={meta.page <= 1 || loading} onClick={() => setPage(meta.page - 1)}>Anterior</Button>
+                <span className="tabular-nums">Página {meta.page} de {meta.pages}</span>
+                <Button size="sm" variant="outline" disabled={meta.page >= meta.pages || loading} onClick={() => setPage(meta.page + 1)}>Siguiente</Button>
+              </div>
+            </nav>}
           </>}
         </TabsContent>)}
       </Tabs>}
