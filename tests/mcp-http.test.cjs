@@ -13,8 +13,9 @@ const request=(url,values,extra={})=>new Request(url,{method:'POST',headers:{'co
 test('HTTP OAuth consent + actual PostgreSQL token exchange + real MCP protocol handshake',async()=>{
  const sql=new PGlite()
  try {
- await sql.exec(`CREATE ROLE anon;CREATE ROLE authenticated;CREATE ROLE service_role;CREATE SCHEMA auth;CREATE TABLE auth.users(id uuid primary key);INSERT INTO auth.users VALUES('${user}');`)
+ await sql.exec(`CREATE ROLE anon;CREATE ROLE authenticated;CREATE ROLE service_role;CREATE SCHEMA auth;CREATE TABLE auth.users(id uuid primary key,encrypted_password text,banned_until timestamptz);INSERT INTO auth.users(id) VALUES('${user}');`)
  await sql.exec(fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261001_mcp_oauth.sql'),'utf8'))
+ await sql.exec(fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261013_mcp_account_security.sql'),'utf8'))
  let queries=0
  const db={rpc:async(name,params)=>{const keys=Object.keys(params);try{const r=await sql.query('SELECT public.'+name+'('+keys.map((k,i)=>'$'+(i+1)+(k==='p_scopes'?'::text[]':'')).join(',')+') AS result',Object.values(params));return {data:r.rows[0].result,error:null}}catch(e){return {data:null,error:e}}},from(){queries++;const q={select(){return q},eq(){return q},order(){return q},range(){return q},then(resolve){return Promise.resolve({data:[],error:null}).then(resolve)}};return q}}
  let session={user:{id:user,email:'fixture@example.test'}}

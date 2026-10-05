@@ -116,6 +116,29 @@ export async function getAuthenticatedSupabaseClient(request?: Request) {
     authSource = 'nextauth'
   }
 
+  // Cookie-authenticated mutations must come from the canonical public origin, not
+  // the request URL/Host (which may be an internal reverse-proxy address).
+  if (request && !['GET', 'HEAD', 'OPTIONS'].includes(request.method.toUpperCase())) {
+    if (authSource === 'nextauth') {
+      let origin: string;
+      try {
+        const url = new URL(process.env.NEXTAUTH_URL || '')
+        if (url.username || url.password || !['https:', 'http:'].includes(url.protocol)
+          || (process.env.NODE_ENV === 'production' && url.protocol !== 'https:')) throw new Error()
+        origin = url.origin
+      } catch {
+        return { error: NextResponse.json({ error: 'Configuración de seguridad pendiente' }, { status: 503 }), supabase: null, userId: null, authSource: null }
+      }
+      if (request.headers.get('origin') !== origin) {
+        return { error: NextResponse.json({ error: 'Origen no autorizado' }, { status: 403 }), supabase: null, userId: null, authSource: null }
+      }
+    }
+    // Verified Bearer clients do not need Origin, but cannot send simple form/text bodies.
+    if (request.body !== null && (request.headers.get('content-type') || '').split(';')[0].trim().toLowerCase() !== 'application/json') {
+      return { error: NextResponse.json({ error: 'Se requiere JSON' }, { status: 415 }), supabase: null, userId: null, authSource: null }
+    }
+  }
+
   // Data tables are closed to anon/authenticated (RLS, no policies): only the server's
   // service role reaches them, so every route must keep filtering by this userId.
   const supabase = createServiceClient()

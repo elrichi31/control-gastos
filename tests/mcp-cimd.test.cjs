@@ -76,8 +76,8 @@ test('invalid signatures, claims and mixed authentication never consume an asser
 test('CIMD consent, signed code exchange, refresh, revocation and MCP use real PostgreSQL',async()=>{
  const sql=new PGlite()
  try{
-  await sql.exec(`CREATE ROLE anon;CREATE ROLE authenticated;CREATE ROLE service_role;CREATE SCHEMA auth;CREATE TABLE auth.users(id uuid primary key);INSERT INTO auth.users VALUES('${user}');`)
-  for(const name of ['20261001_mcp_oauth.sql','20261002_mcp_cimd_assertions.sql'])await sql.exec(fs.readFileSync(path.join(__dirname,'../supabase/migrations',name),'utf8'))
+  await sql.exec(`CREATE ROLE anon;CREATE ROLE authenticated;CREATE ROLE service_role;CREATE SCHEMA auth;CREATE TABLE auth.users(id uuid primary key,encrypted_password text,banned_until timestamptz);INSERT INTO auth.users(id) VALUES('${user}');`)
+  for(const name of ['20261001_mcp_oauth.sql','20261002_mcp_cimd_assertions.sql','20261013_mcp_account_security.sql'])await sql.exec(fs.readFileSync(path.join(__dirname,'../supabase/migrations',name),'utf8'))
   const db={rpc:async(name,params)=>{try{const keys=Object.keys(params),r=await sql.query('SELECT public.'+name+'('+keys.map((k,i)=>'$'+(i+1)+(k==='p_scopes'?'::text[]':'')).join(',')+') AS result',Object.values(params));return {data:r.rows[0].result,error:null}}catch(error){return {data:null,error}}}}
   const f=await fixture(),oauth=require('../src/lib/mcp/oauth.ts').createOAuthHandlers(config,db,async()=>({user:{id:user,email:'fixture@example.test'}}),f.client)
   const params=new URLSearchParams({response_type:'code',client_id:CLIENT,redirect_uri:CALLBACK,scope:'expenses:read',resource:config.resource,state:'fixture-state',code_challenge_method:'S256',code_challenge:createHash('sha256').update(verifier).digest('base64url')})

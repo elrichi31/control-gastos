@@ -8,8 +8,9 @@ const h = s => createHash('sha256').update(s).digest('hex')
 const user='11111111-1111-4111-8111-111111111111', client='chatgpt', resource='https://gastos.example/api/mcp', redirect='https://chatgpt.com/callback', challenge='c'.repeat(43)
 async function setup() {
  const db=new PGlite()
- await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role; CREATE SCHEMA auth; CREATE TABLE auth.users(id uuid primary key); INSERT INTO auth.users VALUES ('${user}');`)
+ await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role; CREATE SCHEMA auth; CREATE TABLE auth.users(id uuid primary key, encrypted_password text, banned_until timestamptz); INSERT INTO auth.users(id) VALUES ('${user}');`)
  await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261001_mcp_oauth.sql'),'utf8'))
+ await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261013_mcp_account_security.sql'),'utf8'))
  await db.query('SELECT public.mcp_create_authorization($1::uuid,$2,$3,$4,$5,$6,$7::text[])',[user,client,resource,redirect,challenge,h('code'),['expenses:read','expenses:write']])
  return db
 }

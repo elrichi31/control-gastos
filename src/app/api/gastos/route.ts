@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { normalizeExpenseTags } from '@/lib/expense-tags';
 import { getAuthenticatedSupabaseClient } from '@/lib/auth';
+import { expenseCreateSchema, expenseUpdateSchema, expenseIdSchema, parseExpenseQueryId } from '@/lib/expense-input';
 
 export async function GET(request: Request) {
   const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request);
@@ -36,12 +37,10 @@ export async function POST(request: Request) {
   const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request);
   if (authError) return authError;
 
-  const body = await request.json();
+  const parsed = expenseCreateSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: 'Datos de gasto inválidos. Revisa monto, fecha, descripción y categorías.' }, { status: 400 });
+  const body = parsed.data;
   const { descripcion, monto, fecha, categoria_id, metodo_pago_id, is_recurrent } = body;
-
-  if (!descripcion || !monto || !fecha || !categoria_id || !metodo_pago_id) {
-    return NextResponse.json({ error: 'Faltan datos requeridos.' }, { status: 400 });
-  }
 
   let tags: string[];
   try { tags = normalizeExpenseTags(body.tags); } catch (error) {
@@ -81,27 +80,23 @@ export async function PUT(request: Request) {
   const { searchParams } = new URL(request.url);
   const queryId = searchParams.get('id');
 
-  const body = await request.json();
-  const { id: bodyId, descripcion, monto, fecha, categoria_id, metodo_pago_id, is_recurrent } = body;
-
-  const id = queryId ?? bodyId;
-
-  if (!id) {
-    return NextResponse.json({ error: 'ID de gasto requerido para actualizar.' }, { status: 400 });
+  const raw: unknown = await request.json().catch(() => null);
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return NextResponse.json({ error: 'Datos de gasto inválidos.' }, { status: 400 });
   }
-
-  const updates: Record<string, unknown> = {};
-  if (body.tags !== undefined) {
-    try { updates.tags = normalizeExpenseTags(body.tags); } catch (error) {
+  const body = raw as Record<string, unknown>;
+  const id = queryId !== null ? parseExpenseQueryId(queryId) : expenseIdSchema.safeParse(body.id).data;
+  if (!id || (body.id !== undefined && body.id !== id)) {
+    return NextResponse.json({ error: 'ID de gasto inválido o inconsistente.' }, { status: 400 });
+  }
+  const parsed = expenseUpdateSchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: 'Campos de gasto inválidos o vacíos.' }, { status: 400 });
+  const updates: Record<string, unknown> = { ...parsed.data };
+  if (updates.tags !== undefined) {
+    try { updates.tags = normalizeExpenseTags(updates.tags); } catch (error) {
       return NextResponse.json({ error: (error as Error).message }, { status: 400 });
     }
   }
-  if (descripcion !== undefined) updates.descripcion = descripcion;
-  if (monto !== undefined) updates.monto = monto;
-  if (fecha !== undefined) updates.fecha = fecha;
-  if (categoria_id !== undefined) updates.categoria_id = categoria_id;
-  if (metodo_pago_id !== undefined) updates.metodo_pago_id = metodo_pago_id;
-  if (typeof is_recurrent === 'boolean') updates.is_recurrent = is_recurrent;
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No hay campos para actualizar.' }, { status: 400 });
@@ -142,7 +137,7 @@ export async function DELETE(request: Request) {
   if (authError) return authError;
 
   const { searchParams } = new URL(request.url);
-  const id = searchParams.get('id');
+  const id = parseExpenseQueryId(searchParams.get('id'));
 
   if (!id) {
     return NextResponse.json({ error: 'ID de gasto requerido para eliminar.' }, { status: 400 });

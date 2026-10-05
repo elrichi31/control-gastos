@@ -28,15 +28,21 @@ export function ExportarDatos({ gastos, gastosOriginal }: ExportarDatosProps) {
 
   const exportarCSV = (datos: Gasto[]) => {
     const headers = ['Fecha', 'Descripción', 'Monto', 'Categoría', 'Método de Pago']
+    const csvCell = (value: string | number) => {
+      const text = String(value)
+      // Quoting alone does not stop spreadsheet formulas (including control/space prefixes).
+      const safe = typeof value === 'string' && /^(?:\s*[=+\-@＝＋－＠]|[\t\r\n])/u.test(text) ? `'${text}` : text
+      return `"${safe.replace(/"/g, '""')}"`
+    }
     const rows = datos.map(gasto => [
       gasto.fecha,
-      `"${gasto.descripcion}"`,
-      gasto.monto.toString(),
-      `"${gasto.categoria?.nombre || 'Sin categoría'}"`,
-      `"${gasto.metodo_pago?.nombre || 'Sin método'}"`
+      gasto.descripcion,
+      gasto.monto,
+      gasto.categoria?.nombre || 'Sin categoría',
+      gasto.metodo_pago?.nombre || 'Sin método'
     ])
 
-    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
+    const csvContent = [headers, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n')
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
