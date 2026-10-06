@@ -29,8 +29,10 @@ function fakeDb(tables) {
   let nextId = 100
   function query(table) {
     const filters = []; let op = 'select', payload, returning = false, single = false
-    const rows = () => tables[table].filter(r => filters.every(f => f(r)))
+    const rows = () => (tables[table] ?? []).filter(r => filters.every(f => f(r)))
     const run = () => {
+      if (op === 'upsert') { const existing = tables[table].find(r => r.user_id === payload.user_id && r.destinatario === payload.destinatario); if (existing) Object.assign(existing, payload); else tables[table].push(payload); return { data: null, error: null } }
+      if (op === 'delete') { const hit = rows(); tables[table] = tables[table].filter(r => !hit.includes(r)); return { data: null, error: null } }
       if (op === 'insert') { const added = [].concat(payload).map(r => ({ id: nextId++, ...r })); tables[table].push(...added); return { data: added, error: null } }
       if (op === 'update') { const hit = rows(); hit.forEach(r => Object.assign(r, payload)); return { data: returning ? (single ? hit[0] ?? null : hit) : null, error: null } }
       const hit = rows(); return { data: single ? hit[0] ?? null : hit, error: null }
@@ -39,8 +41,14 @@ function fakeDb(tables) {
       select() { if (op !== 'select') returning = true; return q },
       update(v) { op = 'update'; payload = v; return q },
       insert(v) { op = 'insert'; payload = v; return q },
+      upsert(v) { op = 'upsert'; payload = v; return q },
+      delete() { op = 'delete'; return q },
       eq(k, v) { filters.push(r => r[k] === v); return q },
       in(k, v) { filters.push(r => v.includes(r[k])); return q },
+      order() { return q },
+      gte(k, v) { filters.push(r => r[k] >= v); return q },
+      lte(k, v) { filters.push(r => r[k] <= v); return q },
+      not(k, op, v) { filters.push(r => r[k] !== v); return q },
       maybeSingle() { single = true; return q },
       then(resolve, reject) { return Promise.resolve(run()).then(resolve, reject) },
     }
@@ -57,9 +65,10 @@ Module._load = function (request, ...args) {
   return realLoad.call(this, request, ...args)
 }
 Object.assign(process.env, { YAHOO_EMAIL: 'x@yahoo.invalid', YAHOO_APP_PASSWORD: 'synthetic', YAHOO_IMPORT_USER_ID: owner })
-const { PATCH } = require('../src/app/api/email-import/yahoo/route.ts')
+const { PATCH, PUT, GET } = require('../src/app/api/email-import/yahoo/route.ts')
 Module._load = realLoad
 const patch = body => PATCH(new Request('https://fixture.invalid/api/email-import/yahoo', { method: 'PATCH', body: JSON.stringify(body) }))
+const put = body => PUT(new Request('https://fixture.invalid/api/email-import/yahoo', { method: 'PUT', body: JSON.stringify(body) }))
 const pending = (id, extra) => ({ id, user_id: owner, estado: 'pendiente', tipo: 'gasto', fecha: '2026-10-02', descripcion: 'Correo', monto: 20, categoria_id: 1, metodo_pago_id: 2, gasto_id: null, ...extra })
 
 test('aceptar con mitad registra tu parte con tags auto + compartido; repetir no duplica', async () => {
@@ -72,6 +81,46 @@ test('aceptar con mitad registra tu parte con tags auto + compartido; repetir no
   assert.deepEqual([entero.monto, entero.tags], [7.5, ['auto']])
   await patch({ aceptar: [{ id: 1, categoria_id: 3 }] })
   assert.equal(tables.gasto.length, 2)
+})
+
+test('aceptar usa el alias privado del destinatario, conserva el correo y no confunde personas', async () => {
+  const tables = {
+    correo_consumo: [pending(1, { descripcion: 'Transferencia a PÉREZ   JUAN' }), pending(2, { descripcion: 'Deuna a PEREZ JUAN' }), pending(3, { descripcion: 'Transferencia a PEREZ JUAN CARLOS' })],
+    correo_alias: [{ user_id: owner, destinatario: 'perez juan', alias: 'Gimnasio' }, { user_id: 'otro', destinatario: 'perez juan carlos', alias: 'Privado' }], gasto: [],
+  }
+  db = fakeDb(tables)
+  const res = await patch({ aceptar: [1, 2, 3].map(id => ({ id, categoria_id: 1 })) })
+  assert.equal(res.status, 200)
+  assert.deepEqual(tables.gasto.map(g => g.descripcion), ['Gimnasio', 'Gimnasio', 'Transferencia a PEREZ JUAN CARLOS'])
+  assert.equal(tables.correo_consumo[0].descripcion, 'Transferencia a PÉREZ   JUAN')
+})
+
+test('listar muestra el alias y permite buscarlo conservando el nombre bancario', async () => {
+  const tables = { correo_consumo: [pending(1, { descripcion: 'Transferencia a JUAN PEREZ' })], correo_alias: [{ user_id: owner, destinatario: 'juan perez', alias: 'Gimnasio' }], gasto: [] }
+  db = fakeDb(tables)
+  const response = await GET(new Request('https://fixture.invalid/api/email-import/yahoo?tab=nuevos&q=Gimnasio'))
+  const body = await response.json()
+  assert.equal(body.total, 1)
+  assert.deepEqual([body.pendientes[0].descripcion, body.pendientes[0].descripcion_original, body.pendientes[0].alias], ['Gimnasio', 'Transferencia a JUAN PEREZ', 'Gimnasio'])
+})
+
+test('configurar, editar y quitar alias solo desde una transferencia propia', async () => {
+  const tables = { correo_consumo: [pending(1, { descripcion: 'Transferencia a PÉREZ JUAN' }), pending(2, { user_id: 'otro', descripcion: 'Transferencia a OTRO' }), pending(3, { tipo: 'ingreso', descripcion: 'Recibido de PÉREZ JUAN' })], correo_alias: [], gasto: [] }
+  db = fakeDb(tables)
+  assert.equal((await put({ id: 1, alias: '  Gimnasio  ' })).status, 200)
+  assert.deepEqual(tables.correo_alias, [{ user_id: owner, destinatario: 'perez juan', alias: 'Gimnasio' }])
+  assert.equal((await put({ id: 1, alias: 'Entrenamiento' })).status, 200)
+  assert.equal(tables.correo_alias.length, 1)
+  assert.equal(tables.correo_alias[0].alias, 'Entrenamiento')
+  tables.correo_consumo.push(pending(4, { descripcion: 'Deuna a PEREZ JUAN' }))
+  assert.equal((await patch({ aceptar: [{ id: 4, categoria_id: 1 }] })).status, 200)
+  assert.equal(tables.gasto[0].descripcion, 'Entrenamiento')
+  assert.equal((await put({ id: 2, alias: 'Intruso' })).status, 404)
+  assert.equal((await put({ id: 3, alias: 'Ingreso' })).status, 400)
+  for (const body of [{ id: 1, alias: 'x'.repeat(201) }, { id: 1, alias: 10 }, { id: -1, alias: 'x' }]) assert.equal((await put(body)).status, 400)
+  assert.equal((await put({ id: 1, alias: '' })).status, 200)
+  assert.deepEqual(tables.correo_alias, [])
+  assert.equal(tables.correo_consumo[0].descripcion, 'Transferencia a PÉREZ JUAN')
 })
 
 test('vincular un duplicado no crea gasto; un ingreso se descuenta del gasto elegido', async () => {
@@ -91,6 +140,27 @@ test('un ingreso igual o mayor al gasto se rechaza y queda pendiente; gastos aje
   assert.deepEqual([tables.correo_consumo[0].estado, tables.correo_consumo[0].gasto_id, tables.gasto[0].monto], ['pendiente', null, 20])
   assert.deepEqual(await (await patch({ vincular: [{ id: 1, gasto_id: 60 }] })).json(), { aceptados: 0, vinculados: 0, descartados: 0 })
   assert.equal(tables.gasto[1].monto, 99)
+})
+
+test('alias persiste por usuario, tiene límites y acceso cerrado (PostgreSQL aislado)', async () => {
+  const { PGlite } = require('@electric-sql/pglite'), pg = new PGlite()
+  try {
+    await pg.exec('CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;')
+    const sql = fs.readFileSync(path.join(__dirname, '../supabase/migrations/20261006_correo_alias.sql'), 'utf8')
+    await pg.exec(sql)
+    await pg.query("INSERT INTO public.correo_alias VALUES ('u', 'juan perez', 'Gimnasio'), ('v', 'juan perez', 'Otro alias')")
+    await pg.exec(sql)
+    assert.equal((await pg.query('SELECT * FROM public.correo_alias')).rows.length, 2)
+    await assert.rejects(() => pg.query("INSERT INTO public.correo_alias VALUES ('u', 'juan perez', 'Duplicado')"), /duplicate|unique/)
+    for (const alias of ['', '  ', 'x'.repeat(201)]) await assert.rejects(() => pg.query('INSERT INTO public.correo_alias VALUES ($1,$2,$3)', ['u', 'otro', alias]), /check/)
+    for (const role of ['anon', 'authenticated']) {
+      await pg.exec('SET ROLE ' + role)
+      await assert.rejects(() => pg.query('SELECT * FROM public.correo_alias'), /permission denied/)
+      await pg.exec('RESET ROLE')
+    }
+    await pg.exec('SET ROLE service_role')
+    assert.equal((await pg.query('SELECT * FROM public.correo_alias')).rows.length, 2)
+  } finally { await pg.close() }
 })
 
 test('migraciones de correo: idempotentes, estados válidos y cerradas a roles públicos (PostgreSQL aislado)', async () => {

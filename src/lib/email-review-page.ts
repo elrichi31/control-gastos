@@ -2,7 +2,7 @@ export type ReviewTab = 'nuevos' | 'duplicados' | 'recibidos'
 export const REVIEW_PAGE_SIZE = 50
 const TABS: ReviewTab[] = ['nuevos', 'duplicados', 'recibidos']
 
-type Row = { id: number; tipo: 'gasto' | 'ingreso'; descripcion: string; origen: string; fecha: string; coincidencias: unknown[] }
+type Row = { id: number; tipo: 'gasto' | 'ingreso'; descripcion: string; descripcion_original?: string; origen: string; fecha: string; coincidencias: unknown[] }
 
 export function parseReviewQuery(url: URL) {
   const tab = TABS.includes(url.searchParams.get('tab') as ReviewTab) ? url.searchParams.get('tab') as ReviewTab : 'nuevos'
@@ -21,7 +21,7 @@ export function pageReviewRows<T extends Row>(rows: T[], { tab, page, q, otros }
   const counts: Record<ReviewTab, number> = { nuevos: 0, duplicados: 0, recibidos: 0 }
   for (const row of rows) counts[tabOf(row, otros)]++
   let inTab = rows.filter(row => tabOf(row, otros) === tab)
-  if (q) inTab = inTab.filter(row => `${row.descripcion} ${row.origen} ${row.fecha}`.toLocaleLowerCase('es').includes(q))
+  if (q) inTab = inTab.filter(row => `${row.descripcion} ${row.descripcion_original ?? ''} ${row.origen} ${row.fecha}`.toLocaleLowerCase('es').includes(q))
   // Los recién marcados como "otro gasto" primero, para que se vean al cambiar de pestaña.
   if (tab === 'nuevos' && otros.size) inTab = [...inTab.filter(r => otros.has(r.id)), ...inTab.filter(r => !otros.has(r.id))]
   const pages = Math.max(1, Math.ceil(inTab.length / REVIEW_PAGE_SIZE))

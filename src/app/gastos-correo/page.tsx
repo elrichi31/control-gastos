@@ -14,7 +14,7 @@ import styles from './review.module.css'
 
 type Gasto = { id: number; descripcion: string; monto: number; fecha: string; categoria?: { nombre: string } | null }
 type Coincidencia = { gasto: Gasto; kind: 'igual' | 'mitad' | 'otro'; dias: number; veredicto?: 'encaja' | 'desconocido' | 'no_encaja'; probabilidad?: number }
-type Pendiente = { id: number; tipo: 'gasto' | 'ingreso'; origen: string; fecha: string; descripcion: string; monto: number; categoria_id: number | null; coincidencias: Coincidencia[] }
+type Pendiente = { id: number; tipo: 'gasto' | 'ingreso'; origen: string; fecha: string; descripcion: string; descripcion_original?: string; destinatario?: string | null; alias?: string; monto: number; categoria_id: number | null; coincidencias: Coincidencia[] }
 type Categoria = { id: number; nombre: string }
 type Tab = 'nuevos' | 'duplicados' | 'recibidos'
 type PageMeta = { counts: Record<Tab, number>; total: number; page: number; pages: number }
@@ -43,6 +43,8 @@ export default function EmailExpensesPage() {
   const [query, setQuery] = useState('')
   const [meta, setMeta] = useState<PageMeta | null>(null)
   const [loading, setLoading] = useState(false)
+  const [aliasDrafts, setAliasDrafts] = useState<Record<string, string>>({})
+  const [aliasSaving, setAliasSaving] = useState<string | null>(null)
   const mounted = useRef(true)
   const loadVersion = useRef(0)
   const queue = useRef<ReturnType<typeof getSessionEmailReviewQueue> | null>(null)
@@ -118,7 +120,7 @@ export default function EmailExpensesPage() {
   // Contador del servidor menos lo que ya se está guardando en esta página.
   const tabCount = (value: Tab) => meta ? meta.counts[value] - pendientes.filter(p => hidden.has(p.id) && tabOf(p, noEsDuplicado) === value).length : groups[value].length
   const goTo = (next: Tab) => { setTab(next); setPage(1) }
-  const matchesSearch = (p: Pendiente) => `${p.descripcion} ${p.origen} ${p.fecha}`.toLocaleLowerCase('es').includes(search.trim().toLocaleLowerCase('es'))
+  const matchesSearch = (p: Pendiente) => `${p.descripcion} ${p.descripcion_original ?? ''} ${p.origen} ${p.fecha}`.toLocaleLowerCase('es').includes(search.trim().toLocaleLowerCase('es'))
   const rows = groups[tab].filter(matchesSearch)
   const chosen = nuevos.filter(p => selected.has(p.id))
   const visibleNew = nuevos.filter(matchesSearch)
@@ -126,6 +128,27 @@ export default function EmailExpensesPage() {
   const total = chosen.reduce((sum, p) => sum + (mitadPor[p.id] ? half(p.monto) : p.monto), 0)
   const category = (p: Pendiente) => categoriaPor[p.id] ?? p.categoria_id
   const validCategory = (p: Pendiente) => categorias.some(c => c.id === category(p))
+  const aliasDraft = (p: Pendiente) => p.destinatario ? aliasDrafts[p.destinatario] ?? p.alias ?? '' : ''
+  const aliasDirty = (p: Pendiente) => aliasDraft(p).trim() !== (p.alias ?? '')
+  const canAccept = (p: Pendiente) => validCategory(p) && !aliasDirty(p) && aliasSaving === null
+
+  async function saveAlias(p: Pendiente) {
+    if (!p.destinatario || syncing || inFlight || aliasSaving !== null) return
+    const alias = aliasDraft(p).trim()
+    setAliasSaving(p.destinatario)
+    try {
+      const response = await fetch(API, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id, alias }) })
+      const body = await response.json().catch(() => null)
+      if (!response.ok || body?.destinatario !== p.destinatario || body?.alias !== alias) throw new Error(body?.error || 'No se pudo confirmar el alias.')
+      if (!mounted.current) return
+      ++loadVersion.current
+      setPendientes(prev => prev.map(row => row.destinatario === p.destinatario ? { ...row, alias, descripcion: alias || row.descripcion_original || row.descripcion } : row))
+      setAliasDrafts(prev => { const next = { ...prev }; delete next[p.destinatario!]; return next })
+      toast.success(alias ? 'Alias guardado para próximas transferencias' : 'Alias eliminado')
+      await load()
+    } catch (cause) { toast.error((cause as Error).message || 'No se pudo guardar el alias.') }
+    finally { if (mounted.current) setAliasSaving(null) }
+  }
 
   function enqueue(p: Pendiente, payload: object, countKey: 'aceptados' | 'descartados' | 'vinculados', label: string) {
     if (syncing) return
@@ -144,11 +167,11 @@ export default function EmailExpensesPage() {
     }
   }
   function aceptar(list: Pendiente[]) {
-    list.filter(validCategory).forEach(p => enqueue(p, { aceptar: [{ id: p.id, categoria_id: category(p), ...(mitadPor[p.id] ? { monto: half(p.monto) } : {}) }] }, 'aceptados', `Gasto registrado · ${p.descripcion}`))
+    list.filter(canAccept).forEach(p => enqueue(p, { aceptar: [{ id: p.id, categoria_id: category(p), ...(mitadPor[p.id] ? { monto: half(p.monto) } : {}) }] }, 'aceptados', `Gasto registrado · ${p.descripcion}`))
   }
   const descartar = (p: Pendiente) => enqueue(p, { descartar: [p.id] }, 'descartados', `Descartado · ${p.descripcion}`)
   async function sync() {
-    if (syncing || queue.current!.pendingCount()) return
+    if (syncing || queue.current!.pendingCount() || aliasSaving !== null) return
     setSyncing(true); setMessage('')
     const id = toast.loading('Buscando movimientos nuevos…')
     try {
@@ -167,7 +190,7 @@ export default function EmailExpensesPage() {
     <PageShell fill>
       <PageTitle customTitle="Correo - BethaSpend" />
       <PageHeader title="Correo" description="Revisa tus movimientos antes de registrarlos."
-        actions={<Button variant="outline" disabled={enabled !== true || syncing || inFlight > 0} onClick={sync}><RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />{syncing ? 'Sincronizando…' : 'Sincronizar'}</Button>} />
+        actions={<Button variant="outline" disabled={enabled !== true || syncing || inFlight > 0 || aliasSaving !== null} onClick={sync}><RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />{syncing ? 'Sincronizando…' : 'Sincronizar'}</Button>} />
       {loadError && <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-destructive/30 p-3" role="alert"><p className="min-w-0 flex-1 text-sm">{loadError}</p><Button variant="outline" size="sm" disabled={inFlight > 0 || syncing} onClick={() => void load()}>Reintentar</Button></div>}
       {message && <p className="mb-4 text-sm" role="status">{message}</p>}
       {enabled === false ? <Empty title="Correo no habilitado" text="La importación desde Yahoo no está habilitada para esta cuenta." /> : enabled === null ? (
@@ -189,7 +212,7 @@ export default function EmailExpensesPage() {
           {value === tab && <>
             {tab === 'nuevos' && rows.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border bg-card px-4 py-2">
               <label className="mr-auto flex min-h-11 cursor-pointer items-center gap-2.5 text-[13px] sm:min-h-9"><input type="checkbox" className="h-4 w-4 accent-primary" aria-label="Seleccionar todos los nuevos visibles" checked={allSelected} disabled={syncing} onChange={() => setSelected(prev => { const next = new Set(prev); visibleNew.forEach(p => allSelected ? next.delete(p.id) : next.add(p.id)); return next })} />{chosen.length ? `${chosen.length} seleccionados · ${money.format(total)}` : 'Seleccionar visibles'}</label>
-              <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || !chosen.length || chosen.some(p => !validCategory(p))} onClick={() => aceptar(chosen)}>Aceptar selección</Button>
+              <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || !chosen.length || chosen.some(p => !canAccept(p))} onClick={() => aceptar(chosen)}>Aceptar selección</Button>
               <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" disabled={syncing || !chosen.length} onClick={() => chosen.forEach(descartar)}>Descartar selección</Button>
             </div>}
             {!rows.length && loading ? <div className="flex min-h-48 items-center justify-center gap-2 text-sm text-muted-foreground" role="status"><Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />Cargando…</div> : !rows.length ? <Empty title={search ? 'Sin coincidencias' : inFlight ? 'Guardando tus decisiones' : gruposEmpty(tab)} text={search ? 'Prueba con otra descripción, fecha o banco.' : inFlight ? 'Puedes cambiar de clasificación mientras terminan de guardarse.' : 'Los movimientos de esta clasificación aparecerán aquí.'} /> : (
@@ -200,7 +223,21 @@ export default function EmailExpensesPage() {
                   const elegido = p.coincidencias.find(c => c.gasto.id === elegidoPor[p.id]) ?? p.coincidencias[0]
                   return <tr key={p.id}>
                     {tab === 'nuevos' && <td className={styles.selection}><label className="inline-flex min-h-11 min-w-6 items-center"><input type="checkbox" className="h-4 w-4 accent-primary" disabled={syncing} checked={selected.has(p.id)} onChange={() => toggle(p.id)} aria-label={`Seleccionar ${p.descripcion}`} /></label></td>}
-                    <td data-label="Movimiento" className={styles.movement}><p className="font-medium text-foreground break-words">{p.descripcion}</p><p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"><span className="tabular-nums">{p.fecha}</span><span className="rounded-md border bg-muted/50 px-1.5 text-[11px] leading-4">{p.origen}</span></p>{errors.get(p.id) && <p className="mt-2 text-xs text-destructive" role="alert">{errors.get(p.id)}</p>}</td>
+                    <td data-label="Movimiento" className={styles.movement}>
+                      <p className="font-medium text-foreground break-words">{p.descripcion}</p>
+                      {p.alias && <p className="mt-1 break-words text-xs text-muted-foreground">{p.descripcion_original}</p>}
+                      <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"><span className="tabular-nums">{p.fecha}</span><span className="rounded-md border bg-muted/50 px-1.5 text-[11px] leading-4">{p.origen}</span></p>
+                      {p.destinatario && <details className="mt-2 text-xs text-muted-foreground">
+                        <summary className="cursor-pointer py-1 hover:text-foreground">{p.alias ? 'Editar alias' : 'Asignar alias'}</summary>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <Input aria-label={`Alias para ${p.descripcion_original ?? p.descripcion}`} placeholder="Ej. Gimnasio" maxLength={200} value={aliasDraft(p)} disabled={syncing || inFlight > 0 || aliasSaving !== null} onChange={e => setAliasDrafts(prev => ({ ...prev, [p.destinatario!]: e.target.value }))} className="h-11 min-w-0 flex-1 text-base sm:h-8 sm:text-[13px]" />
+                          <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" aria-label={`Guardar alias para ${p.descripcion_original ?? p.descripcion}`} disabled={syncing || inFlight > 0 || aliasSaving !== null || !aliasDirty(p)} onClick={() => saveAlias(p)}>{aliasSaving === p.destinatario ? 'Guardando…' : aliasDraft(p).trim() ? 'Guardar' : 'Quitar alias'}</Button>
+                        </div>
+                        <p className="mt-1">Se usará para este destinatario en próximos gastos. Vacíalo para quitarlo.</p>
+                        {aliasDirty(p) && <p className="mt-1 text-foreground" role="status">Guarda el alias antes de aceptar.</p>}
+                      </details>}
+                      {errors.get(p.id) && <p className="mt-2 text-xs text-destructive" role="alert">{errors.get(p.id)}</p>}
+                    </td>
                     {tab === 'nuevos' ? <>
                       <td data-label="Categoría"><select className={selectClass} disabled={syncing} aria-label={`Categoría de ${p.descripcion}`} value={category(p) ?? ''} onChange={e => setCategoriaPor(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}><option value="" disabled>Elegir categoría</option>{categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></td>
                       <td data-label="Tu parte"><select className={selectClass} disabled={syncing} aria-label={`Parte de ${p.descripcion}`} value={mitadPor[p.id] ? 'mitad' : 'todo'} onChange={e => setMitadPor(prev => ({ ...prev, [p.id]: e.target.value === 'mitad' }))}><option value="todo">Total</option><option value="mitad">Mitad</option></select></td>
@@ -215,7 +252,7 @@ export default function EmailExpensesPage() {
                     <td data-label="Acciones" className={styles.actions}>
                       <div className={`flex items-center gap-1.5 ${tab === 'nuevos' ? '' : 'flex-wrap'}`}>
                         {tab === 'nuevos' ? <>
-                          <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || !validCategory(p)} aria-label={`Aceptar ${p.descripcion}`} onClick={() => aceptar([p])}><Check aria-hidden="true" />Aceptar</Button>
+                          <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || !canAccept(p)} aria-label={`Aceptar ${p.descripcion}`} onClick={() => aceptar([p])}><Check aria-hidden="true" />Aceptar</Button>
                           <Button size="sm" variant="ghost" className="min-h-11 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:min-h-0 sm:w-8 sm:px-0" disabled={syncing} aria-label={`Descartar ${p.descripcion}`} title="Descartar" onClick={() => descartar(p)}><X aria-hidden="true" /><span className="sm:sr-only">Descartar</span></Button>
                         </> : <>
                           {elegido && <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || (tab === 'recibidos' && elegido.gasto.monto <= p.monto)} onClick={() => enqueue(p, { vincular: [{ id: p.id, gasto_id: elegido.gasto.id }] }, 'vinculados', `${tab === 'duplicados' ? 'Vinculado sin duplicar' : 'Devolución descontada'} · ${p.descripcion}`)}>{tab === 'duplicados' ? 'Es el mismo' : 'Descontar'}</Button>}

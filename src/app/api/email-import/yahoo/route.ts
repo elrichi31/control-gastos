@@ -5,6 +5,7 @@ import { AUTO_EXPENSE_TAG, MAX_EXPENSE_TAGS, SHARED_EXPENSE_TAG } from '@/lib/ex
 import { findCandidates, type Candidate, type ExistingExpense } from '@/lib/email-matches'
 import { isMissingMigration, syncYahoo, yahooImportUserId } from '@/lib/email-sync'
 import { pageReviewRows, parseReviewQuery } from '@/lib/email-review-page'
+import { emailAliasDescription, transferRecipient } from '@/lib/email-aliases'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -50,7 +51,14 @@ export async function GET(request: Request) {
     .eq('user_id', userId).eq('estado', 'pendiente')
     .order('fecha', { ascending: false })
   if (error) return dbFailure('list', error.code)
-  const pendientes = (data ?? []).map(row => ({ ...row, monto: Number(row.monto) }))
+  const { data: aliases, error: aliasError } = await supabase.from('correo_alias')
+    .select('destinatario, alias').eq('user_id', userId)
+  if (aliasError) return dbFailure('aliases', aliasError.code)
+  const pendientes = (data ?? []).map(row => {
+    const destinatario = row.tipo === 'gasto' ? transferRecipient(row.descripcion) : null
+    const alias = destinatario ? (aliases ?? []).find(rule => rule.destinatario === destinatario)?.alias ?? '' : ''
+    return { ...row, monto: Number(row.monto), descripcion_original: row.descripcion, descripcion: alias || row.descripcion, destinatario, alias }
+  })
   if (!pendientes.length) return NextResponse.json({ enabled: true, pendientes: [], counts: { nuevos: 0, duplicados: 0, recibidos: 0 }, total: 0, page: 1, pages: 1 })
 
   const fechas = pendientes.map(p => p.fecha).sort()
@@ -101,6 +109,29 @@ export async function POST(request: Request) {
   return NextResponse.json({ nuevos: result.nuevos })
 }
 
+/** Alias personal para el destinatario de un correo propio; vacío elimina la regla. */
+export async function PUT(request: Request) {
+  const auth = await authorize(request)
+  if ('error' in auth) return auth.error
+  const { supabase, userId } = auth
+  const body = await request.json().catch(() => null)
+  if (!Number.isSafeInteger(body?.id) || body.id <= 0 || typeof body?.alias !== 'string' || body.alias.trim().length > 200) {
+    return NextResponse.json({ error: 'Indica un movimiento y un alias de hasta 200 caracteres' }, { status: 400 })
+  }
+  const { data: row, error } = await supabase.from('correo_consumo').select('tipo, descripcion')
+    .eq('user_id', userId).eq('id', body.id).maybeSingle()
+  if (error) return dbFailure('alias recipient', error.code)
+  if (!row) return NextResponse.json({ error: 'Movimiento no encontrado' }, { status: 404 })
+  const destinatario = row.tipo === 'gasto' ? transferRecipient(row.descripcion) : null
+  if (!destinatario) return NextResponse.json({ error: 'Solo puedes asignar alias a transferencias enviadas' }, { status: 400 })
+  const alias = body.alias.trim()
+  const result = alias
+    ? await supabase.from('correo_alias').upsert({ user_id: userId, destinatario, alias }, { onConflict: 'user_id,destinatario' })
+    : await supabase.from('correo_alias').delete().eq('user_id', userId).eq('destinatario', destinatario)
+  if (result.error) return dbFailure('save alias', result.error.code)
+  return NextResponse.json({ destinatario, alias })
+}
+
 const ids = (value: unknown) => Array.isArray(value) ? value.filter((v): v is number => Number.isInteger(v) && v > 0) : []
 const list = (value: unknown): Record<string, unknown>[] => Array.isArray(value) ? value.filter(v => v && typeof v === 'object') : []
 
@@ -128,6 +159,10 @@ export async function PATCH(request: Request) {
 
   let aceptados = 0
   if (aceptarPor.size) {
+    // Leer antes de reclamar: un fallo de configuración no debe consumir el pendiente.
+    const { data: aliases, error: aliasError } = await supabase.from('correo_alias')
+      .select('destinatario, alias').eq('user_id', userId)
+    if (aliasError) return dbFailure('aliases', aliasError.code)
     // Marcar primero (solo los que siguen pendientes) evita crear el mismo gasto dos veces.
     const { data: claimed, error } = await supabase.from('correo_consumo')
       .update({ estado: 'aceptado' })
@@ -141,7 +176,7 @@ export async function PATCH(request: Request) {
         const parte = choice.monto && choice.monto > 0 && choice.monto < total ? choice.monto : total
         return {
           user_id: userId,
-          descripcion: row.descripcion,
+          descripcion: emailAliasDescription(row.descripcion, aliases ?? []),
           monto: parte,
           fecha: row.fecha,
           categoria_id: choice.categoria_id ?? row.categoria_id,

@@ -56,6 +56,47 @@ test('two real row accepts enqueue without global blocking and toast turns green
     assert.equal(calls[0].aceptar[0].categoria_id, 1)
   })
 })
+test('alias editable se guarda para el destinatario antes de aceptar, y se puede quitar', async () => {
+  await harness(async ({ slots, render }) => {
+    const transfer = { descripcion: 'Transferencia a JUAN PEREZ', descripcion_original: 'Transferencia a JUAN PEREZ', destinatario: 'juan perez', alias: '' }
+    slots[1] = [row(1, transfer), row(2, transfer)]
+    const calls = []
+    global.fetch = async (url, options) => {
+      if (options?.method === 'PUT') { calls.push(JSON.parse(options.body)); return { ok: true, json: async () => ({ destinatario: 'juan perez', alias: calls.at(-1).alias.trim() }) } }
+      return { ok: true, json: async () => ({ enabled: true, pendientes: slots[1] }) }
+    }
+    let tree = render()
+    const input = tree.find(x => x.props?.['aria-label'] === 'Alias para Transferencia a JUAN PEREZ')
+    assert.ok(input, 'alias input missing')
+    input.props.onChange({ target: { value: 'Gimnasio' } })
+    tree = render()
+    assert.equal(tree.find(x => x.props?.['aria-label'] === 'Aceptar Transferencia a JUAN PEREZ').props.disabled, true, 'must save the alias first')
+    await tree.find(x => x.props?.['aria-label'] === 'Guardar alias para Transferencia a JUAN PEREZ').props.onClick()
+    assert.deepEqual(calls, [{ id: 1, alias: 'Gimnasio' }])
+    tree = render()
+    assert.equal(tree.filter(x => x.props?.['aria-label'] === 'Alias para Transferencia a JUAN PEREZ').every(x => x.props.value === 'Gimnasio'), true)
+    assert.ok(tree.some(x => x.props?.['aria-label'] === 'Aceptar Gimnasio' && !x.props.disabled))
+    tree.find(x => x.props?.['aria-label'] === 'Alias para Transferencia a JUAN PEREZ').props.onChange({ target: { value: '' } })
+    await render().find(x => x.props?.['aria-label'] === 'Guardar alias para Transferencia a JUAN PEREZ').props.onClick()
+    assert.equal(calls.at(-1).alias, '')
+    assert.ok(render().some(x => x.props?.['aria-label'] === 'Aceptar Transferencia a JUAN PEREZ' && !x.props.disabled))
+  })
+})
+
+test('un alias que falla conserva el borrador y no permite aceptar con otro nombre', async () => {
+  await harness(async ({ slots, render }) => {
+    slots[1] = [row(1, { descripcion: 'Transferencia a JUAN', descripcion_original: 'Transferencia a JUAN', destinatario: 'juan', alias: '' })]
+    global.fetch = async () => ({ ok: false, json: async () => ({ error: 'No disponible' }) })
+    render().find(x => x.props?.['aria-label'] === 'Alias para Transferencia a JUAN').props.onChange({ target: { value: 'Gimnasio' } })
+    await render().find(x => x.props?.['aria-label'] === 'Guardar alias para Transferencia a JUAN').props.onClick()
+    const tree = render()
+    assert.equal(tree.find(x => x.props?.['aria-label'] === 'Alias para Transferencia a JUAN').props.value, 'Gimnasio')
+    assert.equal(tree.find(x => x.props?.['aria-label'] === 'Aceptar Transferencia a JUAN').props.disabled, true)
+    assert.equal(events.filter(x => x[0] === 'success').length, 0)
+    assert.ok(events.some(x => x[0] === 'error' && x[1] === 'No disponible'))
+  })
+})
+
 test('failed save restores its row, reports the error and never emits a success toast', async () => {
   await harness(async ({ render }) => {
     global.fetch = async (url, options) => options?.method === 'PATCH'

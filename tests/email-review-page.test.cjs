@@ -25,6 +25,12 @@ test('clamps out-of-range pages and ignores garbage params', () => {
   assert.equal(page.rows.length, 20)
   assert.equal(parseReviewQuery(new URL('https://f.invalid/?page=-4')).page, 1)
 })
+test('búsqueda encuentra el destinatario original incluso cuando se muestra un alias', () => {
+  const aliased = [row(1, { descripcion: 'Gimnasio', descripcion_original: 'Transferencia a JUAN PEREZ' })]
+  assert.equal(pageReviewRows(aliased, q('q=juan')).total, 1)
+  assert.equal(pageReviewRows(aliased, q('q=gimnasio')).total, 1)
+})
+
 test('search filters inside the tab; "otro gasto" moves a duplicate to the top of Nuevos', () => {
   assert.equal(pageReviewRows(rows, q('tab=nuevos&q=COMPRA 11')).total, 11)
   const page = pageReviewRows(rows, q('tab=nuevos&otros=203'))
