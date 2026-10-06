@@ -95,6 +95,30 @@ test('aceptar usa el alias privado del destinatario, conserva el correo y no con
   assert.equal(tables.correo_consumo[0].descripcion, 'Transferencia a PÉREZ   JUAN')
 })
 
+test('guardar como usa una razón por movimiento sin modificar el alias ni el correo', async () => {
+  const tables = {
+    correo_consumo: [pending(1, { descripcion: 'Transferencia a JUAN PEREZ' }), pending(2, { descripcion: 'Transferencia a JUAN PEREZ' }), pending(3, { descripcion: 'Transferencia a JUAN PEREZ' })],
+    correo_alias: [{ user_id: owner, destinatario: 'juan perez', alias: 'Juan' }], gasto: [],
+  }
+  db = fakeDb(tables)
+  const response = await patch({ aceptar: [{ id: 1, categoria_id: 1, descripcion: '  Almuerzo  ' }, { id: 2, categoria_id: 1, descripcion: 'Taxi' }, { id: 3, categoria_id: 1 }] })
+  assert.equal(response.status, 200)
+  assert.deepEqual(tables.gasto.map(g => g.descripcion), ['Almuerzo', 'Taxi', 'Juan'])
+  assert.equal(tables.correo_alias[0].alias, 'Juan')
+  assert.ok(tables.correo_consumo.every(r => r.descripcion === 'Transferencia a JUAN PEREZ'))
+})
+
+test('guardar como rechaza razones inválidas antes de consumir cualquier pendiente', async () => {
+  for (const descripcion of ['', '   ', 42, null, 'x'.repeat(201)]) {
+    const tables = { correo_consumo: [pending(1)], gasto: [] }
+    db = fakeDb(tables)
+    const response = await patch({ aceptar: [{ id: 1, categoria_id: 1, descripcion }] })
+    assert.equal(response.status, 400)
+    assert.equal(tables.correo_consumo[0].estado, 'pendiente')
+    assert.equal(tables.gasto.length, 0)
+  }
+})
+
 test('listar muestra el alias y permite buscarlo conservando el nombre bancario', async () => {
   const tables = { correo_consumo: [pending(1, { descripcion: 'Transferencia a JUAN PEREZ' })], correo_alias: [{ user_id: owner, destinatario: 'juan perez', alias: 'Gimnasio' }], gasto: [] }
   db = fakeDb(tables)

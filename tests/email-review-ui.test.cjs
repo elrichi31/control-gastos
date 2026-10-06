@@ -83,6 +83,32 @@ test('alias editable se guarda para el destinatario antes de aceptar, y se puede
   })
 })
 
+test('guardar como envía la razón solo para su movimiento y conserva los borradores si falla', async () => {
+  await harness(async ({ slots, render }) => {
+    const transfer = { descripcion: 'Juan', descripcion_original: 'Transferencia a JUAN', destinatario: 'juan', alias: 'Juan' }
+    slots[1] = [row(1, transfer), row(2, transfer)]
+    const calls = []
+    global.fetch = async (url, options) => {
+      if (options?.method === 'PATCH') { calls.push(JSON.parse(options.body)); return { ok: false, json: async () => ({ error: 'No disponible' }) } }
+      return { ok: true, json: async () => ({ enabled: true, pendientes: slots[1] }) }
+    }
+    let tree = render()
+    const input = tree.find(x => x.props?.id === 'guardar-como-1')
+    assert.ok(input, 'falta el campo Guardar como')
+    assert.equal(input.props.value, 'Juan')
+    input.props.onChange({ target: { value: '  Almuerzo  ' } })
+    tree = render()
+    assert.equal(tree.find(x => x.props?.id === 'guardar-como-2').props.value, 'Juan')
+    tree.find(x => x.props?.['aria-label'] === 'Aceptar Juan').props.onClick()
+    await new Promise(resolve => setTimeout(resolve, 20))
+    assert.equal(calls[0].aceptar[0].descripcion, 'Almuerzo')
+    assert.equal(render().find(x => x.props?.id === 'guardar-como-1').props.value, '  Almuerzo  ')
+    assert.equal(events.filter(x => x[0] === 'success').length, 0)
+    render().find(x => x.props?.id === 'guardar-como-1').props.onChange({ target: { value: '   ' } })
+    assert.equal(render().find(x => x.props?.['aria-label'] === 'Aceptar Juan').props.disabled, true)
+  })
+})
+
 test('un alias que falla conserva el borrador y no permite aceptar con otro nombre', async () => {
   await harness(async ({ slots, render }) => {
     slots[1] = [row(1, { descripcion: 'Transferencia a JUAN', descripcion_original: 'Transferencia a JUAN', destinatario: 'juan', alias: '' })]

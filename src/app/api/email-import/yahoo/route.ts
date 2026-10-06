@@ -147,11 +147,14 @@ export async function PATCH(request: Request) {
   const { supabase, userId } = auth
   const body = await request.json().catch(() => null)
 
-  const aceptarPor = new Map<number, { categoria_id: number; monto?: number }>()
+  const aceptarPor = new Map<number, { categoria_id: number; monto?: number; descripcion?: string }>()
   for (const item of list(body?.aceptar)) {
     if (!Number.isInteger(item.id) || !Number.isInteger(item.categoria_id)) continue
+    if (item.descripcion !== undefined && (typeof item.descripcion !== 'string' || !item.descripcion.trim() || item.descripcion.trim().length > 200)) {
+      return NextResponse.json({ error: 'Indica una razón de entre 1 y 200 caracteres en Guardar como' }, { status: 400 })
+    }
     const monto = typeof item.monto === 'number' && Number.isFinite(item.monto) ? round2(item.monto) : undefined
-    aceptarPor.set(item.id as number, { categoria_id: item.categoria_id as number, monto })
+    aceptarPor.set(item.id as number, { categoria_id: item.categoria_id as number, monto, descripcion: typeof item.descripcion === 'string' ? item.descripcion.trim() || undefined : undefined })
   }
   const vincular = list(body?.vincular).filter(v => Number.isInteger(v.id) && Number.isInteger(v.gasto_id)) as { id: number; gasto_id: number }[]
   const descartar = ids(body?.descartar)
@@ -176,7 +179,7 @@ export async function PATCH(request: Request) {
         const parte = choice.monto && choice.monto > 0 && choice.monto < total ? choice.monto : total
         return {
           user_id: userId,
-          descripcion: emailAliasDescription(row.descripcion, aliases ?? []),
+          descripcion: choice.descripcion ?? emailAliasDescription(row.descripcion, aliases ?? []),
           monto: parte,
           fecha: row.fecha,
           categoria_id: choice.categoria_id ?? row.categoria_id,

@@ -45,6 +45,7 @@ export default function EmailExpensesPage() {
   const [loading, setLoading] = useState(false)
   const [aliasDrafts, setAliasDrafts] = useState<Record<string, string>>({})
   const [aliasSaving, setAliasSaving] = useState<string | null>(null)
+  const [descriptionDrafts, setDescriptionDrafts] = useState<Record<number, string>>({})
   const mounted = useRef(true)
   const loadVersion = useRef(0)
   const queue = useRef<ReturnType<typeof getSessionEmailReviewQueue> | null>(null)
@@ -130,7 +131,9 @@ export default function EmailExpensesPage() {
   const validCategory = (p: Pendiente) => categorias.some(c => c.id === category(p))
   const aliasDraft = (p: Pendiente) => p.destinatario ? aliasDrafts[p.destinatario] ?? p.alias ?? '' : ''
   const aliasDirty = (p: Pendiente) => aliasDraft(p).trim() !== (p.alias ?? '')
-  const canAccept = (p: Pendiente) => validCategory(p) && !aliasDirty(p) && aliasSaving === null
+  const saveAs = (p: Pendiente) => descriptionDrafts[p.id] ?? p.descripcion
+  const validDescription = (p: Pendiente) => saveAs(p).trim().length > 0 && saveAs(p).trim().length <= 200
+  const canAccept = (p: Pendiente) => validCategory(p) && validDescription(p) && !aliasDirty(p) && aliasSaving === null
 
   async function saveAlias(p: Pendiente) {
     if (!p.destinatario || syncing || inFlight || aliasSaving !== null) return
@@ -167,7 +170,7 @@ export default function EmailExpensesPage() {
     }
   }
   function aceptar(list: Pendiente[]) {
-    list.filter(canAccept).forEach(p => enqueue(p, { aceptar: [{ id: p.id, categoria_id: category(p), ...(mitadPor[p.id] ? { monto: half(p.monto) } : {}) }] }, 'aceptados', `Gasto registrado · ${p.descripcion}`))
+    list.filter(canAccept).forEach(p => enqueue(p, { aceptar: [{ id: p.id, categoria_id: category(p), ...(descriptionDrafts[p.id] !== undefined ? { descripcion: saveAs(p).trim() } : {}), ...(mitadPor[p.id] ? { monto: half(p.monto) } : {}) }] }, 'aceptados', `Gasto registrado · ${saveAs(p).trim()}`))
   }
   const descartar = (p: Pendiente) => enqueue(p, { descartar: [p.id] }, 'descartados', `Descartado · ${p.descripcion}`)
   async function sync() {
@@ -236,6 +239,11 @@ export default function EmailExpensesPage() {
                         <p className="mt-1">Se usará para este destinatario en próximos gastos. Vacíalo para quitarlo.</p>
                         {aliasDirty(p) && <p className="mt-1 text-foreground" role="status">Guarda el alias antes de aceptar.</p>}
                       </details>}
+                      {tab === 'nuevos' && <div className="mt-2">
+                        <label htmlFor={`guardar-como-${p.id}`} className="text-xs text-muted-foreground">Guardar como</label>
+                        <Input id={`guardar-como-${p.id}`} aria-label={`Guardar como para ${p.descripcion_original ?? p.descripcion}`} aria-describedby={`guardar-como-ayuda-${p.id}`} aria-invalid={!validDescription(p)} placeholder="Ej. Almuerzo, taxi, regalo…" maxLength={200} value={saveAs(p)} disabled={syncing} onChange={e => setDescriptionDrafts(prev => ({ ...prev, [p.id]: e.target.value }))} className="mt-1 h-11 w-full min-w-0 text-base sm:h-8 sm:text-[13px]" />
+                        <p id={`guardar-como-ayuda-${p.id}`} className={`mt-1 text-xs ${validDescription(p) ? 'text-muted-foreground' : 'text-destructive'}`}>{validDescription(p) ? 'Solo para este gasto; no cambia el alias.' : 'Escribe una razón de entre 1 y 200 caracteres.'}</p>
+                      </div>}
                       {errors.get(p.id) && <p className="mt-2 text-xs text-destructive" role="alert">{errors.get(p.id)}</p>}
                     </td>
                     {tab === 'nuevos' ? <>
