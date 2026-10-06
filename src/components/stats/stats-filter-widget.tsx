@@ -159,19 +159,19 @@ export function StatsFilterWidget({ onFiltersChange }: StatsFilterWidgetProps) {
           )}
 
           {filters.filterType === "custom" && (
-            <div className="flex items-center gap-2">
+            <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
               <Input
                 type="date"
                 value={filters.dateFrom}
                 onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
-                className="w-auto"
+                className="min-w-0 flex-1 sm:w-auto sm:flex-none"
               />
               <span className="text-muted-foreground">-</span>
               <Input
                 type="date"
                 value={filters.dateTo}
                 onChange={(e) => handleFilterChange("dateTo", e.target.value)}
-                className="w-auto"
+                className="min-w-0 flex-1 sm:w-auto sm:flex-none"
               />
             </div>
           )}

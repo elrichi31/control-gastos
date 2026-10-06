@@ -232,6 +232,22 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* iOS Safari da a los inputs de fecha un ancho intrínseco que ignora
+     width:100% y los hace salirse del contenedor. */
+  input[type="date"],
+  input[type="month"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    max-width: 100%;
+  }
+  input::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1.5em;
+  }
+
   /* iPhone safe area support */
   html, body {
     min-height: 100vh;
