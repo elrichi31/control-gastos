@@ -81,16 +81,15 @@ function ExpenseTracker() {
     <PageShell>
       <PageTitle customTitle="Nuevo Gasto - BethaSpend" />
 
-      {/* Encabezado alineado a la izquierda, al estilo de una página de Notion */}
       <PageHeader title="Nuevo gasto" description="Registra tu gasto de forma rápida y sencilla." />
 
       {/* Columna principal + riel lateral: el formulario manda, lo demás acompaña */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <div className="lg:col-span-7">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_20rem] gap-6 items-start">
+        <div className="min-w-0">
           <Card>
             <CardContent className="pt-5">
               <Tabs defaultValue={tabInicial} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-5">
+                <TabsList className="mb-5">
                   <TabsTrigger value="normal">Normal</TabsTrigger>
                   <TabsTrigger value="recurrente">Recurrente</TabsTrigger>
                 </TabsList>
@@ -107,7 +106,7 @@ function ExpenseTracker() {
           </Card>
         </div>
 
-        <aside className="lg:col-span-5 space-y-6">
+        <aside aria-label="Resumen y gastos recientes" className="min-w-0 space-y-4">
           <ExpenseSummary
             expenses={filteredExpensesAsExpense}
             onDateRangeChange={handleFilterChange}

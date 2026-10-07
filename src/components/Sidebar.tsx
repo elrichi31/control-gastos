@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import * as Dialog from "@radix-ui/react-dialog"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { clearPrivateCaches } from "@/lib/pwa/cache-policy"
@@ -70,13 +71,13 @@ export function Sidebar({ isOpen, onClose, isMobile, isCollapsed, onToggleCollap
 					</div>
 				)}
 				{isMobile && (
-					<button onClick={onClose} aria-label="Cerrar menú" className="grid size-8 place-items-center rounded-md text-sidebar-muted hover:bg-sidebar-accent hover:text-foreground">
+					<button onClick={onClose} aria-label="Cerrar menú" className="grid size-11 shrink-0 place-items-center rounded-md text-sidebar-muted hover:bg-sidebar-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
 						<X className="size-4" />
 					</button>
 				)}
 			</div>
 
-			<nav className="flex-1 overflow-y-auto px-2 py-3">
+			<nav aria-label="Navegación principal" className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
 				{navSections.map((section, i) => (
 					<div key={i} className={cn(i > 0 && "mt-3 border-t border-sidebar-border pt-3")}>
 						{section.title && !collapsed && (
@@ -90,9 +91,11 @@ export function Sidebar({ isOpen, onClose, isMobile, isCollapsed, onToggleCollap
 									href={href}
 									onClick={isMobile ? onClose : undefined}
 									title={collapsed ? name : undefined}
+									aria-label={name}
 									aria-current={isActive ? "page" : undefined}
 									className={cn(
-										"mb-0.5 flex h-8 items-center gap-2.5 rounded-lg border px-2.5 text-[13px] transition-colors",
+										"mb-0.5 flex items-center gap-2.5 rounded-lg border px-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+										isMobile ? "h-11" : "h-8",
 										isActive
 											? "border-sidebar-border bg-sidebar-accent font-semibold text-foreground shadow-xs"
 											: "border-transparent text-sidebar-muted hover:bg-sidebar-accent/60 hover:text-foreground",
@@ -116,7 +119,7 @@ export function Sidebar({ isOpen, onClose, isMobile, isCollapsed, onToggleCollap
 						<button
 							onClick={onToggleCollapse}
 							aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
-							className="grid size-9 place-items-center rounded-lg text-sidebar-muted hover:bg-sidebar-accent hover:text-foreground"
+							className="grid size-9 place-items-center rounded-lg text-sidebar-muted hover:bg-sidebar-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						>
 							<PanelLeft className="size-4" />
 						</button>
@@ -136,7 +139,7 @@ export function Sidebar({ isOpen, onClose, isMobile, isCollapsed, onToggleCollap
 						onClick={handleLogout}
 						title="Cerrar sesión"
 						aria-label="Cerrar sesión"
-						className="grid size-7 shrink-0 place-items-center rounded-md text-sidebar-muted hover:bg-destructive/10 hover:text-destructive"
+						className={cn("grid shrink-0 place-items-center rounded-md text-sidebar-muted hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", isMobile ? "size-11" : "size-7")}
 					>
 						<LogOut className="size-4" />
 					</button>
@@ -147,24 +150,32 @@ export function Sidebar({ isOpen, onClose, isMobile, isCollapsed, onToggleCollap
 
 	if (isMobile) {
 		return (
-			<>
-				{isOpen && <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={onClose} />}
-				<aside
-					className={cn(
-						"fixed left-0 top-0 z-50 flex h-dvh w-64 flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-300 ease-out lg:hidden",
-						isOpen ? "translate-x-0" : "-translate-x-full",
-					)}
-				>
-					{content}
-				</aside>
-			</>
+			<Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+				<Dialog.Portal>
+					<Dialog.Overlay className="fixed inset-0 z-40 bg-black/60" />
+					<Dialog.Content
+						asChild
+						id="mobile-navigation"
+						onCloseAutoFocus={(event) => {
+							event.preventDefault()
+							document.getElementById("mobile-menu-trigger")?.focus()
+						}}
+					>
+						<aside className="fixed left-0 top-0 z-50 flex h-dvh w-72 max-w-[calc(100vw-3rem)] flex-col border-r border-sidebar-border bg-sidebar pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] shadow-xl outline-none">
+							<Dialog.Title className="sr-only">Menú de BethaSpend</Dialog.Title>
+							<Dialog.Description className="sr-only">Navega entre tus gastos, presupuestos y conexiones.</Dialog.Description>
+							{content}
+						</aside>
+					</Dialog.Content>
+				</Dialog.Portal>
+			</Dialog.Root>
 		)
 	}
 
 	return (
 		<aside
 			className={cn(
-				"fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-300 ease-out lg:flex",
+				"fixed left-0 top-0 z-50 hidden h-dvh flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-300 ease-out motion-reduce:transition-none lg:flex",
 				collapsed ? "w-16" : "w-60",
 			)}
 		>

@@ -112,29 +112,23 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
       {!optionsLoading && !optionsError && !ready && <p role="alert" className="text-sm text-muted-foreground">Necesitas al menos una categoría y un método de pago para registrar gastos.</p>}
       {submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}
       <fieldset disabled={isSubmitting} className="space-y-5 min-w-0">
-        <div className="rounded-xl border bg-muted/30 px-4 py-4 text-center">
-          {/* El asterisco va fuera del flujo para no correr el centro del título. */}
-          <Label htmlFor="amount" className="relative text-xs font-normal text-muted-foreground">Monto (USD)<span className="absolute -right-2.5 text-destructive">*</span></Label>
-          <div className="mt-1 flex items-baseline justify-center gap-1">
-            <span aria-hidden="true" className="text-3xl font-semibold text-muted-foreground">$</span>
-            {/* Texto espejo invisible en la misma celda: el input toma exactamente el ancho de lo escrito. */}
-            <span className="inline-grid max-w-full text-4xl font-semibold tracking-tight tabular-nums">
-              <span aria-hidden="true" className="invisible col-start-1 row-start-1 whitespace-pre">{formData.amount || "0.00"}</span>
-              <Input ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : undefined} className="col-start-1 row-start-1 h-14 w-0 min-w-full rounded-none border-0 bg-transparent p-0 text-4xl md:text-4xl font-semibold tracking-tight tabular-nums shadow-none focus-visible:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-            </span>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[9rem_minmax(0,1fr)_10rem]">
+          <div className="min-w-0 space-y-1.5">
+            <Label htmlFor="amount">Monto (USD) <span className="text-destructive">*</span></Label>
+            <div className="relative">
+              <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+              <Input ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : undefined} className={`h-11 pl-7 text-base font-semibold tabular-nums md:text-base [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${errors.amount ? 'border-destructive' : ''}`} />
+            </div>
+            {fieldError('amount')}
           </div>
-          {fieldError('amount')}
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_11rem] gap-4">
           <div className="space-y-1.5 min-w-0">
             <Label htmlFor="description">Descripción <span className="text-destructive">*</span></Label>
-            <Input id="description" placeholder="Ej. Almuerzo, gasolina, supermercado" value={formData.description} onChange={e => change('description', e.target.value)} aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? 'description-error' : undefined} className={`text-base sm:text-[13px] ${errors.description ? 'border-destructive' : ''}`} />
+            <Input id="description" placeholder="Ej. Almuerzo, gasolina, supermercado" value={formData.description} onChange={e => change('description', e.target.value)} aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? 'description-error' : undefined} className={`h-11 text-base sm:text-[13px] ${errors.description ? 'border-destructive' : ''}`} />
             {fieldError('description')}
           </div>
           <div className="space-y-1.5 min-w-0">
             <Label htmlFor="date">Fecha <span className="text-destructive">*</span></Label>
-            <Input id="date" type="date" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className={`text-base sm:text-[13px] min-w-0 dark:[color-scheme:dark] ${errors.date ? 'border-destructive' : ''}`} />
+            <Input id="date" type="date" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className={`h-11 text-base sm:text-[13px] min-w-0 dark:[color-scheme:dark] ${errors.date ? 'border-destructive' : ''}`} />
             {fieldError('date')}
           </div>
         </div>
@@ -156,9 +150,9 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
         </div>
 
         <ExpenseTagsField value={formData.tags} onChange={value => change("tags", value)} error={errors.tags} />
-        <div className="flex flex-col-reverse sm:flex-row gap-2 border-t pt-4">
-          <Button type="submit" value="another" variant="outline" disabled={!ready || isSubmitting} className="h-10 sm:flex-1">Guardar y agregar otro</Button>
-          <Button type="submit" value="save" disabled={!ready || isSubmitting} className="h-10 sm:flex-1">{isSubmitting ? <><LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />Guardando…</> : 'Guardar gasto'}</Button>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 border-t pt-4">
+          <Button type="submit" value="another" variant="outline" disabled={!ready || isSubmitting} className="h-11">Guardar y agregar otro</Button>
+          <Button type="submit" value="save" disabled={!ready || isSubmitting} className="h-11 bg-foreground text-background shadow-sm hover:bg-foreground/90">{isSubmitting ? <><LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />Guardando…</> : 'Guardar gasto'}</Button>
         </div>
       </fieldset>
     </form>
