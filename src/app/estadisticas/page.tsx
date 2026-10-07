@@ -6,7 +6,8 @@ import { StatTile, StatTileRow } from "@/components/stats/stat-tile"
 import { EvolutionChart } from "@/components/stats/evolution-chart"
 import { CategoryRanking } from "@/components/stats/category-ranking"
 import { PaymentMethodChart, WeekdayChart, FixedVsVariable } from "@/components/stats/breakdown-charts"
-import { ProjectionCard } from "@/components/stats/projection-card"
+import { ProjectionPanel } from "@/components/stats/projection-panel"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TopExpenses } from "@/components/stats/top-expenses"
 import { PageShell, PageHeader } from "@/components/ui/page-layout"
 import { PageTitle } from "@/components/PageTitle"
@@ -18,6 +19,7 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 
 export default function EstadisticasPage() {
+  const [activeTab, setActiveTab] = useState('analysis')
   const { gastos, loading, error } = useGastosFiltrados()
 
   const getCurrentDate = () => {
@@ -68,14 +70,20 @@ export default function EstadisticasPage() {
 
   return (
     <PageShell>
-      <PageTitle customTitle={`Estadísticas ${descripcionPeriodo()} - BethaSpend`} />
+      <PageTitle customTitle={activeTab === 'projections' ? 'Proyecciones - BethaSpend' : `Estadísticas ${descripcionPeriodo()} - BethaSpend`} />
 
       <PageHeader
         title="Estadísticas"
-        description={<>Análisis de tus gastos en <span className="text-foreground font-medium">{descripcionPeriodo()}</span>
+        description={activeTab === 'projections' ? 'Estima el cierre del mes y revisa cuánto se equivocó el método antes.' : <>Análisis de tus gastos en <span className="text-foreground font-medium">{descripcionPeriodo()}</span>
           {a.kpis.hayComparacion && etiquetaPrevio ? `, comparado con ${etiquetaPrevio}.` : "."}</>}
       />
 
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList aria-label="Vista de estadísticas" className="h-auto p-1">
+          <TabsTrigger value="analysis" className="min-h-11 px-4">Análisis</TabsTrigger>
+          <TabsTrigger value="projections" className="min-h-11 px-4">Proyecciones</TabsTrigger>
+        </TabsList>
+        <TabsContent value="analysis" className="mt-0">
       {loading && (
         <div className="space-y-4">
           <div className="h-24 rounded-xl border border-border bg-card animate-pulse" />
@@ -113,9 +121,6 @@ export default function EstadisticasPage() {
             />
             <StatTile etiqueta="Ticket promedio" valor={formatMoney(a.kpis.ticket)} delta={a.kpis.ticketDelta} />
           </StatTileRow>
-
-          {/* Solo aparece si el período elegido está en curso */}
-          {a.proyeccion && <ProjectionCard proyeccion={a.proyeccion} />}
 
           <EvolutionChart
             diario={a.evolucion}
@@ -173,6 +178,9 @@ export default function EstadisticasPage() {
           </div>
         </div>
       )}
+        </TabsContent>
+        <TabsContent value="projections" className="mt-0"><ProjectionPanel /></TabsContent>
+      </Tabs>
     </PageShell>
   )
 }

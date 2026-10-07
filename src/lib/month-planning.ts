@@ -9,8 +9,8 @@ const money = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100
 
 /** Calendar-date forecasts, not bank balances or proof of payment. Today is
  * already covered by recorded spending; reserve only strictly future dates. */
-export function buildMonthPlan({ today, budget, expenses, rules, categories }: {
-  today: string; budget?: number; expenses: Expense[]; rules: PlanningRule[]; categories: Category[]
+export function buildMonthPlan({ today, budget, expenses, rules, categories, includeToday = false }: {
+  today: string; budget?: number; expenses: Expense[]; rules: PlanningRule[]; categories: Category[]; includeToday?: boolean
 }) {
   const [year, month, day] = today.split('-').map(Number)
   const days = new Date(Date.UTC(year, month, 0)).getUTCDate()
@@ -19,7 +19,7 @@ export function buildMonthPlan({ today, budget, expenses, rules, categories }: {
   const spent = money(monthExpenses.reduce((sum, e) => sum + Number(e.monto), 0))
   const recorded = new Set(monthExpenses.filter(e => e.gasto_recurrente_id != null).map(e => `${e.gasto_recurrente_id}:${e.fecha.slice(0, 10)}`))
   const upcoming: { ruleId: number; description: string; date: string; amount: number }[] = []
-  for (let d = day + 1; d <= days; d++) {
+  for (let d = day + (includeToday ? 0 : 1); d <= days; d++) {
     const date = `${prefix}-${String(d).padStart(2, '0')}`
     const weekDay = new Date(Date.UTC(year, month - 1, d)).getUTCDay() || 7
     for (const rule of rules) {
