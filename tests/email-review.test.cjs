@@ -46,6 +46,7 @@ function fakeDb(tables) {
       eq(k, v) { filters.push(r => r[k] === v); return q },
       in(k, v) { filters.push(r => v.includes(r[k])); return q },
       order() { return q },
+      limit() { return q },
       gte(k, v) { filters.push(r => r[k] >= v); return q },
       lte(k, v) { filters.push(r => r[k] <= v); return q },
       not(k, op, v) { filters.push(r => r[k] !== v); return q },
@@ -83,6 +84,14 @@ test('aceptar con mitad registra tu parte con tags auto + compartido; repetir no
   assert.equal(tables.gasto.length, 2)
 })
 
+test('aceptar etiqueta el banco de origen conservando auto y compartido', async () => {
+  const tables = { correo_consumo: [pending(1, { origen: 'Produbanco' }), pending(2, { origen: 'Diners' })], gasto: [] }
+  db = fakeDb(tables)
+  const res = await patch({ aceptar: [{ id: 1, categoria_id: 3 }, { id: 2, categoria_id: 4, monto: 10 }] })
+  assert.equal(res.status, 200)
+  assert.deepEqual(tables.gasto.map(g => g.tags), [['auto', 'produbanco'], ['auto', 'compartido', 'diners']])
+})
+
 test('aceptar usa el alias privado del destinatario, conserva el correo y no confunde personas', async () => {
   const tables = {
     correo_consumo: [pending(1, { descripcion: 'Transferencia a PÉREZ   JUAN' }), pending(2, { descripcion: 'Deuna a PEREZ JUAN' }), pending(3, { descripcion: 'Transferencia a PEREZ JUAN CARLOS' })],
@@ -117,6 +126,23 @@ test('guardar como rechaza razones inválidas antes de consumir cualquier pendie
     assert.equal(tables.correo_consumo[0].estado, 'pendiente')
     assert.equal(tables.gasto.length, 0)
   }
+})
+
+test('pendientes reutilizan la categoría más reciente del mismo comercio y no la de otro usuario', async () => {
+  const tables = {
+    correo_consumo: [pending(1, { descripcion: 'CYRANO CUMBAYA', categoria_id: 1 })], correo_alias: [],
+    categoria: [{ id: 1, nombre: 'Otros' }, { id: 3, nombre: 'Alimentación' }],
+    gasto: [
+      { id: 20, user_id: 'otro', descripcion: 'CYRANO CUMBAYA', categoria_id: 1, fecha: '2026-10-05', monto: 7 },
+      { id: 19, user_id: owner, descripcion: 'Cyrano Cumbayá', categoria_id: 3, fecha: '2026-10-04', monto: 7 },
+      { id: 18, user_id: owner, descripcion: 'CYRANO CUMBAYA', categoria_id: 1, fecha: '2026-10-03', monto: 7 },
+    ],
+  }
+  db = fakeDb(tables)
+  const body = await (await GET(new Request('https://fixture.invalid/api/email-import/yahoo?tab=nuevos'))).json()
+  assert.equal(body.pendientes[0].categoria_id, 3)
+  await patch({ aceptar: [{ id: 1, categoria_id: 1 }] })
+  assert.equal(tables.gasto.at(-1).categoria_id, 1, 'La selección manual prevalece')
 })
 
 test('listar muestra el alias y permite buscarlo conservando el nombre bancario', async () => {

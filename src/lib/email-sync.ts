@@ -3,7 +3,7 @@ import { simpleParser } from 'mailparser'
 import type { createServiceClient } from '@/lib/database/service'
 import { predictExpenseSelection } from '@/lib/expense-suggestions'
 import { categorizeWithJev } from '@/lib/jev'
-import { BANK_SENDERS, categoryByRules, classifyEmail, normalizeName, parseBankEmail, type PaymentKind } from '@/lib/bank-emails'
+import { BANK_SENDERS, categoryByRules, categoryFromHistory, classifyEmail, normalizeName, parseBankEmail, type PaymentKind } from '@/lib/bank-emails'
 
 type Db = NonNullable<ReturnType<typeof createServiceClient>>
 export type SyncResult = { ok: true; nuevos: number } | { ok: false; status: number; error: string; db?: boolean; code?: string }
@@ -24,7 +24,7 @@ export async function syncYahoo(supabase: Db, userId: string, since: Date): Prom
   const [categorias, metodos, historial, vistos] = await Promise.all([
     supabase.from('categoria').select('id, nombre'),
     supabase.from('metodo_pago').select('id, nombre'),
-    supabase.from('gasto').select('descripcion, categoria_id, metodo_pago_id').eq('user_id', userId).order('fecha', { ascending: false }).limit(500),
+    supabase.from('gasto').select('descripcion, categoria_id, metodo_pago_id').eq('user_id', userId).order('fecha', { ascending: false }).order('id', { ascending: false }).limit(500),
     supabase.from('correo_consumo').select('email_message_id').eq('user_id', userId).gte('fecha', since.toISOString().slice(0, 10)),
   ])
   const readError = categorias.error || metodos.error || historial.error || vistos.error
@@ -85,7 +85,8 @@ export async function syncYahoo(supabase: Db, userId: string, since: Date): Prom
           if (charge.tipo === 'gasto') {
             const predicted = predictExpenseSelection(charge.descripcion, historial.data ?? [], cats, pays).categoryId
             const ruled = categoryByRules(charge.descripcion)
-            const categoria = predicted ? Number(predicted) : ruled ? catByName.get(ruled) : undefined
+            const categoria = categoryFromHistory(charge.descripcion, historial.data ?? [], cats)
+              ?? (predicted ? Number(predicted) : ruled ? catByName.get(ruled) : undefined)
             // Consumos con tarjeta sin coincidencia: se le preguntan a Jev al final, todos juntos.
             if (!categoria && !charge.transfer) askJev.push(rows.length)
             row.categoria_id = categoria ?? fallbackCat

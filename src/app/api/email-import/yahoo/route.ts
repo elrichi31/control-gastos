@@ -6,6 +6,7 @@ import { findCandidates, type Candidate, type ExistingExpense } from '@/lib/emai
 import { isMissingMigration, syncYahoo, yahooImportUserId } from '@/lib/email-sync'
 import { pageReviewRows, parseReviewQuery } from '@/lib/email-review-page'
 import { emailAliasDescription, transferRecipient } from '@/lib/email-aliases'
+import { categoryFromHistory, normalizeName } from '@/lib/bank-emails'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -51,13 +52,20 @@ export async function GET(request: Request) {
     .eq('user_id', userId).eq('estado', 'pendiente')
     .order('fecha', { ascending: false })
   if (error) return dbFailure('list', error.code)
-  const { data: aliases, error: aliasError } = await supabase.from('correo_alias')
-    .select('destinatario, alias').eq('user_id', userId)
-  if (aliasError) return dbFailure('aliases', aliasError.code)
+  const [aliasResult, history, categories] = await Promise.all([
+    supabase.from('correo_alias').select('destinatario, alias').eq('user_id', userId),
+    supabase.from('gasto').select('descripcion, categoria_id').eq('user_id', userId)
+      .order('fecha', { ascending: false }).order('id', { ascending: false }).limit(500),
+    supabase.from('categoria').select('id'),
+  ])
+  const { data: aliases } = aliasResult
+  const readError = aliasResult.error || history.error || categories.error
+  if (readError) return dbFailure('review history', readError.code)
   const pendientes = (data ?? []).map(row => {
     const destinatario = row.tipo === 'gasto' ? transferRecipient(row.descripcion) : null
     const alias = destinatario ? (aliases ?? []).find(rule => rule.destinatario === destinatario)?.alias ?? '' : ''
-    return { ...row, monto: Number(row.monto), descripcion_original: row.descripcion, descripcion: alias || row.descripcion, destinatario, alias }
+    const category = row.tipo === 'gasto' ? categoryFromHistory(row.descripcion, history.data ?? [], categories.data ?? []) : undefined
+    return { ...row, categoria_id: category ?? row.categoria_id, monto: Number(row.monto), descripcion_original: row.descripcion, descripcion: alias || row.descripcion, destinatario, alias }
   })
   if (!pendientes.length) return NextResponse.json({ enabled: true, pendientes: [], counts: { nuevos: 0, duplicados: 0, recibidos: 0 }, total: 0, page: 1, pages: 1 })
 
@@ -170,7 +178,7 @@ export async function PATCH(request: Request) {
     const { data: claimed, error } = await supabase.from('correo_consumo')
       .update({ estado: 'aceptado' })
       .eq('user_id', userId).eq('estado', 'pendiente').eq('tipo', 'gasto').in('id', [...aceptarPor.keys()])
-      .select('id, fecha, descripcion, monto, categoria_id, metodo_pago_id')
+      .select('id, origen, fecha, descripcion, monto, categoria_id, metodo_pago_id')
     if (error) return dbFailure('claim', error.code)
     if (claimed?.length) {
       const gastos = claimed.map(row => {
@@ -185,7 +193,7 @@ export async function PATCH(request: Request) {
           categoria_id: choice.categoria_id ?? row.categoria_id,
           metodo_pago_id: row.metodo_pago_id,
           is_recurrent: false,
-          tags: parte < total ? [AUTO_EXPENSE_TAG, SHARED_EXPENSE_TAG] : [AUTO_EXPENSE_TAG],
+          tags: [AUTO_EXPENSE_TAG, ...(parte < total ? [SHARED_EXPENSE_TAG] : []), ...(row.origen ? [normalizeName(row.origen)] : [])],
         }
       })
       const { error: insertError } = await supabase.from('gasto').insert(gastos)

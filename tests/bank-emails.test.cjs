@@ -1,7 +1,21 @@
 require('./helpers/register-ts.cjs')
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { classifyEmail, parseBankEmail, parseAmount, categoryByRules } = require('../src/lib/bank-emails.ts')
+const { classifyEmail, parseBankEmail, parseAmount, categoryByRules, categoryFromHistory } = require('../src/lib/bank-emails.ts')
+
+test('categoría histórica: usa el nombre completo normalizado, la última válida y no otros locales', () => {
+  const cats = [{ id: 1 }, { id: 3 }]
+  const history = [
+    { descripcion: 'Cyrano Cumbayá', categoria_id: 99 },
+    { descripcion: 'CYRANO  CUMBAYA', categoria_id: 3 },
+    { descripcion: 'Cyrano Cumbaya', categoria_id: 1 },
+  ]
+  assert.equal(categoryFromHistory('cyrano cumbaya', history, cats), 3)
+  assert.equal(categoryFromHistory('Cyrano Tumbaco', history, cats), undefined)
+  assert.equal(categoryFromHistory('Cyrano', history, cats), undefined)
+  assert.equal(categoryFromHistory('', history, cats), undefined)
+  assert.equal(categoryFromHistory('Cyrano Cumbaya', [{ descripcion: 'Cyrano Cumbaya', categoria_id: null }], cats), undefined)
+})
 
 // Fixtures sintéticos con la misma forma (una celda por línea) que los correos reales.
 const html = (...cells) => `<html><head><style>p{margin:0}</style></head><body><table>${cells.map(c => `<tr><td><p>${c}</p></td></tr>`).join('')}</table></body></html>`
