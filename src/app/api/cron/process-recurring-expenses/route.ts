@@ -27,16 +27,19 @@ export async function GET(request: Request) {
     })
     const { data, error } = await db.rpc('process_recurring_expenses', { p_limit: 200 })
     if (error) {
-      console.error('[recurring-cron] RPC failed', { code: error.code })
+      console.error('[recurring-cron] RPC failed', { code: error.code, message: error.message, details: error.details, hint: error.hint })
       await recordCronRun(db, 'recurring-expenses', false)
       const missing = ['PGRST202', '42883'].includes(error.code)
       return NextResponse.json({ error: missing ? 'Falta aplicar la migración de gastos recurrentes en Supabase' : 'No se pudieron generar los gastos recurrentes' }, { status: missing ? 503 : 500 })
     }
-    if (!data) return NextResponse.json({ error: 'Respuesta inválida del procesador' }, { status: 500 })
+    if (!data) {
+      console.error('[recurring-cron] RPC returned no data')
+      return NextResponse.json({ error: 'Respuesta inválida del procesador' }, { status: 500 })
+    }
     await recordCronRun(db, 'recurring-expenses', true)
     return NextResponse.json(data)
-  } catch {
-    console.error('[recurring-cron] Request failed')
+  } catch (err) {
+    console.error('[recurring-cron] Request failed', err instanceof Error ? { name: err.name, message: err.message, cause: err.cause } : err)
     return NextResponse.json({ error: 'No se pudieron generar los gastos recurrentes' }, { status: 500 })
   }
 }
