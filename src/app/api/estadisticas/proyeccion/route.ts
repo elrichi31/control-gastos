@@ -21,11 +21,11 @@ export async function GET(request: Request) {
       const all: ForecastExpense[] = []
       for (let page = 0; page < 100; page++) {
         const { data, error } = await supabase.from('gasto')
-          .select('id, fecha, monto, is_recurrent, gasto_recurrente_id')
+          .select('id, fecha, monto, is_recurrent, gasto_recurrente_id, categoria(nombre)')
           .eq('user_id', userId).gte('fecha', since).lt('fecha', until)
           .order('id', { ascending: true }).range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
         if (error || !data) throw new Error('history')
-        all.push(...data)
+        all.push(...data.map(({ categoria, ...g }: any) => ({ ...g, categoria: (Array.isArray(categoria) ? categoria[0] : categoria)?.nombre ?? null })))
         if (data.length < PAGE_SIZE) return all
       }
       throw new Error('history limit')

@@ -1,6 +1,6 @@
 import { buildMonthPlan, type PlanningRule } from './month-planning'
 
-export type ForecastExpense = { fecha: string; monto: number; is_recurrent?: boolean; gasto_recurrente_id?: number | null }
+export type ForecastExpense = { fecha: string; monto: number; is_recurrent?: boolean; gasto_recurrente_id?: number | null; categoria?: string | null }
 export type ForecastInput = { today: string; expenses: ForecastExpense[]; rules: PlanningRule[] }
 export type ForecastMethod = 'pace' | 'weekday' | 'blend'
 const METHODS: ForecastMethod[] = ['pace', 'weekday', 'blend']
@@ -106,6 +106,37 @@ export function buildExpenseForecast({ today, expenses, rules }: ForecastInput) 
     }
     return { day: i + 1, date, actual: i + 1 <= day ? money(accumulated) : null, forecast: chosen && i + 1 >= day ? money(expected) : null }
   })
+  // Mes anterior: solo referencia visual, nunca entra en el modelo.
+  const [cy, cm] = month.split('-').map(Number)
+  const prevMonth = new Date(Date.UTC(cy, cm - 2, 1)).toISOString().slice(0, 7)
+  const prevRows = expenses.filter(e => e.fecha.startsWith(prevMonth))
+  const previous = prevRows.length ? { month: prevMonth, total: money(sum(prevRows)) } : null
+  let prevAccumulated = 0
+  const pointsWithPrevious = points.map(p => {
+    if (!previous || p.day > daysIn(prevMonth)) return { ...p, previous: null as number | null }
+    prevAccumulated += sum(prevRows.filter(e => Number(e.fecha.slice(8, 10)) === p.day))
+    return { ...p, previous: money(prevAccumulated) }
+  })
+  // Lo que queda por día (hoy incluido) para gasto variable sin superar el mes anterior.
+  const dailyAllowance = previous ? money((previous.total - floor) / (days - day + 1)) : null
+  // ponytail: ritmo lineal por categoría; el modelo elegido solo existe para el total.
+  const elapsed = day - 1
+  const byCategory = new Map<string, { recorded: number; variable: number; previous: number }>()
+  const bucket = (e: ForecastExpense) => {
+    const name = e.categoria || 'Sin categoría'
+    if (!byCategory.has(name)) byCategory.set(name, { recorded: 0, variable: 0, previous: 0 })
+    return byCategory.get(name)!
+  }
+  for (const e of current) {
+    const b = bucket(e)
+    b.recorded += e.monto
+    if (variable(e) && Number(e.fecha.slice(8, 10)) <= elapsed) b.variable += e.monto
+  }
+  for (const e of prevRows) bucket(e).previous += e.monto
+  const categories = [...byCategory].map(([name, c]) => ({
+    name, recorded: money(c.recorded), previous: money(c.previous),
+    projected: projected == null || elapsed === 0 ? null : money(c.recorded + c.variable / elapsed * (days - day + 1)),
+  })).sort((a, b) => (b.projected ?? b.recorded) - (a.projected ?? a.recorded))
   const warnings = [
     'Solo considera gastos registrados: correos pendientes, efectivo sin registrar y cambios futuros pueden alterar el cierre.',
     'El historial no permite comprobar si un día sin gastos fue realmente cero o faltó registrar movimientos.',
@@ -115,6 +146,7 @@ export function buildExpenseForecast({ today, expenses, rules }: ForecastInput) 
   return { today, month, days, recorded, recordedToDate, futureRecorded, committed: plan.committed, variableRemaining, projected, floor, range,
     method: chosen?.method ?? null, methodLabel: chosen?.label ?? null, errorTypical: chosen?.mae ?? null,
     status: (validated ? 'validated' : chosen ? 'initial' : 'insufficient') as 'validated' | 'initial' | 'insufficient',
-    trainingMonths: model.trainingMonths, backtest, models, points, upcoming: plan.upcoming, warnings }
+    trainingMonths: model.trainingMonths, backtest, models, points: pointsWithPrevious, upcoming: plan.upcoming, warnings,
+    previous, dailyAllowance, categories }
 }
 export type ExpenseForecast = ReturnType<typeof buildExpenseForecast>
