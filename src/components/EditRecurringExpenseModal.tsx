@@ -133,12 +133,12 @@ export function EditRecurringExpenseModal({
           <div className="space-y-2">
             <Label htmlFor="descripcion" className="text-foreground">Descripción</Label>
             <Input
+              controlSize="form"
               id="descripcion"
               value={formData.descripcion}
               onChange={(e) => handleChange("descripcion", e.target.value)}
               placeholder="Ej: Netflix, Gym, etc."
               required
-              className="bg-muted text-foreground border-border"
             />
           </div>
 
@@ -146,6 +146,7 @@ export function EditRecurringExpenseModal({
           <div className="space-y-2">
             <Label htmlFor="monto" className="text-foreground">{foreignTax.enabled ? "Precio sin impuestos" : "Monto"}</Label>
             <Input
+              controlSize="form"
               id="monto"
               type="number"
               step="0.01"
@@ -154,7 +155,6 @@ export function EditRecurringExpenseModal({
               onChange={(e) => handleChange("monto", e.target.value)}
               placeholder="0.00"
               required
-              className="bg-muted text-foreground border-border"
             />
           </div>
 
@@ -165,10 +165,10 @@ export function EditRecurringExpenseModal({
               value={formData.categoria_id}
               onValueChange={(value) => handleChange("categoria_id", value)}
             >
-              <SelectTrigger className="bg-muted text-foreground border-border">
+              <SelectTrigger controlSize="form">
                 <SelectValue placeholder="Selecciona una categoría" />
               </SelectTrigger>
-              <SelectContent className="bg-muted border-border">
+              <SelectContent>
                 {categories.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id.toString()} className="text-foreground">
                     {cat.nombre}
@@ -185,10 +185,10 @@ export function EditRecurringExpenseModal({
               value={formData.metodo_pago_id}
               onValueChange={(value) => handleChange("metodo_pago_id", value)}
             >
-              <SelectTrigger className="bg-muted text-foreground border-border">
+              <SelectTrigger controlSize="form">
                 <SelectValue placeholder="Selecciona un método" />
               </SelectTrigger>
-              <SelectContent className="bg-muted border-border">
+              <SelectContent>
                 {paymentMethods.map((method) => (
                   <SelectItem key={method.id} value={method.id.toString()} className="text-foreground">
                     {method.nombre}
@@ -205,10 +205,10 @@ export function EditRecurringExpenseModal({
               value={formData.frecuencia}
               onValueChange={(value) => handleChange("frecuencia", value as Frecuencia)}
             >
-              <SelectTrigger className="bg-muted text-foreground border-border">
+              <SelectTrigger controlSize="form">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-muted border-border">
+              <SelectContent>
                 <SelectItem value="semanal" className="text-foreground">Semanal</SelectItem>
                 <SelectItem value="mensual" className="text-foreground">Mensual</SelectItem>
                 <SelectItem value="anual" className="text-foreground">Anual</SelectItem>
@@ -224,10 +224,10 @@ export function EditRecurringExpenseModal({
                 value={formData.dia_semana}
                 onValueChange={(value) => handleChange("dia_semana", value)}
               >
-                <SelectTrigger className="bg-muted text-foreground border-border">
+                <SelectTrigger controlSize="form">
                   <SelectValue placeholder="Selecciona un día" />
                 </SelectTrigger>
-                <SelectContent className="bg-muted border-border">
+                <SelectContent>
                   {DIAS_SEMANA.map((dia) => (
                     <SelectItem key={dia.value} value={dia.value.toString()} className="text-foreground">
                       {dia.label}
@@ -243,10 +243,10 @@ export function EditRecurringExpenseModal({
             <div className="space-y-2">
               <Label className="text-foreground">Mes</Label>
               <Select value={formData.mes_anual} onValueChange={(value) => handleChange("mes_anual", value)}>
-                <SelectTrigger className="bg-muted text-foreground border-border">
+                <SelectTrigger controlSize="form">
                   <SelectValue placeholder="Selecciona el mes" />
                 </SelectTrigger>
-                <SelectContent className="bg-muted border-border">
+                <SelectContent>
                   {MESES.map((mes, i) => (
                     <SelectItem key={mes} value={String(i + 1)} className="text-foreground">{mes}</SelectItem>
                   ))}
@@ -260,6 +260,7 @@ export function EditRecurringExpenseModal({
             <div className="space-y-2">
               <Label htmlFor="dia_mes" className="text-foreground">Día del mes (1-31; si el mes es más corto, el último día)</Label>
               <Input
+                controlSize="form"
                 id="dia_mes"
                 type="number"
                 min="1"
@@ -268,7 +269,6 @@ export function EditRecurringExpenseModal({
                 onChange={(e) => handleChange("dia_mes", e.target.value)}
                 placeholder="1"
                 required
-                className="bg-muted text-foreground border-border"
               />
             </div>
           )}
@@ -277,12 +277,12 @@ export function EditRecurringExpenseModal({
           <div className="space-y-2">
             <Label htmlFor="fecha_inicio" className="text-foreground">Fecha de inicio</Label>
             <Input
+              controlSize="form"
               id="fecha_inicio"
               type="date"
               value={formData.fecha_inicio}
               onChange={(e) => handleChange("fecha_inicio", e.target.value)}
               required
-              className="bg-muted text-foreground border-border"
             />
           </div>
 
@@ -294,7 +294,7 @@ export function EditRecurringExpenseModal({
                 id="usar_fecha_fin"
                 checked={formData.usarFechaFin}
                 onChange={(e) => handleChange("usarFechaFin", e.target.checked)}
-                className="w-4 h-4 rounded border-border"
+                className="w-4 h-4 accent-primary"
               />
               <Label htmlFor="usar_fecha_fin" className="text-foreground">
                 Establecer fecha de fin
@@ -302,12 +302,12 @@ export function EditRecurringExpenseModal({
             </div>
             {formData.usarFechaFin && (
               <Input
+                controlSize="form"
                 id="fecha_fin"
                 type="date"
                 value={formData.fecha_fin}
                 onChange={(e) => handleChange("fecha_fin", e.target.value)}
                 min={formData.fecha_inicio}
-                className="bg-muted text-foreground border-border"
               />
             )}
           </div>
@@ -316,15 +316,15 @@ export function EditRecurringExpenseModal({
 
           <DialogFooter className="gap-2">
             <Button
+              size="form"
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={saving}
-              className="bg-muted text-foreground border-border hover:bg-muted"
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving || Boolean(foreignError)}>
+            <Button size="form" type="submit" disabled={saving || Boolean(foreignError)}>
               {saving ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </DialogFooter>

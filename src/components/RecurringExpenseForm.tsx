@@ -87,7 +87,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {}
-    
+
     if (!formData.description.trim()) {
       newErrors.description = "La descripción es obligatoria"
     }
@@ -101,7 +101,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
       newErrors.diaSemana = "Selecciona el día de la semana"
     }
     const dia = parseInt(formData.diaMes)
-    if ((formData.frecuencia === 'mensual' || formData.frecuencia === 'anual') && !(dia >= 1 && dia <= 31)) {
+    if ((formData.frecuencia === 'mensual' || formData.frecuencia === 'anual') && !(dia>= 1 && dia <= 31)) {
       newErrors.diaMes = "Ingresa un día entre 1 y 31"
     }
     if (formData.frecuencia === 'anual' && !formData.mesAnual) {
@@ -115,18 +115,18 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
     }
     const foreignError = validateForeignTax(foreignTax)
     if (foreignError) newErrors.foreignTax = foreignError
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
-    
+
     setIsSubmitting(true)
 
     try {
@@ -172,8 +172,8 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Descripción */}
       <div className="space-y-2">
-        <Label htmlFor="rec-description" className="text-sm font-semibold text-foreground">
-          Descripción <span className="text-red-500">*</span>
+        <Label htmlFor="rec-description">
+          Descripción <span className="text-destructive">*</span>
         </Label>
         <Textarea
           id="rec-description"
@@ -183,23 +183,24 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
             setFormData({ ...formData, description: e.target.value })
             if (errors.description) setErrors({ ...errors, description: "" })
           }}
-          className={`min-h-[80px] text-base border-2 transition-colors rounded-lg ${errors.description ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}
+          aria-invalid={Boolean(errors.description)}
           rows={3}
         />
-        {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+        {errors.description && <p className="text-destructive text-sm">{errors.description}</p>}
       </div>
 
       {/* Monto y Frecuencia en una línea */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="rec-amount" className="text-sm font-semibold text-foreground">
-            {foreignTax.enabled ? "Precio sin impuestos" : "Monto (USD)"} <span className="text-red-500">*</span>
+          <Label htmlFor="rec-amount">
+            {foreignTax.enabled ? "Precio sin impuestos" : "Monto (USD)"} <span className="text-destructive">*</span>
           </Label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-lg font-semibold">
               $
             </span>
             <Input
+              controlSize="form"
               id="rec-amount"
               type="number"
               step="0.01"
@@ -209,15 +210,16 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
                 setFormData({ ...formData, amount: e.target.value })
                 if (errors.amount) setErrors({ ...errors, amount: "" })
               }}
-              className={`pl-8 text-lg font-semibold border-2 transition-colors h-12 rounded-lg ${errors.amount ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-green-500 dark:focus:border-emerald-500'}`}
+              aria-invalid={Boolean(errors.amount)}
+              className="pl-7 font-semibold tabular-nums"
             />
           </div>
-          {errors.amount && <p className="text-red-500 text-sm">{errors.amount}</p>}
+          {errors.amount && <p className="text-destructive text-sm">{errors.amount}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="frecuencia" className="text-sm font-semibold text-foreground">
-            Frecuencia <span className="text-red-500">*</span>
+          <Label htmlFor="frecuencia">
+            Frecuencia <span className="text-destructive">*</span>
           </Label>
           <Select
             value={formData.frecuencia}
@@ -226,24 +228,24 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
               if (errors.frecuencia) setErrors({ ...errors, frecuencia: "" })
             }}
           >
-            <SelectTrigger className={`h-12 text-base border-2 rounded-lg ${errors.frecuencia ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}>
+            <SelectTrigger id="frecuencia" controlSize="form" aria-invalid={Boolean(errors.frecuencia)}>
               <SelectValue placeholder="Frecuencia" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="semanal" className="text-base py-3">Semanal</SelectItem>
-              <SelectItem value="mensual" className="text-base py-3">Mensual</SelectItem>
-              <SelectItem value="anual" className="text-base py-3">Anual</SelectItem>
+              <SelectItem value="semanal">Semanal</SelectItem>
+              <SelectItem value="mensual">Mensual</SelectItem>
+              <SelectItem value="anual">Anual</SelectItem>
             </SelectContent>
           </Select>
-          {errors.frecuencia && <p className="text-red-500 text-sm">{errors.frecuencia}</p>}
+          {errors.frecuencia && <p className="text-destructive text-sm">{errors.frecuencia}</p>}
         </div>
       </div>
 
       {/* Día de la semana (solo si es semanal) */}
       {formData.frecuencia === 'semanal' && (
         <div className="space-y-2">
-          <Label htmlFor="dia-semana" className="text-sm font-semibold text-foreground">
-            Día de la Semana <span className="text-red-500">*</span>
+          <Label htmlFor="dia-semana">
+            Día de la Semana <span className="text-destructive">*</span>
           </Label>
           <Select
             value={formData.diaSemana}
@@ -252,26 +254,26 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
               if (errors.diaSemana) setErrors({ ...errors, diaSemana: "" })
             }}
           >
-            <SelectTrigger className={`h-12 text-base border-2 rounded-lg ${errors.diaSemana ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}>
+            <SelectTrigger id="dia-semana" controlSize="form" aria-invalid={Boolean(errors.diaSemana)}>
               <SelectValue placeholder="Selecciona el día" />
             </SelectTrigger>
             <SelectContent>
               {diasSemana.map((dia) => (
-                <SelectItem key={dia.value} value={dia.value} className="text-base py-3">
+                <SelectItem key={dia.value} value={dia.value}>
                   {dia.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {errors.diaSemana && <p className="text-red-500 text-sm">{errors.diaSemana}</p>}
+          {errors.diaSemana && <p className="text-destructive text-sm">{errors.diaSemana}</p>}
         </div>
       )}
 
       {/* Mes (solo si es anual) */}
       {formData.frecuencia === 'anual' && (
         <div className="space-y-2">
-          <Label htmlFor="mes-anual" className="text-sm font-semibold text-foreground">
-            Mes <span className="text-red-500">*</span>
+          <Label htmlFor="mes-anual">
+            Mes <span className="text-destructive">*</span>
           </Label>
           <Select
             value={formData.mesAnual}
@@ -280,26 +282,27 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
               if (errors.mesAnual) setErrors({ ...errors, mesAnual: "" })
             }}
           >
-            <SelectTrigger id="mes-anual" className={`h-12 text-base border-2 rounded-lg ${errors.mesAnual ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}>
+            <SelectTrigger controlSize="form" id="mes-anual" aria-invalid={Boolean(errors.mesAnual)}>
               <SelectValue placeholder="Selecciona el mes" />
             </SelectTrigger>
             <SelectContent>
               {MESES.map((mes, i) => (
-                <SelectItem key={mes} value={String(i + 1)} className="text-base py-3">{mes}</SelectItem>
+                <SelectItem key={mes} value={String(i + 1)}>{mes}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {errors.mesAnual && <p className="text-red-500 text-sm">{errors.mesAnual}</p>}
+          {errors.mesAnual && <p className="text-destructive text-sm">{errors.mesAnual}</p>}
         </div>
       )}
 
       {/* Día del mes (mensual o anual) */}
       {(formData.frecuencia === 'mensual' || formData.frecuencia === 'anual') && (
         <div className="space-y-2">
-          <Label htmlFor="dia-mes" className="text-sm font-semibold text-foreground">
-            Día del Mes <span className="text-red-500">*</span>
+          <Label htmlFor="dia-mes">
+            Día del Mes <span className="text-destructive">*</span>
           </Label>
           <Input
+            controlSize="form"
             id="dia-mes"
             type="number"
             min="1"
@@ -310,10 +313,10 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
               setFormData({ ...formData, diaMes: e.target.value })
               if (errors.diaMes) setErrors({ ...errors, diaMes: "" })
             }}
-            className={`text-base border-2 transition-colors h-12 rounded-lg ${errors.diaMes ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}
+            aria-invalid={Boolean(errors.diaMes)}
           />
           <p className="text-xs text-muted-foreground">Si el mes tiene menos días, se cobra el último día (31 = último día del mes)</p>
-          {errors.diaMes && <p className="text-red-500 text-sm">{errors.diaMes}</p>}
+          {errors.diaMes && <p className="text-destructive text-sm">{errors.diaMes}</p>}
         </div>
       )}
 
@@ -321,14 +324,15 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
       <div className="space-y-4">
         {/* Fecha de Inicio */}
         <div className="space-y-2">
-          <Label htmlFor="fecha-inicio" className="text-sm font-semibold text-foreground">
+          <Label htmlFor="fecha-inicio">
             Fecha de Inicio *
           </Label>
           <Input
+            controlSize="form"
             id="fecha-inicio"
             type="date"
             value={formData.fechaInicio}
-            className="text-base border-2 border-border bg-muted transition-colors h-12 rounded-lg cursor-not-allowed"
+            className="bg-muted cursor-not-allowed dark:[color-scheme:dark]"
             readOnly
           />
           <p className="text-xs text-muted-foreground">Inicia desde el 1° del mes actual</p>
@@ -359,16 +363,17 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
         {/* Fecha de Fin - solo se muestra si el switch está activo */}
         {mostrarFechaFin && (
           <div className="space-y-2">
-            <Label htmlFor="fecha-fin" className="text-sm font-semibold text-foreground">
+            <Label htmlFor="fecha-fin">
               Fecha de Fin
             </Label>
             <Input
+              controlSize="form"
               id="fecha-fin"
               type="date"
               value={formData.fechaFin}
               min={formData.fechaInicio}
               onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
-              className="text-base border-2 border-border focus:border-blue-500 focus:border-border transition-colors h-12 rounded-lg"
+              className="dark:[color-scheme:dark]"
             />
           </div>
         )}
@@ -376,8 +381,8 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
 
       {/* Categoría */}
       <div className="space-y-2">
-        <Label htmlFor="rec-category" className="text-sm font-semibold text-foreground">
-          Categoría <span className="text-red-500">*</span>
+        <Label htmlFor="rec-category">
+          Categoría <span className="text-destructive">*</span>
         </Label>
         <Select
           value={formData.categoryId}
@@ -386,24 +391,24 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
             if (errors.categoryId) setErrors({ ...errors, categoryId: "" })
           }}
         >
-          <SelectTrigger className={`h-12 text-base border-2 rounded-lg ${errors.categoryId ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}>
+          <SelectTrigger id="rec-category" controlSize="form" aria-invalid={Boolean(errors.categoryId)}>
             <SelectValue placeholder="Selecciona una categoría" />
           </SelectTrigger>
           <SelectContent>
             {categories.map((cat) => (
-              <SelectItem key={cat.id} value={String(cat.id)} className="text-base py-3">
+              <SelectItem key={cat.id} value={String(cat.id)}>
                 {cat.nombre}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {errors.categoryId && <p className="text-red-500 text-sm">{errors.categoryId}</p>}
+        {errors.categoryId && <p className="text-destructive text-sm">{errors.categoryId}</p>}
       </div>
 
       {/* Método de Pago */}
       <div className="space-y-2">
-        <Label htmlFor="rec-paymentMethod" className="text-sm font-semibold text-foreground">
-          Método de Pago <span className="text-red-500">*</span>
+        <Label htmlFor="rec-paymentMethod">
+          Método de Pago <span className="text-destructive">*</span>
         </Label>
         <Select
           value={formData.paymentMethodId}
@@ -412,25 +417,26 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
             if (errors.paymentMethodId) setErrors({ ...errors, paymentMethodId: "" })
           }}
         >
-          <SelectTrigger className={`h-12 text-base border-2 rounded-lg ${errors.paymentMethodId ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-blue-500 focus:border-border'}`}>
+          <SelectTrigger id="rec-paymentMethod" controlSize="form" aria-invalid={Boolean(errors.paymentMethodId)}>
             <SelectValue placeholder="¿Cómo pagarás?" />
           </SelectTrigger>
           <SelectContent>
             {paymentMethods.map((m) => (
-              <SelectItem key={m.id} value={String(m.id)} className="text-base py-3">
+              <SelectItem key={m.id} value={String(m.id)}>
                 {m.nombre}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {errors.paymentMethodId && <p className="text-red-500 text-sm">{errors.paymentMethodId}</p>}
+        {errors.paymentMethodId && <p className="text-destructive text-sm">{errors.paymentMethodId}</p>}
       </div>
 
       <ForeignTaxField idPrefix="rec-foreign" base={parseFloat(formData.amount)} value={foreignTax} totalLabel="Total de cada cobro" tagNote={false} error={errors.foreignTax}
         onChange={value => { setForeignTax(value); if (errors.foreignTax) setErrors({ ...errors, foreignTax: "" }) }} />
 
       {/* Botón de envío */}
-      <Button 
+      <Button
+        size="form"
         type="submit" 
         className="w-full"
         disabled={isSubmitting}

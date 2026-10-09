@@ -113,20 +113,20 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
           <fieldset disabled={saving} className="space-y-4 min-w-0">
             <div className="space-y-2">
               <Label htmlFor="edit-description">Descripción</Label>
-              <Input id="edit-description" value={formData.description} onChange={e => change("description", e.target.value)} aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? "edit-description-error" : undefined} className="h-11 text-base sm:text-sm" />
+              <Input controlSize="form" id="edit-description" value={formData.description} onChange={e => change("description", e.target.value)} aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? "edit-description-error" : undefined} />
               {fieldError("description")}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2 min-w-0">
                 <Label htmlFor="edit-amount">{foreignTax.enabled ? "Precio sin impuestos" : "Monto (USD)"}</Label>
                 <div className="relative"><span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                  <Input id="edit-amount" type="number" inputMode="decimal" min="0.01" step="0.01" value={formData.amount} onChange={e => change("amount", e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? "edit-amount-error" : undefined} className="pl-7 h-11 text-base sm:text-sm tabular-nums" />
+                  <Input controlSize="form" id="edit-amount" type="number" inputMode="decimal" min="0.01" step="0.01" value={formData.amount} onChange={e => change("amount", e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? "edit-amount-error" : undefined} className="pl-7 tabular-nums" />
                 </div>
                 {fieldError("amount")}
               </div>
               <div className="space-y-2 min-w-0">
                 <Label htmlFor="edit-date">Fecha</Label>
-                <Input id="edit-date" type="date" value={formData.date} onChange={e => change("date", e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? "edit-date-error" : undefined} className="h-11 text-base sm:text-sm min-w-0 dark:[color-scheme:dark]" />
+                <Input controlSize="form" id="edit-date" type="date" value={formData.date} onChange={e => change("date", e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? "edit-date-error" : undefined} className="min-w-0 dark:[color-scheme:dark]" />
                 {fieldError("date")}
               </div>
             </div>
@@ -134,7 +134,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
               <div className="space-y-2 min-w-0">
                 <Label htmlFor="edit-categoryId">Categoría</Label>
                 <Select value={formData.categoryId} disabled={!optionsReady} onValueChange={value => change("categoryId", value)}>
-                  <SelectTrigger id="edit-categoryId" aria-invalid={Boolean(errors.categoryId)} className="h-11"><SelectValue placeholder={optionsReady ? "Selecciona" : "Cargando…"} /></SelectTrigger>
+                  <SelectTrigger controlSize="form" id="edit-categoryId" aria-invalid={Boolean(errors.categoryId)}><SelectValue placeholder={optionsReady ? "Selecciona" : "Cargando…"} /></SelectTrigger>
                   <SelectContent>{categories.map(cat => <SelectItem key={cat.id} value={String(cat.id)}>{cat.nombre}</SelectItem>)}</SelectContent>
                 </Select>
                 {fieldError("categoryId")}
@@ -142,7 +142,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
               <div className="space-y-2 min-w-0">
                 <Label htmlFor="edit-paymentMethodId">Método de pago</Label>
                 <Select value={formData.paymentMethodId} disabled={!optionsReady} onValueChange={value => change("paymentMethodId", value)}>
-                  <SelectTrigger id="edit-paymentMethodId" aria-invalid={Boolean(errors.paymentMethodId)} className="h-11"><SelectValue placeholder={optionsReady ? "Selecciona" : "Cargando…"} /></SelectTrigger>
+                  <SelectTrigger controlSize="form" id="edit-paymentMethodId" aria-invalid={Boolean(errors.paymentMethodId)}><SelectValue placeholder={optionsReady ? "Selecciona" : "Cargando…"} /></SelectTrigger>
                   <SelectContent>{paymentMethods.map(method => <SelectItem key={method.id} value={String(method.id)}>{method.nombre}</SelectItem>)}</SelectContent>
                 </Select>
                 {fieldError("paymentMethodId")}
@@ -151,8 +151,8 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
             <ForeignTaxField idPrefix="edit-foreign" notice={legacyForeign && !foreignTax.enabled ? "Este gasto ya incluye impuestos del exterior en su monto. Si lo activas, cambia el monto al precio original para no cobrarlos dos veces." : undefined} base={Number(formData.amount)} value={foreignTax} onChange={value => { setForeignTax(value); setErrors(previous => ({ ...previous, foreignTax: "" })) }} error={errors.foreignTax} />
             <ExpenseTagsField value={formData.tags} onChange={value => change("tags", value)} error={errors.tags} />
             <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
-              <Button type="button" variant="outline" className="h-11 sm:flex-1" onClick={() => onOpenChange(false)}>Cancelar</Button>
-              <Button type="submit" disabled={!optionsReady || saving} className="h-11 sm:flex-1">{saving ? <><LoaderCircle aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />Guardando…</> : "Guardar cambios"}</Button>
+              <Button size="form" type="button" variant="outline" className="sm:flex-1" onClick={() => onOpenChange(false)}>Cancelar</Button>
+              <Button size="form" type="submit" disabled={!optionsReady || saving} className="sm:flex-1">{saving ? <><LoaderCircle aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />Guardando…</> : "Guardar cambios"}</Button>
             </div>
           </fieldset>
         </form>

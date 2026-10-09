@@ -1,5 +1,6 @@
 import { Tag, Calendar, CreditCard, Trash2, Repeat, Pencil } from "lucide-react"
 import { Gasto } from "@/hooks/useGastosFiltrados"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { formatDisplayDate } from "@/lib/utils"
 import { getCategoriaColor } from "@/lib/constants"
@@ -90,7 +91,7 @@ export function ExpenseItem({ expense, onDelete, onUpdated, showDeleteIcon = fal
     <>
       {/* Fila horizontal: en pantallas medianas cada dato va en su columna
           (alineada con la cabecera de ExpenseList); en móvil se apila. */}
-      <div className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 px-5 py-3 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors md:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_7rem_minmax(0,1fr)_6rem_3.5rem]">
+      <div className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 px-5 py-3 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors md:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_7rem_minmax(0,1fr)_6rem_4.5rem]">
         <div className="min-w-0">
           <p className="font-medium text-sm text-foreground truncate" title={expense.descripcion}>{expense.descripcion}</p>
           <ExpenseTags tags={expense.tags} className="mt-1" />
@@ -100,28 +101,26 @@ export function ExpenseItem({ expense, onDelete, onUpdated, showDeleteIcon = fal
         <span className="font-semibold text-sm text-foreground tabular-nums text-right md:order-5">
           ${expense.monto.toFixed(2)}
         </span>
-        <div className="flex items-center justify-end gap-1 md:order-6">
+        <div className="flex items-center justify-end gap-1 md:order-6 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100 transition-opacity">
             {onUpdated && (
-              <button
+              <Button size="icon-sm" variant="ghost"
                 type="button"
                 onClick={() => setShowEdit(true)}
-                className="relative h-6 w-6 grid place-items-center rounded text-muted-foreground after:absolute after:-inset-2 after:content-[''] transition-[opacity,color,background-color,scale] duration-150 ease-out active:scale-90 motion-reduce:active:scale-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100 focus-visible:opacity-100 hover:bg-muted hover:text-foreground"
                 title="Editar"
                 aria-label={`Editar ${expense.descripcion}`}
               >
                 <Pencil className="h-3.5 w-3.5" />
-              </button>
+              </Button>
             )}
             {showDeleteIcon && (
-              <button
+              <Button size="icon-sm" variant="ghost-destructive"
                 type="button"
                 onClick={handleDeleteClick}
-                className="relative h-6 w-6 grid place-items-center rounded text-muted-foreground after:absolute after:-inset-2 after:content-[''] transition-[opacity,color,background-color,scale] duration-150 ease-out active:scale-90 motion-reduce:active:scale-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100 focus-visible:opacity-100 hover:bg-muted hover:text-destructive"
                 title="Eliminar"
                 aria-label={`Eliminar ${expense.descripcion}`}
               >
                 <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              </Button>
             )}
         </div>
         </div>

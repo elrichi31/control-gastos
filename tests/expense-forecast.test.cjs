@@ -67,3 +67,18 @@ test('rechaza fechas imposibles y montos incompletos en vez de mostrar una cifra
   for (const today of ['2026-02-30', 'bad-date']) assert.throws(() => buildExpenseForecast({ today, expenses: [], rules: [] }), /fecha/i)
   for (const monto of [NaN, Infinity, -10]) assert.throws(() => buildExpenseForecast({ today: '2026-10-08', expenses: [expense('2026-10-01', monto)], rules: [] }), /datos|monto/i)
 })
+
+test('compara con el mes anterior y proyecta por categoría sin tocar el modelo', () => {
+  const expenses = [...fullMonth('2026-09').map(e => ({ ...e, categoria: 'Comida' })),
+    ...fullMonth('2026-10').slice(0, 7).map((e, i) => ({ ...e, categoria: i % 2 ? 'Comida' : 'Transporte' }))]
+  const result = buildExpenseForecast({ today: '2026-10-08', expenses, rules: [] })
+  assert.deepEqual(result.previous, { month: '2026-09', total: 300 })
+  assert.equal(result.points[29].previous, 300)
+  assert.equal(result.points[30].previous, null)
+  assert.equal(result.dailyAllowance, money((300 - 70) / 24))
+  const comida = result.categories.find(c => c.name === 'Comida')
+  assert.equal(comida.recorded, 30)
+  assert.equal(comida.previous, 300)
+  assert.equal(comida.projected, money(30 + 30 / 7 * 24))
+})
+function money(n) { return Math.round((n + Number.EPSILON) * 100) / 100 }

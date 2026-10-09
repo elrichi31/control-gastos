@@ -134,18 +134,18 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
               <Label htmlFor="amount">{foreignTax.enabled ? 'Precio sin impuestos' : 'Monto (USD)'} <span className="text-destructive">*</span></Label>
               <div className="relative">
                 <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                <Input ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : undefined} className={`h-11 pl-7 text-base font-semibold tabular-nums md:text-base [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${errors.amount ? 'border-destructive' : ''}`} />
+                <Input controlSize="form" ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : undefined} className="pl-7 font-semibold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
               </div>
               {fieldError('amount')}
             </div>
             <div className="space-y-1.5 min-w-0">
               <Label htmlFor="description">Descripción <span className="text-destructive">*</span></Label>
-              <Input id="description" placeholder="Ej. Almuerzo, gasolina, Netflix" value={formData.description} onChange={e => change('description', e.target.value)} aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? 'description-error' : 'description-hint'} className={`h-11 text-base sm:text-[13px] ${errors.description ? 'border-destructive' : ''}`} />
+              <Input controlSize="form" id="description" placeholder="Ej. Almuerzo, gasolina, Netflix" value={formData.description} onChange={e => change('description', e.target.value)} aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? 'description-error' : 'description-hint'} />
               {errors.description ? fieldError('description') : <p id="description-hint" className="text-xs text-muted-foreground">Al escribir, sugerimos categoría y pago según tus gastos anteriores.</p>}
             </div>
             <div className="space-y-1.5 min-w-0">
               <Label htmlFor="date">Fecha <span className="text-destructive">*</span></Label>
-              <Input id="date" type="date" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className={`h-11 text-base sm:text-[13px] min-w-0 dark:[color-scheme:dark] ${errors.date ? 'border-destructive' : ''}`} />
+              <Input controlSize="form" id="date" type="date" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className="min-w-0 dark:[color-scheme:dark]" />
               {fieldError('date')}
             </div>
           </div>
@@ -182,8 +182,8 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
             {paymentName && <> con <span className="font-medium text-foreground">{paymentName}</span></>}.
           </p>
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-            <Button type="submit" value="another" variant="outline" disabled={!ready || isSubmitting} className="h-11" title="Guarda y deja la misma categoría, pago y fecha para registrar otro rápido">Guardar y agregar otro</Button>
-            <Button type="submit" value="save" disabled={!ready || isSubmitting} className="h-11 bg-foreground text-background shadow-sm hover:bg-foreground/90">{isSubmitting ? <><LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />Guardando…</> : 'Guardar gasto'}</Button>
+            <Button size="form" type="submit" value="another" variant="outline" disabled={!ready || isSubmitting} title="Guarda y deja la misma categoría, pago y fecha para registrar otro rápido">Guardar y agregar otro</Button>
+            <Button size="form" type="submit" value="save" disabled={!ready || isSubmitting}>{isSubmitting ? <><LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />Guardando…</> : 'Guardar gasto'}</Button>
           </div>
         </div>
       </fieldset>
