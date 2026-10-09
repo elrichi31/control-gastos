@@ -129,7 +129,7 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
       {submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}
       <fieldset disabled={isSubmitting} className="space-y-6 min-w-0">
         <Section step={1} title="¿Cuánto gastaste y en qué?">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-[9rem_minmax(0,1fr)_10rem]">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-[11rem_minmax(0,1fr)_10rem]">
             <div className="min-w-0 space-y-1.5">
               <Label htmlFor="amount">{foreignTax.enabled ? 'Precio sin impuestos' : 'Monto (USD)'} <span className="text-destructive">*</span></Label>
               <div className="relative">
