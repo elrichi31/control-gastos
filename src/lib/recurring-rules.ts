@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { computeForeignTax, foreignTaxFromStored, parseStoredForeignTax } from '@/lib/foreign-tax'
 
 export class RecurringValidationError extends Error {}
 // Keep web/mobile response shapes unchanged; scheduling state belongs to SQL only.
@@ -33,6 +34,8 @@ export function validateRecurringRule(input: Record<string, unknown>) {
   const start = input.fecha_inicio
   const end = input.fecha_fin === '' || input.fecha_fin == null ? null : input.fecha_fin
   if (!validDate(start) || (end !== null && (!validDate(end) || end < start))) throw new RecurringValidationError('Fechas de inicio o fin inválidas')
+  const tax = input.impuesto_exterior === undefined || input.impuesto_exterior === null ? input.impuesto_exterior : parseStoredForeignTax(input.impuesto_exterior)
+  if (tax === null && input.impuesto_exterior !== null) throw new RecurringValidationError('Impuestos de compra en el exterior inválidos')
   const active = input.activo === undefined ? true : input.activo
   if (typeof active !== 'boolean') throw new RecurringValidationError('Estado activo inválido')
   return {
@@ -41,7 +44,15 @@ export function validateRecurringRule(input: Record<string, unknown>) {
     // Sent only for yearly rules so weekly/monthly writes keep working before the calendar migration.
     ...(frequency === 'anual' ? { mes_anual: month } : {}),
     fecha_inicio: start, fecha_fin: end, activo: active,
+    // Solo se escribe si viene: así las reglas sin impuestos funcionan antes de la migración 20261015.
+    ...(tax !== undefined ? { impuesto_exterior: tax } : {}),
   }
+}
+
+/** Con compra en el exterior el monto de cada cobro se calcula desde el precio original. */
+export function recurringTaxTotal(value: unknown): number | undefined {
+  const stored = parseStoredForeignTax(value)
+  return stored ? computeForeignTax(stored.base, foreignTaxFromStored(stored)).total : undefined
 }
 
 export function recurringDatabaseError(error: { code?: string }) {

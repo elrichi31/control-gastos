@@ -1,3 +1,4 @@
+import type { StoredForeignTax } from '@/lib/foreign-tax'
 // Interfaces comunes y tipos compartidos para evitar duplicación
 
 export interface BaseGasto {
@@ -9,6 +10,7 @@ export interface BaseGasto {
   categoria: { id: number; nombre: string }
   is_recurrent?: boolean
   tags?: string[]
+  impuesto_exterior?: StoredForeignTax | null
 }
 
 export interface Gasto extends BaseGasto {

@@ -28,7 +28,8 @@ function gastoToExpense(gasto: Gasto): Expense {
     categoria: gasto.categoria,
     metodo_pago: gasto.metodo_pago || DEFAULT_METODO_PAGO,
     is_recurrent: gasto.is_recurrent, // ✅ Preservar is_recurrent
-    tags: gasto.tags
+    tags: gasto.tags,
+    impuesto_exterior: gasto.impuesto_exterior
   }
 }
 

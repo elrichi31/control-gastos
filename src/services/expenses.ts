@@ -1,5 +1,6 @@
 // src/services/expenses.ts
 import { API_ENDPOINTS } from "@/lib/constants"
+import type { StoredForeignTax } from "@/lib/foreign-tax"
 
 export interface CreateExpenseData {
   descripcion: string
@@ -9,6 +10,7 @@ export interface CreateExpenseData {
   metodo_pago_id: number
   is_recurrent?: boolean
   tags?: string[]
+  impuesto_exterior?: StoredForeignTax | null
 }
 
 export interface Expense {
@@ -21,6 +23,7 @@ export interface Expense {
   metodo_pago?: { id: number; nombre: string }
   is_recurrent?: boolean
   tags?: string[]
+  impuesto_exterior?: StoredForeignTax | null
 }
 
 /**

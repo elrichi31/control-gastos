@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ExpenseTagsField } from "@/components/ExpenseTags"
 import { ForeignTaxField } from "@/components/ForeignTaxField"
-import { computeForeignTax, emptyForeignTax, validateForeignTax, withForeignTag } from "@/lib/foreign-tax"
+import { FOREIGN_EXPENSE_TAG, computeForeignTax, foreignTaxFromStored, parseStoredForeignTax, storedForeignTax, validateForeignTax, withForeignTag } from "@/lib/foreign-tax"
 import { parseExpenseTags } from "@/lib/expense-tags"
 import { updateExpense } from "@/services/expenses"
 import { fetchCategories, type Category } from "@/services/categories"
@@ -21,7 +21,8 @@ type Props = { expense: Gasto; open: boolean; onOpenChange: (open: boolean) => v
 
 const fromExpense = (expense: Gasto) => ({
   description: expense.descripcion,
-  amount: String(expense.monto),
+  // Con compra en el exterior se edita el precio original; el total se recalcula al guardar.
+  amount: String(parseStoredForeignTax(expense.impuesto_exterior)?.base ?? expense.monto),
   date: expense.fecha.slice(0, 10),
   categoryId: String(expense.categoria_id ?? expense.categoria?.id ?? ""),
   paymentMethodId: expense.metodo_pago?.id ? String(expense.metodo_pago.id) : "",
@@ -30,7 +31,10 @@ const fromExpense = (expense: Gasto) => ({
 
 export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Props) {
   const [formData, setFormData] = useState(() => fromExpense(expense))
-  const [foreignTax, setForeignTax] = useState(emptyForeignTax)
+  const [foreignTax, setForeignTax] = useState(() => foreignTaxFromStored(expense.impuesto_exterior))
+  const hadStoredTax = parseStoredForeignTax(expense.impuesto_exterior) !== null
+  // Gastos marcados #exterior antes de guardar el detalle: el monto ya trae los impuestos.
+  const legacyForeign = !hadStoredTax && (expense.tags ?? []).includes(FOREIGN_EXPENSE_TAG)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -43,7 +47,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
   useEffect(() => {
     if (!open) return
     setFormData(fromExpense(expense))
-    setForeignTax(emptyForeignTax())
+    setForeignTax(foreignTaxFromStored(expense.impuesto_exterior))
     setErrors({})
     setSubmitError(null)
     setOptionsError(false)
@@ -81,7 +85,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
     }
     setSaving(true)
     try {
-      await updateExpense(expense.id, { descripcion: formData.description.trim(), monto: computeForeignTax(amount, foreignTax).total, fecha: formData.date, categoria_id: Number(formData.categoryId), metodo_pago_id: Number(formData.paymentMethodId), tags: withForeignTag(tags, foreignTax) })
+      await updateExpense(expense.id, { descripcion: formData.description.trim(), monto: computeForeignTax(amount, foreignTax).total, fecha: formData.date, categoria_id: Number(formData.categoryId), metodo_pago_id: Number(formData.paymentMethodId), tags: foreignTax.enabled ? withForeignTag(tags, foreignTax) : hadStoredTax ? tags.filter(tag => tag !== FOREIGN_EXPENSE_TAG) : tags, impuesto_exterior: storedForeignTax(amount, foreignTax, hadStoredTax) })
     } catch (error) {
       console.error("Error al actualizar gasto:", error)
       setSubmitError("No se pudieron guardar los cambios. Tus datos siguen aquí; vuelve a intentar.")
@@ -144,7 +148,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
                 {fieldError("paymentMethodId")}
               </div>
             </div>
-            <ForeignTaxField idPrefix="edit-foreign" base={Number(formData.amount)} value={foreignTax} onChange={value => { setForeignTax(value); setErrors(previous => ({ ...previous, foreignTax: "" })) }} error={errors.foreignTax} />
+            <ForeignTaxField idPrefix="edit-foreign" notice={legacyForeign && !foreignTax.enabled ? "Este gasto ya incluye impuestos del exterior en su monto. Si lo activas, cambia el monto al precio original para no cobrarlos dos veces." : undefined} base={Number(formData.amount)} value={foreignTax} onChange={value => { setForeignTax(value); setErrors(previous => ({ ...previous, foreignTax: "" })) }} error={errors.foreignTax} />
             <ExpenseTagsField value={formData.tags} onChange={value => change("tags", value)} error={errors.tags} />
             <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
               <Button type="button" variant="outline" className="h-11 sm:flex-1" onClick={() => onOpenChange(false)}>Cancelar</Button>

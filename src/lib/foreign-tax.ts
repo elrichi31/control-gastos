@@ -67,3 +67,29 @@ export function parseForeignTaxInput(value: unknown): ForeignTaxState | null {
   const state: ForeignTaxState = { enabled: true, selected: [...new Set(data.selected as ForeignTaxId[])], customRate: data.customRate === undefined ? '' : String(data.customRate) }
   return validateForeignTax(state) ? null : state
 }
+
+/** Lo que se guarda en la columna `impuesto_exterior`: precio original + impuestos elegidos. */
+export type StoredForeignTax = { base: number; selected: ForeignTaxId[]; customRate: string }
+
+/** Valida el JSON guardado o enviado por la API. null si no es válido. */
+export function parseStoredForeignTax(value: unknown): StoredForeignTax | null {
+  const state = parseForeignTaxInput(value)
+  const base = (value as Record<string, unknown> | null)?.base
+  if (!state || typeof base !== 'number' || !Number.isFinite(base) || base <= 0 || base > 999999999 || Math.abs(base * 100 - Math.round(base * 100)) > 0.000001) return null
+  return { base, selected: state.selected, customRate: state.customRate }
+}
+
+/** Estado del formulario a partir de lo guardado (o desactivado si no hay nada). */
+export function foreignTaxFromStored(value: unknown): ForeignTaxState {
+  const stored = parseStoredForeignTax(value)
+  return stored ? { enabled: true, selected: stored.selected, customRate: stored.customRate } : emptyForeignTax()
+}
+
+/** Valor a guardar: el detalle si está activo, null para borrarlo, undefined para no tocar la columna. */
+export function storedForeignTax(base: number, state: ForeignTaxState, hadStored = false): StoredForeignTax | null | undefined {
+  if (state.enabled) return { base: computeForeignTax(base, state).base, selected: state.selected, customRate: state.selected.includes('custom') ? state.customRate : '' }
+  return hadStored ? null : undefined
+}
+
+/** PostgREST/Postgres cuando la columna aún no existe (migración sin aplicar). */
+export const isMissingColumnError = (error: { code?: string } | null | undefined) => ['PGRST204', '42703'].includes(error?.code ?? '')

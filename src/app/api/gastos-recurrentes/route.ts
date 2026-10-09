@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAuthenticatedSupabaseClient } from '@/lib/auth/auth-supabase'
-import { validateRecurringRule, publicRecurringRule, recurringDatabaseError, recurringRequestError } from '@/lib/recurring-rules'
+import { validateRecurringRule, publicRecurringRule, recurringDatabaseError, recurringRequestError, recurringTaxTotal } from '@/lib/recurring-rules'
+import { isMissingColumnError } from '@/lib/foreign-tax'
 
 export async function GET(request: Request) {
   const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request)
@@ -16,9 +17,11 @@ export async function POST(request: Request) {
   if (authError) return authError
   try {
     const rule = validateRecurringRule(await request.json())
-    const { data, error } = await supabase.from('gasto_recurrente')
-      .insert({ ...rule, user_id: userId, proxima_fecha: null, ultima_fecha_generada: null })
-      .select().single()
+    const total = recurringTaxTotal(rule.impuesto_exterior)
+    const row: Record<string, unknown> = { ...rule, ...(total !== undefined ? { monto: total } : {}), user_id: userId, proxima_fecha: null, ultima_fecha_generada: null }
+    const insert = (values: Record<string, unknown>) => supabase.from('gasto_recurrente').insert(values).select().single()
+    let { data, error } = await insert(row)
+    if ('impuesto_exterior' in row && isMissingColumnError(error)) { delete row.impuesto_exterior; ({ data, error } = await insert(row)) }
     // Explicit new columns also prevent partial creation before the migration is applied.
     if (error) return recurringDatabaseError(error)
     return NextResponse.json(publicRecurringRule(data), { status: 201 })

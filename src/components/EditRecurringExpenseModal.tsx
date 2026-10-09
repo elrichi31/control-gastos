@@ -10,7 +10,7 @@ import { GastoRecurrente, Frecuencia, MESES } from "@/types/recurring-expense"
 import { Category } from "@/services/categories"
 import { PaymentMethod } from "@/services/paymentMethods"
 import { ForeignTaxField } from "@/components/ForeignTaxField"
-import { computeForeignTax, emptyForeignTax, validateForeignTax } from "@/lib/foreign-tax"
+import { computeForeignTax, emptyForeignTax, foreignTaxFromStored, parseStoredForeignTax, storedForeignTax, validateForeignTax } from "@/lib/foreign-tax"
 
 interface EditRecurringExpenseModalProps {
   expense: GastoRecurrente | null
@@ -61,7 +61,8 @@ export function EditRecurringExpenseModal({
     if (expense) {
       setFormData({
         descripcion: expense.descripcion,
-        monto: expense.monto.toString(),
+        // Con compra en el exterior se edita el precio original; el total se recalcula al guardar.
+        monto: String(parseStoredForeignTax(expense.impuesto_exterior)?.base ?? expense.monto),
         categoria_id: expense.categoria_id.toString(),
         metodo_pago_id: expense.metodo_pago_id.toString(),
         frecuencia: expense.frecuencia,
@@ -72,7 +73,7 @@ export function EditRecurringExpenseModal({
         fecha_fin: expense.fecha_fin || "",
         usarFechaFin: !!expense.fecha_fin,
       })
-      setForeignTax(emptyForeignTax())
+      setForeignTax(foreignTaxFromStored(expense.impuesto_exterior))
     }
   }, [expense])
 
@@ -85,6 +86,7 @@ export function EditRecurringExpenseModal({
       const data: any = {
         descripcion: formData.descripcion,
         monto: computeForeignTax(parseFloat(formData.monto), foreignTax).total,
+        impuesto_exterior: storedForeignTax(parseFloat(formData.monto), foreignTax, parseStoredForeignTax(expense.impuesto_exterior) !== null),
         categoria_id: parseInt(formData.categoria_id),
         metodo_pago_id: parseInt(formData.metodo_pago_id),
         frecuencia: formData.frecuencia,

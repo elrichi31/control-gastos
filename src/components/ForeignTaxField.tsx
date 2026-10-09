@@ -10,8 +10,9 @@ import { FOREIGN_EXPENSE_TAG, FOREIGN_TAXES, computeForeignTax, validateForeignT
  * Interruptor "Compra en el exterior": al activarlo el usuario elige qué impuestos
  * le cobró el banco y ve en vivo cuánto sube el precio antes de guardar.
  */
-export function ForeignTaxField({ idPrefix = "foreign", base, value, onChange, error, totalLabel = "Total que se guarda", tagNote = true }: {
+export function ForeignTaxField({ idPrefix = "foreign", base, value, onChange, error, totalLabel = "Total que se guarda", tagNote = true, notice }: {
   idPrefix?: string
+  notice?: string
   totalLabel?: string
   tagNote?: boolean
   base: number
@@ -36,6 +37,7 @@ export function ForeignTaxField({ idPrefix = "foreign", base, value, onChange, e
         </label>
         <Switch id={switchId} checked={value.enabled} onCheckedChange={enabled => onChange({ ...value, enabled })} aria-describedby={error ? `${idPrefix}-error` : undefined} />
       </div>
+      {notice && <p role="note" className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-foreground">{notice}</p>}
 
       {value.enabled && (
         <div className="space-y-3">

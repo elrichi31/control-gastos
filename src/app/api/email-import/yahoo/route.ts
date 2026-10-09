@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAuthenticatedSupabaseClient } from '@/lib/auth'
 import { scoreSameExpense } from '@/lib/jev'
 import { AUTO_EXPENSE_TAG, MAX_EXPENSE_TAGS, SHARED_EXPENSE_TAG } from '@/lib/expense-tags'
-import { computeForeignTax, parseForeignTaxInput, withForeignTag, type ForeignTaxState } from '@/lib/foreign-tax'
+import { computeForeignTax, isMissingColumnError, parseForeignTaxInput, storedForeignTax, withForeignTag, type ForeignTaxState } from '@/lib/foreign-tax'
 import { findCandidates, type Candidate, type ExistingExpense } from '@/lib/email-matches'
 import { isMissingMigration, syncYahoo, yahooImportUserId } from '@/lib/email-sync'
 import { pageReviewRows, parseReviewQuery } from '@/lib/email-review-page'
@@ -199,10 +199,13 @@ export async function PATCH(request: Request) {
           categoria_id: choice.categoria_id ?? row.categoria_id,
           metodo_pago_id: row.metodo_pago_id,
           is_recurrent: false,
+          ...(choice.impuestos ? { impuesto_exterior: storedForeignTax(parte, choice.impuestos) } : {}),
           tags: withForeignTag([AUTO_EXPENSE_TAG, ...(parte < total ? [SHARED_EXPENSE_TAG] : []), ...(row.origen ? [normalizeName(row.origen)] : [])], choice.impuestos ?? { enabled: false, selected: [], customRate: '' }, MAX_EXPENSE_TAGS),
         }
       })
-      const { error: insertError } = await supabase.from('gasto').insert(gastos)
+      let { error: insertError } = await supabase.from('gasto').insert(gastos)
+      // Sin la migración 20261015 se guarda igual el total; solo se pierde el detalle de impuestos.
+      if (isMissingColumnError(insertError)) ({ error: insertError } = await supabase.from('gasto').insert(gastos.map(({ impuesto_exterior: _omit, ...gasto }) => gasto)))
       if (insertError) {
         await supabase.from('correo_consumo').update({ estado: 'pendiente' }).eq('user_id', userId).in('id', claimed.map(row => row.id))
         return dbFailure('create expenses', insertError.code)

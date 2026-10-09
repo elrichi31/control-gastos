@@ -1,4 +1,5 @@
 // Tipos para gastos recurrentes
+import type { StoredForeignTax } from '@/lib/foreign-tax'
 
 export type Frecuencia = 'semanal' | 'mensual' | 'anual'
 export const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
@@ -21,6 +22,7 @@ export interface GastoRecurrente {
   fecha_inicio: string // "YYYY-MM-DD"
   fecha_fin?: string | null // "YYYY-MM-DD" o null
   activo: boolean
+  impuesto_exterior?: StoredForeignTax | null // compra en el exterior: precio original + impuestos
   created_at?: string
   updated_at?: string
 }
@@ -47,4 +49,5 @@ export interface CreateGastoRecurrenteInput {
   fecha_inicio: string
   fecha_fin?: string | null
   activo?: boolean
+  impuesto_exterior?: StoredForeignTax | null
 }

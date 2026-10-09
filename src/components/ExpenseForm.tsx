@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { ExpenseTagsField } from '@/components/ExpenseTags'
 import { ForeignTaxField } from '@/components/ForeignTaxField'
-import { computeForeignTax, emptyForeignTax, validateForeignTax, withForeignTag } from '@/lib/foreign-tax'
+import { computeForeignTax, emptyForeignTax, storedForeignTax, validateForeignTax, withForeignTag } from '@/lib/foreign-tax'
 import { formatMoney } from '@/lib/utils'
 import { parseExpenseTags } from '@/lib/expense-tags'
 import { getCategoriaColor } from '@/lib/constants'
@@ -101,7 +101,7 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
     setIsSubmitting(true)
     try {
       // Con "Compra en el exterior" se guarda el total que cobró el banco, impuestos incluidos.
-      await createExpense({ descripcion: formData.description.trim(), monto: computeForeignTax(amount, foreignTax).total, categoria_id: parseInt(selection.categoryId), fecha: formData.date, metodo_pago_id: parseInt(selection.paymentMethodId), is_recurrent: false, tags: withForeignTag(tags, foreignTax) })
+      await createExpense({ descripcion: formData.description.trim(), monto: computeForeignTax(amount, foreignTax).total, categoria_id: parseInt(selection.categoryId), fecha: formData.date, metodo_pago_id: parseInt(selection.paymentMethodId), is_recurrent: false, tags: withForeignTag(tags, foreignTax), impuesto_exterior: storedForeignTax(amount, foreignTax) })
     } catch (error) {
       console.error("Error al agregar gasto:", error)
       setSubmitError("No se pudo guardar el gasto. Tus datos siguen aquí; vuelve a intentar.")

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAuthenticatedSupabaseClient } from '@/lib/auth/auth-supabase'
-import { validateRecurringRule, publicRecurringRule, RecurringValidationError, recurringDatabaseError, recurringRequestError } from '@/lib/recurring-rules'
+import { validateRecurringRule, publicRecurringRule, RecurringValidationError, recurringDatabaseError, recurringRequestError, recurringTaxTotal } from '@/lib/recurring-rules'
+import { isMissingColumnError } from '@/lib/foreign-tax'
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request)
@@ -28,9 +29,16 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       updateData.dia_mes = validated.dia_mes
       updateData.mes_anual = validated.mes_anual
     }
+    const total = body.impuesto_exterior ? recurringTaxTotal(validated.impuesto_exterior) : undefined
+    if (total !== undefined) updateData.monto = total
     if (!Object.keys(updateData).length) return NextResponse.json(publicRecurringRule(existing))
     // Never write cursors from a stale read; SQL recalculates calendar edits atomically.
-    const { data, error } = await supabase.from('gasto_recurrente').update(updateData).eq('id', id).eq('user_id', userId).select().single()
+    const update = () => supabase.from('gasto_recurrente').update(updateData).eq('id', id).eq('user_id', userId).select().single()
+    let { data, error } = await update()
+    if ('impuesto_exterior' in updateData && isMissingColumnError(error)) {
+      delete updateData.impuesto_exterior
+      ;({ data, error } = Object.keys(updateData).length ? await update() : { data: existing, error: null })
+    }
     if (error) return recurringDatabaseError(error)
     return NextResponse.json(publicRecurringRule(data))
   } catch (error) { return recurringRequestError(error) }

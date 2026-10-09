@@ -14,6 +14,8 @@ const fields = {
   metodo_pago_id: expenseIdSchema,
   is_recurrent: z.boolean().optional(),
   tags: z.unknown().optional(),
+  // Compra en el exterior: { base, selected, customRate } o null para quitarla (ver lib/foreign-tax).
+  impuesto_exterior: z.unknown().optional(),
 }
 export const expenseCreateSchema = z.object(fields)
 export const expenseUpdateSchema = z.object(fields).partial()

@@ -102,6 +102,7 @@ test('aceptar compra en el exterior suma ISD/IVA sobre tu parte y etiqueta #exte
   ] })
   assert.equal(res.status, 200)
   assert.deepEqual(tables.gasto.map(g => [g.monto, g.tags]), [[19.19, ['auto', 'exterior']], [10.25, ['auto', 'compartido', 'exterior']], [20, ['auto']]])
+  assert.deepEqual(tables.gasto.map(g => g.impuesto_exterior), [{ base: 15.99, selected: ['isd', 'iva_digital'], customRate: '' }, { base: 10, selected: ['custom'], customRate: '2,5' }, undefined])
 })
 
 test('aceptar rechaza impuestos inválidos sin consumir el pendiente', async () => {

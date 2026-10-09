@@ -19,7 +19,7 @@ import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMetho
 import { Frecuencia, MESES } from "@/types/recurring-expense"
 import { toast } from "sonner"
 import { ForeignTaxField } from "@/components/ForeignTaxField"
-import { computeForeignTax, emptyForeignTax, validateForeignTax } from "@/lib/foreign-tax"
+import { computeForeignTax, emptyForeignTax, storedForeignTax, validateForeignTax } from "@/lib/foreign-tax"
 
 export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
   // Calcular el primer día del mes actual
@@ -143,6 +143,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
         fecha_inicio: formData.fechaInicio,
         fecha_fin: formData.fechaFin || null,
         activo: formData.activo,
+        impuesto_exterior: storedForeignTax(parseFloat(formData.amount), foreignTax),
       })
 
       resetForm()
