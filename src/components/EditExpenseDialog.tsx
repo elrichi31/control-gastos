@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ExpenseTagsField } from "@/components/ExpenseTags"
+import { ForeignTaxField } from "@/components/ForeignTaxField"
+import { computeForeignTax, emptyForeignTax, validateForeignTax, withForeignTag } from "@/lib/foreign-tax"
 import { parseExpenseTags } from "@/lib/expense-tags"
 import { updateExpense } from "@/services/expenses"
 import { fetchCategories, type Category } from "@/services/categories"
@@ -28,6 +30,7 @@ const fromExpense = (expense: Gasto) => ({
 
 export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Props) {
   const [formData, setFormData] = useState(() => fromExpense(expense))
+  const [foreignTax, setForeignTax] = useState(emptyForeignTax)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -40,6 +43,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
   useEffect(() => {
     if (!open) return
     setFormData(fromExpense(expense))
+    setForeignTax(emptyForeignTax())
     setErrors({})
     setSubmitError(null)
     setOptionsError(false)
@@ -66,16 +70,18 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
     if (!formData.date) newErrors.date = "La fecha es obligatoria"
     if (!formData.categoryId) newErrors.categoryId = "Selecciona una categoría"
     if (!formData.paymentMethodId) newErrors.paymentMethodId = "Selecciona un método de pago"
+    const foreignError = validateForeignTax(foreignTax)
+    if (foreignError) newErrors.foreignTax = foreignError
     setErrors(newErrors)
     setSubmitError(null)
     const first = Object.keys(newErrors)[0]
     if (first) {
-      formRef.current?.querySelector<HTMLElement>(`#${first === "tags" ? "expense-tags" : `edit-${first}`}`)?.focus()
+      formRef.current?.querySelector<HTMLElement>(`#${first === "tags" ? "expense-tags" : first === "foreignTax" ? "edit-foreign-enabled" : `edit-${first}`}`)?.focus()
       return
     }
     setSaving(true)
     try {
-      await updateExpense(expense.id, { descripcion: formData.description.trim(), monto: amount, fecha: formData.date, categoria_id: Number(formData.categoryId), metodo_pago_id: Number(formData.paymentMethodId), tags })
+      await updateExpense(expense.id, { descripcion: formData.description.trim(), monto: computeForeignTax(amount, foreignTax).total, fecha: formData.date, categoria_id: Number(formData.categoryId), metodo_pago_id: Number(formData.paymentMethodId), tags: withForeignTag(tags, foreignTax) })
     } catch (error) {
       console.error("Error al actualizar gasto:", error)
       setSubmitError("No se pudieron guardar los cambios. Tus datos siguen aquí; vuelve a intentar.")
@@ -108,7 +114,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2 min-w-0">
-                <Label htmlFor="edit-amount">Monto (USD)</Label>
+                <Label htmlFor="edit-amount">{foreignTax.enabled ? "Precio sin impuestos" : "Monto (USD)"}</Label>
                 <div className="relative"><span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                   <Input id="edit-amount" type="number" inputMode="decimal" min="0.01" step="0.01" value={formData.amount} onChange={e => change("amount", e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? "edit-amount-error" : undefined} className="pl-7 h-11 text-base sm:text-sm tabular-nums" />
                 </div>
@@ -138,6 +144,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
                 {fieldError("paymentMethodId")}
               </div>
             </div>
+            <ForeignTaxField idPrefix="edit-foreign" base={Number(formData.amount)} value={foreignTax} onChange={value => { setForeignTax(value); setErrors(previous => ({ ...previous, foreignTax: "" })) }} error={errors.foreignTax} />
             <ExpenseTagsField value={formData.tags} onChange={value => change("tags", value)} error={errors.tags} />
             <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
               <Button type="button" variant="outline" className="h-11 sm:flex-1" onClick={() => onOpenChange(false)}>Cancelar</Button>
