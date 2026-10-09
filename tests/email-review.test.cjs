@@ -92,6 +92,29 @@ test('aceptar etiqueta el banco de origen conservando auto y compartido', async 
   assert.deepEqual(tables.gasto.map(g => g.tags), [['auto', 'produbanco'], ['auto', 'compartido', 'diners']])
 })
 
+test('aceptar compra en el exterior suma ISD/IVA sobre tu parte y etiqueta #exterior', async () => {
+  const tables = { correo_consumo: [pending(1, { monto: 15.99 }), pending(2), pending(3)], gasto: [] }
+  db = fakeDb(tables)
+  const res = await patch({ aceptar: [
+    { id: 1, categoria_id: 3, impuestos: { selected: ['isd', 'iva_digital'] } },
+    { id: 2, categoria_id: 3, monto: 10, impuestos: { selected: ['custom'], customRate: '2,5' } },
+    { id: 3, categoria_id: 3 },
+  ] })
+  assert.equal(res.status, 200)
+  assert.deepEqual(tables.gasto.map(g => [g.monto, g.tags]), [[19.19, ['auto', 'exterior']], [10.25, ['auto', 'compartido', 'exterior']], [20, ['auto']]])
+})
+
+test('aceptar rechaza impuestos inválidos sin consumir el pendiente', async () => {
+  for (const impuestos of [{ selected: [] }, { selected: ['iva_99'] }, { selected: ['custom'], customRate: '0' }, 'isd']) {
+    const tables = { correo_consumo: [pending(1)], gasto: [] }
+    db = fakeDb(tables)
+    const res = await patch({ aceptar: [{ id: 1, categoria_id: 3, impuestos }] })
+    assert.equal(res.status, 400)
+    assert.equal(tables.correo_consumo[0].estado, 'pendiente')
+    assert.equal(tables.gasto.length, 0)
+  }
+})
+
 test('aceptar usa el alias privado del destinatario, conserva el correo y no confunde personas', async () => {
   const tables = {
     correo_consumo: [pending(1, { descripcion: 'Transferencia a PÉREZ   JUAN' }), pending(2, { descripcion: 'Deuna a PEREZ JUAN' }), pending(3, { descripcion: 'Transferencia a PEREZ JUAN CARLOS' })],

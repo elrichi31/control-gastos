@@ -148,3 +148,22 @@ test('zero acknowledged items is not advertised as saved', async () => {
     assert.ok(events.some(x => x[0] === 'error'))
   })
 })
+test('compra en el exterior muestra el total con impuestos y los envía al aceptar', async () => {
+  await harness(async ({ render }) => {
+    const calls = []
+    global.fetch = async (url, options) => {
+      if (options?.method === 'PATCH') { calls.push(JSON.parse(options.body)); return { ok: true, json: async () => ({ aceptados: 1 }) } }
+      return { ok: true, json: async () => ({ enabled: true, pendientes: [] }) }
+    }
+    let tree = render()
+    const control = tree.find(x => x.props?.id === 'exterior-1')
+    assert.ok(control, 'falta el control de compra en el exterior')
+    control.props.onChange({ enabled: true, selected: ['isd', 'iva_digital'], customRate: '' })
+    tree = render()
+    const text = tree.filter(x => typeof x === 'object').flatMap(x => React.Children.toArray(x.props?.children)).filter(x => typeof x === 'string').join(' ')
+    assert.match(text, /\$24[.,]00/)
+    tree.find(x => x.props?.['aria-label'] === 'Aceptar Compra 1').props.onClick()
+    await new Promise(resolve => setTimeout(resolve, 20))
+    assert.deepEqual(calls[0].aceptar[0].impuestos, { selected: ['isd', 'iva_digital'], customRate: '' })
+  })
+})

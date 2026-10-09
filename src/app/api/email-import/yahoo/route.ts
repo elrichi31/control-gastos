@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAuthenticatedSupabaseClient } from '@/lib/auth'
 import { scoreSameExpense } from '@/lib/jev'
 import { AUTO_EXPENSE_TAG, MAX_EXPENSE_TAGS, SHARED_EXPENSE_TAG } from '@/lib/expense-tags'
+import { computeForeignTax, parseForeignTaxInput, withForeignTag, type ForeignTaxState } from '@/lib/foreign-tax'
 import { findCandidates, type Candidate, type ExistingExpense } from '@/lib/email-matches'
 import { isMissingMigration, syncYahoo, yahooImportUserId } from '@/lib/email-sync'
 import { pageReviewRows, parseReviewQuery } from '@/lib/email-review-page'
@@ -145,6 +146,7 @@ const list = (value: unknown): Record<string, unknown>[] => Array.isArray(value)
 
 /**
  * aceptar: crea el gasto (tag "auto"); con `monto` menor registras solo tu parte (tag "compartido").
+ *   Con `impuestos` (compra en el exterior) se suman ISD/IVA sobre tu parte y se agrega el tag "exterior".
  * vincular: el movimiento ya existe como `gasto_id`. Si es un gasto, no se crea nada (duplicado);
  *   si es un ingreso, se descuenta de ese gasto (te devolvieron tu parte).
  * descartar: no es un gasto; no vuelve a aparecer.
@@ -155,14 +157,16 @@ export async function PATCH(request: Request) {
   const { supabase, userId } = auth
   const body = await request.json().catch(() => null)
 
-  const aceptarPor = new Map<number, { categoria_id: number; monto?: number; descripcion?: string }>()
+  const aceptarPor = new Map<number, { categoria_id: number; monto?: number; descripcion?: string; impuestos?: ForeignTaxState }>()
   for (const item of list(body?.aceptar)) {
     if (!Number.isInteger(item.id) || !Number.isInteger(item.categoria_id)) continue
     if (item.descripcion !== undefined && (typeof item.descripcion !== 'string' || !item.descripcion.trim() || item.descripcion.trim().length > 200)) {
       return NextResponse.json({ error: 'Indica una razón de entre 1 y 200 caracteres en Guardar como' }, { status: 400 })
     }
+    const impuestos = item.impuestos === undefined ? undefined : parseForeignTaxInput(item.impuestos)
+    if (impuestos === null) return NextResponse.json({ error: 'Revisa los impuestos de la compra en el exterior' }, { status: 400 })
     const monto = typeof item.monto === 'number' && Number.isFinite(item.monto) ? round2(item.monto) : undefined
-    aceptarPor.set(item.id as number, { categoria_id: item.categoria_id as number, monto, descripcion: typeof item.descripcion === 'string' ? item.descripcion.trim() || undefined : undefined })
+    aceptarPor.set(item.id as number, { categoria_id: item.categoria_id as number, monto, descripcion: typeof item.descripcion === 'string' ? item.descripcion.trim() || undefined : undefined, impuestos })
   }
   const vincular = list(body?.vincular).filter(v => Number.isInteger(v.id) && Number.isInteger(v.gasto_id)) as { id: number; gasto_id: number }[]
   const descartar = ids(body?.descartar)
@@ -185,15 +189,17 @@ export async function PATCH(request: Request) {
         const choice = aceptarPor.get(row.id)!
         const total = Number(row.monto)
         const parte = choice.monto && choice.monto > 0 && choice.monto < total ? choice.monto : total
+        // Los impuestos se calculan aquí sobre el monto del banco, no con un total que mande el cliente.
+        const conImpuestos = choice.impuestos ? computeForeignTax(parte, choice.impuestos).total : parte
         return {
           user_id: userId,
           descripcion: choice.descripcion ?? emailAliasDescription(row.descripcion, aliases ?? []),
-          monto: parte,
+          monto: conImpuestos,
           fecha: row.fecha,
           categoria_id: choice.categoria_id ?? row.categoria_id,
           metodo_pago_id: row.metodo_pago_id,
           is_recurrent: false,
-          tags: [AUTO_EXPENSE_TAG, ...(parte < total ? [SHARED_EXPENSE_TAG] : []), ...(row.origen ? [normalizeName(row.origen)] : [])],
+          tags: withForeignTag([AUTO_EXPENSE_TAG, ...(parte < total ? [SHARED_EXPENSE_TAG] : []), ...(row.origen ? [normalizeName(row.origen)] : [])], choice.impuestos ?? { enabled: false, selected: [], customRate: '' }, MAX_EXPENSE_TAGS),
         }
       })
       const { error: insertError } = await supabase.from('gasto').insert(gastos)

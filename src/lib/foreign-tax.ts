@@ -55,3 +55,15 @@ export function withForeignTag(tags: string[], state: ForeignTaxState, max = 10)
   if (!state.enabled || tags.includes(FOREIGN_EXPENSE_TAG) || tags.length >= max) return tags
   return [...tags, FOREIGN_EXPENSE_TAG]
 }
+
+const TAX_IDS: readonly ForeignTaxId[] = ['isd', 'iva_digital', 'custom']
+
+/** Valida lo que llega por la API: `{ selected: [...], customRate? }`. null si no es válido. */
+export function parseForeignTaxInput(value: unknown): ForeignTaxState | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  const data = value as Record<string, unknown>
+  if (!Array.isArray(data.selected) || data.selected.some(id => !TAX_IDS.includes(id as ForeignTaxId))) return null
+  if (data.customRate !== undefined && typeof data.customRate !== 'string' && typeof data.customRate !== 'number') return null
+  const state: ForeignTaxState = { enabled: true, selected: [...new Set(data.selected as ForeignTaxId[])], customRate: data.customRate === undefined ? '' : String(data.customRate) }
+  return validateForeignTax(state) ? null : state
+}

@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { getSessionEmailReviewQueue, type ReviewJob } from '@/lib/email-review-queue'
 import { REVIEW_PAGE_SIZE as PAGE_SIZE } from '@/lib/email-review-page'
+import { ForeignTaxInline } from '@/components/ForeignTaxField'
+import { computeForeignTax, emptyForeignTax, validateForeignTax, type ForeignTaxState } from '@/lib/foreign-tax'
 import styles from './review.module.css'
 
 type Gasto = { id: number; descripcion: string; monto: number; fecha: string; categoria?: { nombre: string } | null }
@@ -46,6 +48,7 @@ export default function EmailExpensesPage() {
   const [aliasDrafts, setAliasDrafts] = useState<Record<string, string>>({})
   const [aliasSaving, setAliasSaving] = useState<string | null>(null)
   const [descriptionDrafts, setDescriptionDrafts] = useState<Record<number, string>>({})
+  const [exteriorPor, setExteriorPor] = useState<Record<number, ForeignTaxState>>({})
   const mounted = useRef(true)
   const loadVersion = useRef(0)
   const queue = useRef<ReturnType<typeof getSessionEmailReviewQueue> | null>(null)
@@ -126,14 +129,18 @@ export default function EmailExpensesPage() {
   const chosen = nuevos.filter(p => selected.has(p.id))
   const visibleNew = nuevos.filter(matchesSearch)
   const allSelected = visibleNew.length > 0 && visibleNew.every(p => selected.has(p.id))
-  const total = chosen.reduce((sum, p) => sum + (mitadPor[p.id] ? half(p.monto) : p.monto), 0)
+  const exterior = (p: Pendiente) => exteriorPor[p.id] ?? emptyForeignTax()
+  const parte = (p: Pendiente) => mitadPor[p.id] ? half(p.monto) : p.monto
+  // Mismo cálculo que hace el servidor al aceptar: tu parte + impuestos del exterior.
+  const aGuardar = (p: Pendiente) => computeForeignTax(parte(p), exterior(p))
+  const total = chosen.reduce((sum, p) => sum + aGuardar(p).total, 0)
   const category = (p: Pendiente) => categoriaPor[p.id] ?? p.categoria_id
   const validCategory = (p: Pendiente) => categorias.some(c => c.id === category(p))
   const aliasDraft = (p: Pendiente) => p.destinatario ? aliasDrafts[p.destinatario] ?? p.alias ?? '' : ''
   const aliasDirty = (p: Pendiente) => aliasDraft(p).trim() !== (p.alias ?? '')
   const saveAs = (p: Pendiente) => descriptionDrafts[p.id] ?? p.descripcion
   const validDescription = (p: Pendiente) => saveAs(p).trim().length > 0 && saveAs(p).trim().length <= 200
-  const canAccept = (p: Pendiente) => validCategory(p) && validDescription(p) && !aliasDirty(p) && aliasSaving === null
+  const canAccept = (p: Pendiente) => validCategory(p) && validDescription(p) && !validateForeignTax(exterior(p)) && !aliasDirty(p) && aliasSaving === null
 
   async function saveAlias(p: Pendiente) {
     if (!p.destinatario || syncing || inFlight || aliasSaving !== null) return
@@ -170,7 +177,7 @@ export default function EmailExpensesPage() {
     }
   }
   function aceptar(list: Pendiente[]) {
-    list.filter(canAccept).forEach(p => enqueue(p, { aceptar: [{ id: p.id, categoria_id: category(p), ...(descriptionDrafts[p.id] !== undefined ? { descripcion: saveAs(p).trim() } : {}), ...(mitadPor[p.id] ? { monto: half(p.monto) } : {}) }] }, 'aceptados', `Gasto registrado · ${saveAs(p).trim()}`))
+    list.filter(canAccept).forEach(p => enqueue(p, { aceptar: [{ id: p.id, categoria_id: category(p), ...(descriptionDrafts[p.id] !== undefined ? { descripcion: saveAs(p).trim() } : {}), ...(mitadPor[p.id] ? { monto: half(p.monto) } : {}), ...(exterior(p).enabled ? { impuestos: { selected: exterior(p).selected, customRate: exterior(p).customRate } } : {}) }] }, 'aceptados', `Gasto registrado · ${saveAs(p).trim()}`))
   }
   const descartar = (p: Pendiente) => enqueue(p, { descartar: [p.id] }, 'descartados', `Descartado · ${p.descripcion}`)
   async function sync() {
@@ -243,6 +250,7 @@ export default function EmailExpensesPage() {
                         <label htmlFor={`guardar-como-${p.id}`} className="text-xs text-muted-foreground">Guardar como</label>
                         <Input id={`guardar-como-${p.id}`} aria-label={`Guardar como para ${p.descripcion_original ?? p.descripcion}`} aria-describedby={`guardar-como-ayuda-${p.id}`} aria-invalid={!validDescription(p)} placeholder="Ej. Almuerzo, taxi, regalo…" maxLength={200} value={saveAs(p)} disabled={syncing} onChange={e => setDescriptionDrafts(prev => ({ ...prev, [p.id]: e.target.value }))} className="mt-1 h-11 w-full min-w-0 text-base sm:h-8 sm:text-[13px]" />
                         <p id={`guardar-como-ayuda-${p.id}`} className={`mt-1 text-xs ${validDescription(p) ? 'text-muted-foreground' : 'text-destructive'}`}>{validDescription(p) ? 'Solo para este gasto; no cambia el alias.' : 'Escribe una razón de entre 1 y 200 caracteres.'}</p>
+                        <ForeignTaxInline id={`exterior-${p.id}`} base={parte(p)} value={exterior(p)} disabled={syncing} onChange={value => setExteriorPor(prev => ({ ...prev, [p.id]: value }))} />
                       </div>}
                       {errors.get(p.id) && <p className="mt-2 text-xs text-destructive" role="alert">{errors.get(p.id)}</p>}
                     </td>
@@ -256,7 +264,7 @@ export default function EmailExpensesPage() {
                         {tab === 'duplicados' && <details className="mt-1 text-xs text-muted-foreground"><summary className="cursor-pointer py-1 hover:text-foreground">Ver comparación</summary><p className="py-1 break-words">{elegido.gasto.descripcion}{elegido.gasto.categoria ? ` · ${elegido.gasto.categoria.nombre}` : ''}. {elegido.veredicto === 'encaja' ? 'El comercio encaja con tu descripción.' : elegido.veredicto === 'desconocido' ? 'El correo no especifica qué se compró.' : 'Coincidencia por fecha e importe; confirma antes de vincular.'}</p></details>}
                       </> : <p className="text-xs text-muted-foreground">No hay un gasto compatible de los últimos 20 días.</p>}
                     </td>}
-                    <td data-label={tab === 'recibidos' ? 'Recibido' : 'Importe'} className={styles.amount}><span className="font-semibold tabular-nums">{tab === 'recibidos' ? '+' : ''}{money.format(tab === 'nuevos' && mitadPor[p.id] ? half(p.monto) : p.monto)}</span>{tab === 'nuevos' && mitadPor[p.id] && <span className="mt-0.5 block text-xs text-muted-foreground">de {money.format(p.monto)}</span>}</td>
+                    <td data-label={tab === 'recibidos' ? 'Recibido' : 'Importe'} className={styles.amount}><span className="font-semibold tabular-nums">{tab === 'recibidos' ? '+' : ''}{money.format(tab === 'nuevos' ? aGuardar(p).total : p.monto)}</span>{tab === 'nuevos' && mitadPor[p.id] && <span className="mt-0.5 block text-xs text-muted-foreground">de {money.format(p.monto)}</span>}{tab === 'nuevos' && aGuardar(p).taxTotal > 0 && <span className="mt-0.5 block text-xs text-muted-foreground">incl. {money.format(aGuardar(p).taxTotal)} imp.</span>}</td>
                     <td data-label="Acciones" className={styles.actions}>
                       <div className={`flex items-center gap-1.5 ${tab === 'nuevos' ? '' : 'flex-wrap'}`}>
                         {tab === 'nuevos' ? <>
