@@ -6,7 +6,7 @@ import { format, startOfMonth, endOfMonth, isToday, isYesterday, subMonths } fro
 import { es } from "date-fns/locale"
 import { toDateWithTime } from "@/lib/utils"
 import { PageShell } from "@/components/ui/page-layout"
-import { PageTitle } from "@/components/PageTitle"
+import { PageTitle } from "@/components/layout/PageTitle"
 import {
   DashboardHeader,
   ExpenseCalendar,

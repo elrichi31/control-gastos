@@ -2,7 +2,7 @@ require('./helpers/register-ts.cjs')
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
 const React = require('react')
-const { ExpenseTagsField } = require('../src/components/ExpenseTags.tsx')
+const { ExpenseTagsField } = require('../src/components/gastos/ExpenseTags.tsx')
 const { parseExpenseTags } = require('../src/lib/expense-tags.ts')
 function elements(node) { if (!node || typeof node !== 'object') return []; return [node, ...React.Children.toArray(node.props?.children).flatMap(elements)] }
 const render = (value, onChange = () => {}) => elements(ExpenseTagsField({ value, onChange }))

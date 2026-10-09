@@ -6,7 +6,7 @@ const { renderToStaticMarkup } = require('react-dom/server')
 const Module = require('node:module'), original = Module._load
 Module._load = function(request, ...args) {
   if (request === '@/hooks/useGastosFiltrados') return { useGastosFiltrados: () => ({ gastos: [], loading: false, error: null }) }
-  if (request === '@/components/PageTitle') return { PageTitle: () => null }
+  if (request === '@/components/layout/PageTitle') return { PageTitle: () => null }
   return original.call(this, request, ...args)
 }
 const Page = require('../src/app/estadisticas/page.tsx').default

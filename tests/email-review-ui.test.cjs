@@ -7,7 +7,7 @@ const events = [], originalLoad = Module._load
 const toast = { loading: (text, opts) => events.push(['loading', text, opts]), success: (text, opts) => events.push(['success', text, opts]), error: (text, opts) => events.push(['error', text, opts]) }
 Module._load = function(name, ...args) {
   if (name.endsWith('.module.css')) return {}
-  if (name === '@/components/PageTitle') return { PageTitle: () => null }
+  if (name === '@/components/layout/PageTitle') return { PageTitle: () => null }
   if (name === 'sonner') return { toast }
   return originalLoad.call(this, name, ...args)
 }

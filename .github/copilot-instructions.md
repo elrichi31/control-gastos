@@ -37,7 +37,7 @@ npm run lint             # ESLint check
 
 ## Essential File Locations
 - **Auth Configuration**: `src/lib/auth/auth.ts` (NextAuth config)
-- **Database Clients**: `src/lib/database/` (browser, server, and legacy clients)
+- **Database Client**: `src/lib/database/service.ts` (server-only service-role client)
 - **API Pattern**: `src/app/api/[entity]/route.ts` (standard CRUD operations)
 - **Constants**: `src/lib/constants/app.ts` (months, payment methods, endpoints)
 - **Types**: `src/types/common.ts` (shared interfaces)

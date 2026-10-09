@@ -9,9 +9,9 @@ Module._load = function (name, ...args) {
   if (name.startsWith('@/services/')) return { fetchCategories: async () => [], fetchPaymentMethods: async () => [], createExpense: async () => {} }
   return load.call(this, name, ...args)
 }
-const { ExpenseForm } = require('../src/components/ExpenseForm.tsx')
+const { ExpenseForm } = require('../src/components/gastos/ExpenseForm.tsx')
 Module._load = load
-const { ExpenseSummary } = require('../src/components/ExpenseSummary.tsx')
+const { ExpenseSummary } = require('../src/components/gastos/ExpenseSummary.tsx')
 const render = (component, props) => renderToStaticMarkup(React.createElement(component, props))
 
 test('el monto conserva la captura decimal sin suprimir el foco visible del campo', () => {

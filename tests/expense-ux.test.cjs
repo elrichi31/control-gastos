@@ -6,7 +6,7 @@ const {renderToStaticMarkup}=require('react-dom/server')
 const Module=require('node:module')
 const original=Module._load
 Module._load=function(name,...args){ if(name.startsWith('@/services/'))return {fetchCategories:async()=>[],fetchPaymentMethods:async()=>[],createExpense:async()=>{},fetchExpenses:async()=>[]};return original.call(this,name,...args) }
-const {ExpenseForm}=require('../src/components/ExpenseForm.tsx')
+const {ExpenseForm}=require('../src/components/gastos/ExpenseForm.tsx')
 Module._load=original
 const {FiltrosGastos}=require('../src/components/detalle-gastos/FiltrosGastos.tsx')
 const {ListaGastosAgrupados}=require('../src/components/detalle-gastos/ListaGastosAgrupados.tsx')

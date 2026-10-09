@@ -93,14 +93,20 @@ src/
 │   ├── gastos-recurrentes/   # Gestión de gastos recurrentes
 │   └── presupuesto/          # Gestión de presupuestos
 ├── components/               # Componentes React
-│   ├── ui/                   # shadcn/ui components
+│   ├── ui/                   # shadcn/ui y piezas genéricas
+│   ├── layout/               # Sidebar, TopBar, providers y tema
+│   ├── gastos/               # Formulario, lista y edición de gastos
+│   ├── gastos-recurrentes/   # Formulario, lista y modales de recurrentes
+│   ├── dashboard/            # Widgets del dashboard
 │   ├── detalle-gastos/       # Componentes de vista detallada
 │   ├── presupuesto/          # Componentes de presupuestos
-│   └── stats/                # Componentes de estadísticas
+│   ├── stats/                # Componentes de estadísticas
+│   ├── conexiones/           # Sesiones y conexiones MCP
+│   └── landing/              # Página pública
 ├── hooks/                    # Custom React hooks
 ├── lib/                      # Utilidades y configuración
 │   ├── auth/                 # Configuración de autenticación
-│   ├── database/             # Clientes de Supabase
+│   ├── database/             # Cliente service-role de Supabase (solo servidor)
 │   └── constants/            # Constantes globales
 ├── services/                 # Capa de servicios/API
 └── types/                    # Definiciones de TypeScript

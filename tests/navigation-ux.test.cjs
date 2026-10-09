@@ -10,12 +10,12 @@ Module._load = function (request, ...args) {
   if (request === 'next/navigation') return { usePathname: () => pathname }
   if (request === 'next-auth/react') return { useSession: () => ({ data: { user: { name: 'Usuario de prueba', email: 'fixture@example.invalid' } } }), signOut: async () => {} }
   if (request === 'next/link') return { __esModule: true, default: ({ children, ...props }) => React.createElement('a', props, children) }
-  if (request === '@/components/CronStatus') return { CronStatus: () => null }
-  if (request === '@/components/mode-toggle') return { ModeToggle: () => null }
+  if (request === '@/components/layout/CronStatus') return { CronStatus: () => null }
+  if (request === '@/components/layout/mode-toggle') return { ModeToggle: () => null }
   return load.call(this, request, ...args)
 }
-const { TopBar } = require('../src/components/TopBar.tsx')
-const { Sidebar } = require('../src/components/Sidebar.tsx')
+const { TopBar } = require('../src/components/layout/TopBar.tsx')
+const { Sidebar } = require('../src/components/layout/Sidebar.tsx')
 Module._load = load
 const sidebarProps = { isOpen: false, onClose() {}, isMobile: true, isCollapsed: false, onToggleCollapse() {} }
 

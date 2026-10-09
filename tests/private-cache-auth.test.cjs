@@ -30,5 +30,5 @@ test('legacy private caches are purged without deleting public static caches',as
 })
 test('worker activation runs legacy purge and logout awaits purge before signOut',()=>{
  const worker=sw;assert.match(worker,/addEventListener\(['"]activate['"]/);assert.match(worker,/waitUntil\(clearPrivateCaches\(\)\)/)
- const sidebar=fs.readFileSync(path.join(__dirname,'../src/components/Sidebar.tsx'),'utf8');assert.ok(sidebar.indexOf('await clearPrivateCaches()')<sidebar.indexOf('await signOut('));assert.ok(sidebar.includes('await clearPrivateCaches()'))
+ const sidebar=fs.readFileSync(path.join(__dirname,'../src/components/layout/Sidebar.tsx'),'utf8');assert.ok(sidebar.indexOf('await clearPrivateCaches()')<sidebar.indexOf('await signOut('));assert.ok(sidebar.includes('await clearPrivateCaches()'))
 })

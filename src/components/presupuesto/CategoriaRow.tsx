@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { ExpenseTags } from "@/components/ExpenseTags"
+import { ExpenseTags } from "@/components/gastos/ExpenseTags"
 import { ChevronRight, Edit2, Plus, Trash2, X } from "lucide-react"
 import { PresupuestoCategoriaDetalle, MovimientoPresupuesto } from "@/types/budget"
 import { formatMoney } from "@/lib/utils"

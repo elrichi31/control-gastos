@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { PageTitle } from '@/components/PageTitle'
-import { ModeToggle } from '@/components/mode-toggle'
+import { PageTitle } from '@/components/layout/PageTitle'
+import { ModeToggle } from '@/components/layout/mode-toggle'
 import { Eye, EyeOff, Wallet } from 'lucide-react'
 
 export default function RegisterPage() {

@@ -1,5 +1,5 @@
 import React from "react"
-import { ExpenseTagsField } from "@/components/ExpenseTags"
+import { ExpenseTagsField } from "@/components/gastos/ExpenseTags"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"

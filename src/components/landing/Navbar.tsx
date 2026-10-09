@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Wallet, Menu, X, LayoutDashboard } from "lucide-react"
-import { ModeToggle } from "@/components/mode-toggle"
+import { ModeToggle } from "@/components/layout/mode-toggle"
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)

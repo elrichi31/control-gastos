@@ -1321,7 +1321,7 @@ Se puede enviar cualquier subconjunto de estos campos:
 ```
 
 El generador mensual de instancias fue eliminado. La tabla antigua se conserva como historial, no como cola.
-Migración y activación: [`docs/RECURRING_EXPENSES.md`](docs/RECURRING_EXPENSES.md).
+Migración y activación: [`docs/RECURRING_EXPENSES.md`](RECURRING_EXPENSES.md).
 
 ---
 

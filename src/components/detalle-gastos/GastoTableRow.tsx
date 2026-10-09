@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { ExpenseTags } from '@/components/ExpenseTags'
+import { ExpenseTags } from '@/components/gastos/ExpenseTags'
 import { Badge } from '@/components/ui/badge'
 import { getCategoriaColor } from '@/lib/constants'
 import { Button } from '@/components/ui/button'

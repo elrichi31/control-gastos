@@ -11,10 +11,10 @@ Module._load = function(name, ...args) {
   if (name === 'sonner') return { toast: { success() {}, error() {} } }
   return load.call(this, name, ...args)
 }
-const { ExpenseForm } = require('../src/components/ExpenseForm.tsx')
+const { ExpenseForm } = require('../src/components/gastos/ExpenseForm.tsx')
 const { useBudgetDetailsData } = require('../src/hooks/useBudgetDetailsData.ts')
 Module._load = load
-const { ExpenseTagsField } = require('../src/components/ExpenseTags.tsx')
+const { ExpenseTagsField } = require('../src/components/gastos/ExpenseTags.tsx')
 // Exercise real component handlers with a bounded hook harness. External services
 // are mocked; this is not live browser or Supabase integration evidence.
 async function harness(run) {

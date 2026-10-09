@@ -1,5 +1,5 @@
-import { ExpenseItem } from "./ExpenseItem"
-import { Gasto } from "./../hooks/useGastosFiltrados"
+import { ExpenseItem } from "@/components/gastos/ExpenseItem"
+import { Gasto } from "@/hooks/useGastosFiltrados"
 import { format, parse, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 type Props = {

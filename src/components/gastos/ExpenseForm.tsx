@@ -6,8 +6,8 @@ import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { ExpenseTagsField } from '@/components/ExpenseTags'
-import { ForeignTaxField } from '@/components/ForeignTaxField'
+import { ExpenseTagsField } from '@/components/gastos/ExpenseTags'
+import { ForeignTaxField } from '@/components/gastos/ForeignTaxField'
 import { computeForeignTax, emptyForeignTax, storedForeignTax, validateForeignTax, withForeignTag } from '@/lib/foreign-tax'
 import { formatMoney } from '@/lib/utils'
 import { parseExpenseTags } from '@/lib/expense-tags'

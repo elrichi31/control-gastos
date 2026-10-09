@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { GastoRecurrente, Frecuencia, MESES } from "@/types/recurring-expense"
 import { Category } from "@/services/categories"
 import { PaymentMethod } from "@/services/paymentMethods"
-import { ForeignTaxField } from "@/components/ForeignTaxField"
+import { ForeignTaxField } from "@/components/gastos/ForeignTaxField"
 import { computeForeignTax, emptyForeignTax, foreignTaxFromStored, parseStoredForeignTax, storedForeignTax, validateForeignTax } from "@/lib/foreign-tax"
 
 interface EditRecurringExpenseModalProps {

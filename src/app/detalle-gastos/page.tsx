@@ -8,7 +8,7 @@ import { toast } from "sonner"
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from "@/components/ui/card"
 import { PageShell, PageHeader } from "@/components/ui/page-layout"
-import { PageTitle } from "@/components/PageTitle"
+import { PageTitle } from "@/components/layout/PageTitle"
 import { ExportarDatos } from "@/components/detalle-gastos/ExportarDatos"
 import { EstadisticasResumen } from "@/components/detalle-gastos/EstadisticasResumen"
 import { FiltrosGastos } from "@/components/detalle-gastos/FiltrosGastos"

@@ -1,8 +1,8 @@
 "use client"
 
-import { RecurringExpenseList } from "@/components/RecurringExpenseList"
+import { RecurringExpenseList } from "@/components/gastos-recurrentes/RecurringExpenseList"
 import { PageShell, PageHeader } from "@/components/ui/page-layout"
-import { PageTitle } from "@/components/PageTitle"
+import { PageTitle } from "@/components/layout/PageTitle"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { X, Plus } from "lucide-react"

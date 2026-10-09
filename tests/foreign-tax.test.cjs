@@ -4,7 +4,7 @@ const assert = require('node:assert/strict')
 const React = require('react')
 const { renderToStaticMarkup } = require('react-dom/server')
 const { computeForeignTax, validateForeignTax, withForeignTag, emptyForeignTax } = require('../src/lib/foreign-tax.ts')
-const { ForeignTaxField } = require('../src/components/ForeignTaxField.tsx')
+const { ForeignTaxField } = require('../src/components/gastos/ForeignTaxField.tsx')
 const on = (selected, customRate = '') => ({ enabled: true, selected, customRate })
 
 test('desactivado no cambia el monto', () => {

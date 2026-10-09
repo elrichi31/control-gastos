@@ -2,7 +2,7 @@
 
 import React, { use, useState } from "react"
 import { PageShell, PageHeader } from "@/components/ui/page-layout"
-import { Breadcrumb } from "@/components/Breadcrumb"
+import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { useSearchParams } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"

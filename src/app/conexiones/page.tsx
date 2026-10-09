@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { PageShell, PageHeader } from '@/components/ui/page-layout'
-import { PageTitle } from '@/components/PageTitle'
+import { PageTitle } from '@/components/layout/PageTitle'
 import { Button } from '@/components/ui/button'
 import { McpStatusCard } from '@/components/conexiones/McpStatusCard'
 import { SessionSecurity } from '@/components/conexiones/SessionSecurity'

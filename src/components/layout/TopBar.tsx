@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Menu, Plus } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { navSections, initials } from "@/components/Sidebar"
+import { navSections, initials } from "@/components/layout/Sidebar"
 
 export function TopBar({ onMenuClick, isMobile, isMenuOpen = false }: { onMenuClick: () => void; isMobile: boolean; isMenuOpen?: boolean }) {
   const pathname = usePathname()

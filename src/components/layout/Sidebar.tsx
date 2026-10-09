@@ -7,8 +7,8 @@ import { useSession, signOut } from "next-auth/react"
 import { clearPrivateCaches } from "@/lib/pwa/cache-policy"
 import { Home, Calculator, BarChart3, Receipt, LogOut, Repeat, Plus, Wallet, Plug, Mail, PanelLeft, X, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { ModeToggle } from "@/components/mode-toggle"
-import { CronStatus } from "@/components/CronStatus"
+import { ModeToggle } from "@/components/layout/mode-toggle"
+import { CronStatus } from "@/components/layout/CronStatus"
 
 type NavItem = { name: string; href: string; icon: LucideIcon }
 

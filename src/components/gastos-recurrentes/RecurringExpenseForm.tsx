@@ -18,7 +18,7 @@ import { fetchCategories, type Category } from "@/services/categories"
 import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
 import { Frecuencia, MESES } from "@/types/recurring-expense"
 import { toast } from "sonner"
-import { ForeignTaxField } from "@/components/ForeignTaxField"
+import { ForeignTaxField } from "@/components/gastos/ForeignTaxField"
 import { computeForeignTax, emptyForeignTax, storedForeignTax, validateForeignTax } from "@/lib/foreign-tax"
 
 export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) {

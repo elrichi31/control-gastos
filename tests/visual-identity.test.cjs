@@ -15,7 +15,7 @@ const gasto = {
 const formatMoney = (value) => `$${value.toFixed(2)}`
 
 test('internal primary actions inherit the shared button palette', () => {
-  for (const file of ['components/detalle-gastos/ExportarDatos.tsx', 'components/presupuesto/ExpenseModal.tsx', 'components/RecurringExpenseForm.tsx']) {
+  for (const file of ['components/detalle-gastos/ExportarDatos.tsx', 'components/presupuesto/ExpenseModal.tsx', 'components/gastos-recurrentes/RecurringExpenseForm.tsx']) {
     const source = fs.readFileSync(path.join(root, 'src', file), 'utf8')
     assert.doesNotMatch(source, /className="[^"]*bg-(?:blue|green|emerald)-600/, `Hardcoded primary palette in ${file}`)
     assert.doesNotMatch(source, /className="[^"]*bg-blue-500/, `Hardcoded primary palette in ${file}`)

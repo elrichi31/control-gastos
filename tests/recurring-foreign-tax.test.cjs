@@ -10,7 +10,7 @@ Module._load = function (name, ...args) {
   if (name === 'sonner') return { toast: { success() {}, error() {} } }
   return load.call(this, name, ...args)
 }
-const { RecurringExpenseForm } = require('../src/components/RecurringExpenseForm.tsx')
+const { RecurringExpenseForm } = require('../src/components/gastos-recurrentes/RecurringExpenseForm.tsx')
 Module._load = load
 
 async function harness(run) {

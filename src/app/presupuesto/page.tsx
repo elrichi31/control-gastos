@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { PageShell, PageHeader } from "@/components/ui/page-layout"
-import { PageTitle } from "@/components/PageTitle"
+import { PageTitle } from "@/components/layout/PageTitle"
 import { YearSelector } from "@/components/presupuesto/YearSelector"
 import { BudgetContent } from "@/components/presupuesto/BudgetContent"
 import { useBudgetData } from "@/hooks/useBudgetData"
