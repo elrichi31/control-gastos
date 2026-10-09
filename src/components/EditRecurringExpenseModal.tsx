@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { GastoRecurrente, Frecuencia, MESES } from "@/types/recurring-expense"
 import { Category } from "@/services/categories"
 import { PaymentMethod } from "@/services/paymentMethods"
+import { ForeignTaxField } from "@/components/ForeignTaxField"
+import { computeForeignTax, emptyForeignTax, validateForeignTax } from "@/lib/foreign-tax"
 
 interface EditRecurringExpenseModalProps {
   expense: GastoRecurrente | null
@@ -52,6 +54,8 @@ export function EditRecurringExpenseModal({
   })
 
   const [saving, setSaving] = useState(false)
+  const [foreignTax, setForeignTax] = useState(emptyForeignTax)
+  const foreignError = validateForeignTax(foreignTax)
 
   useEffect(() => {
     if (expense) {
@@ -68,18 +72,19 @@ export function EditRecurringExpenseModal({
         fecha_fin: expense.fecha_fin || "",
         usarFechaFin: !!expense.fecha_fin,
       })
+      setForeignTax(emptyForeignTax())
     }
   }, [expense])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!expense) return
+    if (!expense || foreignError) return
 
     setSaving(true)
     try {
       const data: any = {
         descripcion: formData.descripcion,
-        monto: parseFloat(formData.monto),
+        monto: computeForeignTax(parseFloat(formData.monto), foreignTax).total,
         categoria_id: parseInt(formData.categoria_id),
         metodo_pago_id: parseInt(formData.metodo_pago_id),
         frecuencia: formData.frecuencia,
@@ -137,7 +142,7 @@ export function EditRecurringExpenseModal({
 
           {/* Monto */}
           <div className="space-y-2">
-            <Label htmlFor="monto" className="text-foreground">Monto</Label>
+            <Label htmlFor="monto" className="text-foreground">{foreignTax.enabled ? "Precio sin impuestos" : "Monto"}</Label>
             <Input
               id="monto"
               type="number"
@@ -305,6 +310,8 @@ export function EditRecurringExpenseModal({
             )}
           </div>
 
+          <ForeignTaxField idPrefix="edit-rec-foreign" base={parseFloat(formData.monto)} value={foreignTax} onChange={setForeignTax} totalLabel="Total de cada cobro" tagNote={false} error={foreignError ?? undefined} />
+
           <DialogFooter className="gap-2">
             <Button
               type="button"
@@ -315,7 +322,7 @@ export function EditRecurringExpenseModal({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" disabled={saving || Boolean(foreignError)}>
               {saving ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </DialogFooter>

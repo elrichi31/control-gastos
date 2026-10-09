@@ -18,6 +18,8 @@ import { fetchCategories, type Category } from "@/services/categories"
 import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
 import { Frecuencia, MESES } from "@/types/recurring-expense"
 import { toast } from "sonner"
+import { ForeignTaxField } from "@/components/ForeignTaxField"
+import { computeForeignTax, emptyForeignTax, validateForeignTax } from "@/lib/foreign-tax"
 
 export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
   // Calcular el primer día del mes actual
@@ -47,6 +49,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
   const [mostrarFechaFin, setMostrarFechaFin] = useState(false)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
+  const [foreignTax, setForeignTax] = useState(emptyForeignTax)
 
   const resetForm = () => {
     setFormData({
@@ -63,6 +66,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
       activo: true,
     })
     setMostrarFechaFin(false)
+    setForeignTax(emptyForeignTax())
   }
 
   useEffect(() => {
@@ -109,6 +113,8 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
     if (!formData.paymentMethodId) {
       newErrors.paymentMethodId = "Selecciona un método de pago"
     }
+    const foreignError = validateForeignTax(foreignTax)
+    if (foreignError) newErrors.foreignTax = foreignError
     
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -126,7 +132,8 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
     try {
       await createRecurringExpense({
         descripcion: formData.description,
-        monto: parseFloat(formData.amount),
+        // Con "Compra en el exterior" cada cobro se registra con los impuestos incluidos.
+        monto: computeForeignTax(parseFloat(formData.amount), foreignTax).total,
         categoria_id: parseInt(formData.categoryId),
         metodo_pago_id: parseInt(formData.paymentMethodId),
         frecuencia: formData.frecuencia as Frecuencia,
@@ -185,7 +192,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="rec-amount" className="text-sm font-semibold text-foreground">
-            Monto (USD) <span className="text-red-500">*</span>
+            {foreignTax.enabled ? "Precio sin impuestos" : "Monto (USD)"} <span className="text-red-500">*</span>
           </Label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-lg font-semibold">
@@ -417,6 +424,9 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
         </Select>
         {errors.paymentMethodId && <p className="text-red-500 text-sm">{errors.paymentMethodId}</p>}
       </div>
+
+      <ForeignTaxField idPrefix="rec-foreign" base={parseFloat(formData.amount)} value={foreignTax} totalLabel="Total de cada cobro" tagNote={false} error={errors.foreignTax}
+        onChange={value => { setForeignTax(value); if (errors.foreignTax) setErrors({ ...errors, foreignTax: "" }) }} />
 
       {/* Botón de envío */}
       <Button 

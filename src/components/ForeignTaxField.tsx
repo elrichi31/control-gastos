@@ -10,8 +10,10 @@ import { FOREIGN_EXPENSE_TAG, FOREIGN_TAXES, computeForeignTax, validateForeignT
  * Interruptor "Compra en el exterior": al activarlo el usuario elige qué impuestos
  * le cobró el banco y ve en vivo cuánto sube el precio antes de guardar.
  */
-export function ForeignTaxField({ idPrefix = "foreign", base, value, onChange, error }: {
+export function ForeignTaxField({ idPrefix = "foreign", base, value, onChange, error, totalLabel = "Total que se guarda", tagNote = true }: {
   idPrefix?: string
+  totalLabel?: string
+  tagNote?: boolean
   base: number
   value: ForeignTaxState
   onChange: (value: ForeignTaxState) => void
@@ -68,9 +70,9 @@ export function ForeignTaxField({ idPrefix = "foreign", base, value, onChange, e
           <dl aria-live="polite" className="rounded-md bg-card border border-input px-3 py-2 text-sm space-y-1 tabular-nums">
             <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Precio original</dt><dd>{formatMoney(breakdown.base)}</dd></div>
             {breakdown.lines.map(line => <div key={line.id} className="flex justify-between gap-2"><dt className="text-muted-foreground">+ {line.label}</dt><dd>{formatMoney(line.amount)}</dd></div>)}
-            <div className="flex justify-between gap-2 border-t pt-1 font-semibold"><dt>Total que se guarda</dt><dd>{formatMoney(breakdown.total)}</dd></div>
+            <div className="flex justify-between gap-2 border-t pt-1 font-semibold"><dt>{totalLabel}</dt><dd>{formatMoney(breakdown.total)}</dd></div>
           </dl>
-          <p className="text-xs text-muted-foreground">Se le añadirá la etiqueta #{FOREIGN_EXPENSE_TAG} para que lo encuentres luego.</p>
+          {tagNote && <p className="text-xs text-muted-foreground">Se le añadirá la etiqueta #{FOREIGN_EXPENSE_TAG} para que lo encuentres luego.</p>}
         </div>
       )}
       {error && <p id={`${idPrefix}-error`} role="alert" className="text-sm text-destructive">{error}</p>}
