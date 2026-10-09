@@ -68,11 +68,18 @@ export function ExpenseList({ groupedExpenses, isLoading, onDelete, onUpdated, g
   }
 
   return (
-    <div className="max-h-[26rem] overflow-y-auto overflow-x-hidden">
+    <div className="max-h-[36rem] overflow-y-auto overflow-x-hidden">
+      {/* Cabecera de columnas: solo cuando las filas van en horizontal */}
+      <div aria-hidden="true" className="hidden md:grid sticky top-0 z-20 grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_7rem_minmax(0,1fr)_6rem_3.5rem] gap-x-4 border-b border-border bg-card px-5 py-2 text-xs font-medium text-muted-foreground">
+        <span>Descripción</span><span>Categoría</span><span>Fecha</span><span>Método de pago</span><span className="text-right">Monto</span><span />
+      </div>
       {groupKeys.map((groupTitle) => (
-        <div key={groupTitle} className="mb-4 last:mb-0">
-          <h3 className="sticky top-0 z-10 bg-card px-5 pt-3 pb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {formatGroupTitle(groupTitle, groupBy)}
+        <div key={groupTitle} className="mb-2 last:mb-0">
+          <h3 className="sticky top-0 md:top-[33px] z-10 flex items-baseline justify-between gap-3 bg-muted/60 backdrop-blur px-5 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="truncate">{formatGroupTitle(groupTitle, groupBy)}</span>
+            <span className="shrink-0 normal-case tracking-normal tabular-nums">
+              {groupedExpenses[groupTitle].length} · ${groupedExpenses[groupTitle].reduce((sum, expense) => sum + expense.monto, 0).toFixed(2)}
+            </span>
           </h3>
           <div>
             {groupedExpenses[groupTitle].map((expense) => (

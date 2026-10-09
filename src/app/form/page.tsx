@@ -83,7 +83,7 @@ function ExpenseTracker() {
 
       <PageHeader title="Nuevo gasto" description="Registra tu gasto de forma rápida y sencilla." />
 
-      {/* Columna principal + riel lateral: el formulario manda, lo demás acompaña */}
+      {/* Arriba: formulario + resumen al lado. Abajo: gastos recientes a todo el ancho. */}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_20rem] gap-6 items-start">
         <div className="min-w-0">
           <Card>
@@ -106,32 +106,33 @@ function ExpenseTracker() {
           </Card>
         </div>
 
-        <aside aria-label="Resumen y gastos recientes" className="min-w-0 space-y-4">
+        <aside aria-label="Resumen" className="min-w-0 xl:sticky xl:top-4">
           <ExpenseSummary
             expenses={filteredExpensesAsExpense}
             onDateRangeChange={handleFilterChange}
             groupBy={groupBy}
             setGroupBy={setGroupBy}
           />
-
-          <Card>
-            {/* px-5 para alinear con el padding de las filas de ExpenseItem */}
-            <CardHeader className="px-5 pt-5 pb-3">
-              <CardTitle className="text-base font-semibold">Gastos recientes</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 pb-2">
-              {error && <div role="alert" className="px-5 py-3 space-y-2"><p className="text-sm text-destructive">No se pudo actualizar la lista de gastos.</p><Button variant="outline" size="sm" onClick={() => void refreshExpenses()}>Reintentar</Button></div>}
-              <ExpenseList
-                groupedExpenses={groupedExpenses}
-                isLoading={loading}
-                onDelete={handleDeleteExpense}
-                onUpdated={refreshExpenses}
-                groupBy={groupBy}
-              />
-            </CardContent>
-          </Card>
         </aside>
       </div>
+
+      <section aria-label="Gastos recientes" className="mt-6">
+        <Card>
+          <CardHeader className="px-5 pt-5 pb-3">
+            <CardTitle className="text-base font-semibold">Gastos recientes</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 pb-2">
+            {error && <div role="alert" className="px-5 py-3 space-y-2"><p className="text-sm text-destructive">No se pudo actualizar la lista de gastos.</p><Button variant="outline" size="sm" onClick={() => void refreshExpenses()}>Reintentar</Button></div>}
+            <ExpenseList
+              groupedExpenses={groupedExpenses}
+              isLoading={loading}
+              onDelete={handleDeleteExpense}
+              onUpdated={refreshExpenses}
+              groupBy={groupBy}
+            />
+          </CardContent>
+        </Card>
+      </section>
     </PageShell>
   )
 }
