@@ -19,7 +19,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .eq('user_id', userId)
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('Error al obtener presupuesto:', error)
+    return NextResponse.json({ error: 'Error al obtener el presupuesto' }, { status: 500 })
+  }
   if (!data) return NextResponse.json({ error: 'Presupuesto no encontrado' }, { status: 404 })
   
   return NextResponse.json(data)

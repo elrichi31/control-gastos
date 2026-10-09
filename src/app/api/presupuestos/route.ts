@@ -26,7 +26,10 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await query
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('Error al obtener presupuestos:', error)
+    return NextResponse.json({ error: 'Error al obtener los presupuestos' }, { status: 500 })
+  }
   
   // Si se solicita incluir el conteo de gastos reales, calcularlos para cada presupuesto
   if (includeExpenseCount && data) {
@@ -91,7 +94,10 @@ export async function POST(req: NextRequest) {
     .eq('mes', mes)
     .limit(1)
 
-  if (checkError) return NextResponse.json({ error: checkError.message }, { status: 500 })
+  if (checkError) {
+    console.error('Error al verificar presupuesto existente:', checkError)
+    return NextResponse.json({ error: 'Error al verificar el presupuesto existente' }, { status: 500 })
+  }
   
   if (existingPresupuesto && existingPresupuesto.length > 0) {
     return NextResponse.json({ error: "Ya tienes un presupuesto creado para este mes y año." }, { status: 400 })
@@ -107,23 +113,20 @@ export async function POST(req: NextRequest) {
     
     // Si es un error de constraint, usar "En progreso" que sabemos que funciona
     if (error.message.includes('presupuesto_mensual_estado_check')) {
-      console.log(`Constraint error, using "En progreso" instead of "${estado}"`)
-      
       const { data: retryData, error: retryError } = await supabase
         .from('presupuesto_mensual')
         .insert([{ anio, mes, total, gastos_registrados, tendencia, estado: "En progreso", user_id: userId }])
         .select()
       
       if (retryError) {
-        return NextResponse.json({ 
-          error: `Error de constraint: ${retryError.message}` 
-        }, { status: 500 })
+        console.error('Error al crear presupuesto (reintento):', retryError)
+        return NextResponse.json({ error: 'Error al crear el presupuesto' }, { status: 500 })
       }
       
       return NextResponse.json(retryData)
     }
     
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Error al crear el presupuesto' }, { status: 500 })
   }
   return NextResponse.json(data)
 }
@@ -165,7 +168,8 @@ export async function PUT(req: NextRequest) {
     .single()
 
   if (errorUpdate) {
-    return NextResponse.json({ error: 'Error al actualizar presupuesto: ' + errorUpdate.message }, { status: 500 })
+    console.error('Error al actualizar presupuesto:', errorUpdate)
+    return NextResponse.json({ error: 'Error al actualizar el presupuesto' }, { status: 500 })
   }
 
   return NextResponse.json({
@@ -200,6 +204,9 @@ export async function DELETE(req: NextRequest) {
     .eq('mes', mes)
     .eq('user_id', userId)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('Error al eliminar presupuesto:', error)
+    return NextResponse.json({ error: 'Error al eliminar el presupuesto' }, { status: 500 })
+  }
   return NextResponse.json({ success: true })
 }

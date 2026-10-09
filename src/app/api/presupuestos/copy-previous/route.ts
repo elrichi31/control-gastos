@@ -57,7 +57,8 @@ export async function POST(req: NextRequest) {
       .limit(1)
 
     if (errorExistentes) {
-      return NextResponse.json({ error: errorExistentes.message }, { status: 500 })
+      console.error('Error al copiar el presupuesto del mes anterior:', errorExistentes)
+      return NextResponse.json({ error: 'Error al copiar el presupuesto del mes anterior' }, { status: 500 })
     }
 
     if (categoriasExistentes && categoriasExistentes.length > 0) {
@@ -78,7 +79,8 @@ export async function POST(req: NextRequest) {
       .eq('user_id', userId)
 
     if (errorCategorias) {
-      return NextResponse.json({ error: errorCategorias.message }, { status: 500 })
+      console.error('Error al copiar el presupuesto del mes anterior:', errorCategorias)
+      return NextResponse.json({ error: 'Error al copiar el presupuesto del mes anterior' }, { status: 500 })
     }
 
     if (!categoriasAnteriores || categoriasAnteriores.length === 0) {
@@ -93,7 +95,8 @@ export async function POST(req: NextRequest) {
       .eq('user_id', userId)
 
     if (errorLectura) {
-      return NextResponse.json({ error: errorLectura.message }, { status: 500 })
+      console.error('Error al copiar el presupuesto del mes anterior:', errorLectura)
+      return NextResponse.json({ error: 'Error al copiar el presupuesto del mes anterior' }, { status: 500 })
     }
 
     const categoriasConMovimientos: { categoria_id: number; nombreCategoria: string; movimientos: any[] }[] = []
@@ -130,7 +133,8 @@ export async function POST(req: NextRequest) {
       .select('id, categoria_id')
 
     if (errorCopia) {
-      return NextResponse.json({ error: errorCopia.message }, { status: 500 })
+      console.error('Error al copiar el presupuesto del mes anterior:', errorCopia)
+      return NextResponse.json({ error: 'Error al copiar el presupuesto del mes anterior' }, { status: 500 })
     }
 
     // 9. Crear los movimientos de presupuesto para cada categoría
@@ -173,7 +177,8 @@ export async function POST(req: NextRequest) {
         .delete()
         .in('id', categoriasCopiadas.map(c => c.id))
       
-      return NextResponse.json({ error: errorMovimientos.message }, { status: 500 })
+      console.error('Error al copiar el presupuesto del mes anterior:', errorMovimientos)
+      return NextResponse.json({ error: 'Error al copiar el presupuesto del mes anterior' }, { status: 500 })
     }
 
     return NextResponse.json({ 
@@ -182,7 +187,8 @@ export async function POST(req: NextRequest) {
       movimientos: movimientosParaCopiar.length
     })
 
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Error interno del servidor' }, { status: 500 })
+  } catch (error) {
+    console.error('Error al copiar el presupuesto del mes anterior:', error)
+    return NextResponse.json({ error: 'Error al copiar el presupuesto del mes anterior' }, { status: 500 })
   }
 }

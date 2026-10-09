@@ -90,15 +90,6 @@ export function useExpenseFilters(gastos: Expense[], userId?: string) {
       const today = new Date()
       dateFrom = new Date(today.getFullYear(), today.getMonth(), 1) // primer día del mes
       dateTo = new Date(today.getFullYear(), today.getMonth() + 1, 0) // último día del mes
-      
-      console.log('🔍 Filtrado por mes actual:', {
-        today: today.toLocaleDateString(),
-        month: today.getMonth() + 1, // mes actual (1-indexado)
-        year: today.getFullYear(),
-        dateFrom: dateFrom.toLocaleDateString(),
-        dateTo: dateTo.toLocaleDateString(),
-        totalGastos: gastos.length
-      })
     } else if (filters.dateRange === "year") {
       // Use the specific year if provided, otherwise current year
       const targetYear = filters.year ? parseInt(filters.year) : new Date().getFullYear()
@@ -116,29 +107,11 @@ export function useExpenseFilters(gastos: Expense[], userId?: string) {
     }
 
     if (dateFrom || dateTo) {
-      const beforeFilter = filtered.length
       filtered = filtered.filter(gasto => {
         // Usar la utilidad existente que maneja bien las fechas
         const gastoDate = toLocalDateFromString(gasto.fecha)
-        
-        const isInRange = (!dateFrom || gastoDate >= dateFrom) && (!dateTo || gastoDate <= dateTo)
-        
-        // Log some examples for debugging
-        if (beforeFilter > 0 && beforeFilter <= 5) {
-          console.log('🧾 Gasto fecha:', {
-            descripcion: gasto.descripcion,
-            fecha: gasto.fecha,
-            gastoDate: gastoDate.toLocaleDateString(),
-            dateFrom: dateFrom?.toLocaleDateString(),
-            dateTo: dateTo?.toLocaleDateString(),
-            isInRange
-          })
-        }
-        
-        return isInRange
+        return (!dateFrom || gastoDate >= dateFrom) && (!dateTo || gastoDate <= dateTo)
       })
-      
-      console.log(`📊 Filtrado por fechas: ${beforeFilter} → ${filtered.length} gastos`)
     }
 
     // Ordenamiento
