@@ -14,6 +14,7 @@ export const runtime = 'nodejs'
 export const maxDuration = 120
 
 // ponytail: fecha fija pedida para la primera importación; los Message-ID ya vistos se saltan.
+// Pasar a fecha por usuario (o última importación) si se suma otro usuario o el escaneo desde enero se vuelve lento.
 const IMPORT_SINCE = new Date('2026-01-01T00:00:00-05:00')
 
 function dbFailure(where: string, code?: string) {

@@ -134,6 +134,7 @@ export function parseBankEmail(source: Source, subject: string, html: string, da
 }
 
 // ponytail: reglas fijas por palabra; el historial del usuario manda antes que estas reglas.
+// Mover a una tabla editable por usuario si corregir categorías mal sugeridas se vuelve frecuente.
 // El orden importa: "UBER EATS" debe caer en alimentación antes que "uber" en transporte.
 const RULES: [category: string, keywords: string[]][] = [
   ['alimentacion', ['supermaxi', 'megamaxi', 'comisariato', 'tia', 'aki', 'coral', 'santa maria', 'mini', 'restaurant', 'deli', 'kfc', 'mcdonald', 'burger', 'carls jr', 'chilis', 'taco bell', 'pizza', 'pollo', 'pollos', 'campero', 'cebiche', 'ceviche', 'ecuaviche', 'shawarma', 'pincho', 'tablita', 'smash', 'frittenchop', 'pretzels', 'corfu', 'juan valdez', 'cafe', 'coffee', 'panaderia', 'pedidosya', 'rappi', 'uber eats', 'ub eats']],
