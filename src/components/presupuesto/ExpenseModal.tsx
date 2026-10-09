@@ -1,6 +1,9 @@
 import React from "react"
 import { ExpenseTagsField } from "@/components/ExpenseTags"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { MetodoPagoDB, MovimientoPresupuesto } from "@/types/budget"
 
@@ -36,68 +39,77 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card mx-4 max-w-md backdrop-blur-md">
+      <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editingExpense ? "Editar gasto" : "Nuevo gasto"}</DialogTitle>
         </DialogHeader>
         <form className="space-y-4" onSubmit={editingExpense ? handleUpdateExpense : handleAddExpense}>
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="block text-sm font-medium text-foreground">Descripción</label>
-              <input
+              <Label htmlFor="budget-description">Descripción</Label>
+              <Input
+                id="budget-description"
+                controlSize="form"
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="mt-1 block w-full border border-border bg-card text-foreground rounded-md focus:ring-3 focus:ring-blue-500 focus:outline-hidden px-3 py-2"
+                className="mt-1"
                 placeholder="Ej. Compra en supermercado"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground">Monto</label>
-              <input
+              <Label htmlFor="budget-amount">Monto</Label>
+              <Input
+                id="budget-amount"
+                controlSize="form"
                 type="number"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                className="mt-1 block w-full border border-border bg-card text-foreground rounded-md focus:ring-3 focus:ring-blue-500 focus:outline-hidden px-3 py-2"
+                className="mt-1"
                 placeholder="Ej. 150.00"
                 step="0.01"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground">Fecha de pago</label>
-              <input
+              <Label htmlFor="budget-date">Fecha de pago</Label>
+              <Input
+                id="budget-date"
+                controlSize="form"
                 type="date"
                 value={formData.paymentDate}
                 onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
-                className="mt-1 block w-full border border-border bg-card text-foreground rounded-md focus:ring-3 focus:ring-blue-500 focus:outline-hidden px-3 py-2"
+                className="mt-1"
               />
             </div>
             {/* El selector de categoría se elimina, ya que la categoría se define al abrir el modal */}
             <div>
-              <label className="block text-sm font-medium text-foreground">Método de pago</label>
-              <select
+              <Label htmlFor="budget-payment">Método de pago</Label>
+              <Select
                 value={formData.metodoPago}
-                onChange={(e) => setFormData({ ...formData, metodoPago: e.target.value })}
-                className="mt-1 block w-full border border-border bg-card text-foreground rounded-md focus:ring-3 focus:ring-blue-500 focus:outline-hidden px-3 py-2"
+                onValueChange={(value) => setFormData({ ...formData, metodoPago: value })}
               >
-                <option value="">Selecciona un método de pago</option>
-                {metodosPago.map((metodo) => (
-                  <option key={metodo.id} value={metodo.id}>
-                    {metodo.nombre}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="budget-payment" controlSize="form" className="mt-1">
+                  <SelectValue placeholder="Selecciona un método de pago" />
+                </SelectTrigger>
+                <SelectContent>
+                  {metodosPago.map((metodo) => (
+                    <SelectItem key={metodo.id} value={String(metodo.id)}>
+                      {metodo.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <ExpenseTagsField value={formData.tags || ""} onChange={tags => setFormData({ ...formData, tags })} />
           <div className="flex gap-2 pt-4">
-            <Button type="submit" className="flex-1">
+            <Button size="form" type="submit" className="flex-1">
               {editingExpense ? "Guardar cambios" : "Agregar gasto"}
             </Button>
             <Button
               type="button"
               variant="outline"
-              className="bg-card border-border text-muted-foreground"
+              size="form"
               onClick={onCancel}
             >
               Cancelar

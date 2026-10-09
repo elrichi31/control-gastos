@@ -29,8 +29,8 @@ export function ConfirmModal({
         </DialogHeader>
         <p>{message}</p>
         <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={onCancel}>Cancelar</Button>
-          <Button className="sm: mb-4" variant="destructive" onClick={handleConfirm}>{confirmLabel}</Button>
+          <Button size="form" variant="outline" onClick={onCancel}>Cancelar</Button>
+          <Button size="form" variant="destructive" onClick={handleConfirm}>{confirmLabel}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

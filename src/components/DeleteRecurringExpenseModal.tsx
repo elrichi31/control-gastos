@@ -55,28 +55,31 @@ export function DeleteRecurringExpenseModal({
 
         <div className="flex flex-col gap-3 mt-6">
           <Button
+            size="form"
             variant="outline"
             onClick={onDeleteSingle}
             disabled={isDeleting}
-            className="w-full h-10 font-medium"
+            className="w-full"
           >
             Eliminar solo este gasto
           </Button>
           
           <Button
+            size="form"
             variant="destructive"
             onClick={onDeleteAll}
             disabled={isDeleting}
-            className="w-full h-11 bg-red-600 hover:bg-red-700 font-medium"
+            className="w-full"
           >
             {isDeleting ? "Eliminando..." : "Eliminar gasto recurrente completo"}
           </Button>
           
           <Button
+            size="form"
             variant="outline"
             onClick={onCancel}
             disabled={isDeleting}
-            className="w-full h-11 border-2 border-border hover:bg-muted font-medium"
+            className="w-full"
           >
             Cancelar
           </Button>

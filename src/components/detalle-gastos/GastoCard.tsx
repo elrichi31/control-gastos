@@ -28,7 +28,7 @@ export const GastoCard: React.FC<GastoCardProps> = ({ gasto, onDeleteGasto, form
     </div>
     <div className="shrink-0 flex flex-col items-end gap-1">
       <span className="text-sm font-medium text-foreground tabular-nums whitespace-nowrap">{formatMoney(gasto.monto)}</span>
-      <Button size="icon" variant="ghost" onClick={() => onDeleteGasto(gasto.id.toString())} aria-label={`Eliminar gasto: ${gasto.descripcion}`} className="h-11 w-11 text-muted-foreground hover:text-destructive hover:bg-destructive/10"><Trash2 aria-hidden="true" className="h-4 w-4" /></Button>
+      <Button size="icon-sm" variant="ghost-destructive" onClick={() => onDeleteGasto(gasto.id.toString())} aria-label={`Eliminar gasto: ${gasto.descripcion}`}><Trash2 aria-hidden="true" className="h-4 w-4" /></Button>
     </div>
   </div>
 )

@@ -345,31 +345,33 @@ export function RecurringExpenseList() {
                   </TableCell>
                   <TableCell className="py-2.5 pr-5">
                     {/* Acciones discretas: aparecen al pasar el mouse por la fila */}
-                    <div className="flex items-center justify-end gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-end gap-0.5 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100 transition-opacity">
                       {canSkip(expense) && (
-                        <button
+                        <Button size="icon-sm" variant="ghost"
+                          type="button"
                           onClick={() => setSkipTarget(expense)}
-                          className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                           title="Saltar el próximo cobro"
                           aria-label={`Saltar el próximo cobro de ${expense.descripcion}`}
                         >
                           <SkipForward className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                       )}
-                      <button
+                      <Button size="icon-sm" variant="ghost"
+                        type="button"
                         onClick={() => setEditExpense(expense)}
-                        className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                         title="Editar"
+                        aria-label={`Editar ${expense.descripcion}`}
                       >
                         <Edit className="w-3.5 h-3.5" />
-                      </button>
-                      <button
+                      </Button>
+                      <Button size="icon-sm" variant="ghost-destructive"
+                        type="button"
                         onClick={() => setDeleteId(expense.id)}
-                        className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
                         title="Eliminar"
+                        aria-label={`Eliminar ${expense.descripcion}`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -414,29 +416,31 @@ export function RecurringExpenseList() {
                 </div>
                 <div className="flex items-center gap-0.5">
                   {canSkip(expense) && (
-                    <button
+                    <Button size="icon-sm" variant="ghost"
+                      type="button"
                       onClick={() => setSkipTarget(expense)}
-                      className="h-8 w-8 grid place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                       title="Saltar el próximo cobro"
                       aria-label={`Saltar el próximo cobro de ${expense.descripcion}`}
                     >
                       <SkipForward className="w-4 h-4" />
-                    </button>
+                    </Button>
                   )}
-                  <button
+                  <Button size="icon-sm" variant="ghost"
+                    type="button"
                     onClick={() => setEditExpense(expense)}
-                    className="h-8 w-8 grid place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                     title="Editar"
+                    aria-label={`Editar ${expense.descripcion}`}
                   >
                     <Edit className="w-4 h-4" />
-                  </button>
-                  <button
+                  </Button>
+                  <Button size="icon-sm" variant="ghost-destructive"
+                    type="button"
                     onClick={() => setDeleteId(expense.id)}
-                    className="h-8 w-8 grid place-items-center rounded-md text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
                     title="Eliminar"
+                    aria-label={`Eliminar ${expense.descripcion}`}
                   >
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

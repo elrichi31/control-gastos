@@ -70,7 +70,7 @@ export function ExpenseList({ groupedExpenses, isLoading, onDelete, onUpdated, g
   return (
     <div className="max-h-[36rem] overflow-y-auto overflow-x-hidden">
       {/* Cabecera de columnas: solo cuando las filas van en horizontal */}
-      <div aria-hidden="true" className="hidden md:grid sticky top-0 z-20 grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_7rem_minmax(0,1fr)_6rem_3.5rem] gap-x-4 border-b border-border bg-card px-5 py-2 text-xs font-medium text-muted-foreground">
+      <div aria-hidden="true" className="hidden md:grid sticky top-0 z-20 grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_7rem_minmax(0,1fr)_6rem_4.5rem] gap-x-4 border-b border-border bg-card px-5 py-2 text-xs font-medium text-muted-foreground">
         <span>Descripción</span><span>Categoría</span><span>Fecha</span><span>Método de pago</span><span className="text-right">Monto</span><span />
       </div>
       {groupKeys.map((groupTitle) => (

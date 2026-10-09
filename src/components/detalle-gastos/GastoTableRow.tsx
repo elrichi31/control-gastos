@@ -77,11 +77,10 @@ export function GastoTableRow({
       </TableCell>
       <TableCell className="text-center px-3 py-3 w-[80px] min-w-[80px]">
         <Button
-          size="sm"
+          size="icon-sm"
           onClick={() => onDeleteGasto(gasto.id.toString())}
-          variant="ghost"
+          variant="ghost-destructive"
           aria-label={`Eliminar gasto: ${gasto.descripcion}`}
-          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-0 h-8 w-8"
         >
           <Trash2 className="h-4 w-4" />
         </Button>
