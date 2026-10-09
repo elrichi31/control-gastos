@@ -28,7 +28,7 @@ export function useGastosPorCategoriaDelMes(mes: number, anio: number) {
       setLoading(false)
     }
     fetchGastos()
-  }, [mes, anio])
+  }, [])
 
   // Filtrar y agrupar por categoría solo los del mes/año actual
   const gastosPorCategoria: Record<number, { nombre: string; total: number }> = {}

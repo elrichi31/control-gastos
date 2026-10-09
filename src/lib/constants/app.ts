@@ -2,12 +2,6 @@
 
 export const DEFAULT_METODO_PAGO = { id: 1, nombre: "Efectivo" }
 
-export const METODOS_PAGO = {
-  EFECTIVO: { id: 1, nombre: "Efectivo" },
-  TARJETA: { id: 2, nombre: "Tarjeta" },
-  TRANSFERENCIA: { id: 3, nombre: "Transferencia" }
-} as const
-
 export const MESES_NOMBRES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
@@ -18,19 +12,6 @@ export const MESES_NOMBRES_LOWERCASE = [
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
 ] as const
 
-export const TIPOS_FILTRO = {
-  YEAR_MONTH: "year-month",
-  YEAR: "year", 
-  MONTH: "month",
-  CUSTOM: "custom"
-} as const
-
-export const AGRUPACIONES = {
-  DIA: "dia",
-  SEMANA: "semana", 
-  MES: "mes"
-} as const
-
 export const API_ENDPOINTS = {
   GASTOS: "/api/gastos",
   CATEGORIAS: "/api/categorias",
@@ -38,17 +19,6 @@ export const API_ENDPOINTS = {
   PRESUPUESTOS: "/api/presupuestos",
   GASTOS_RECURRENTES: "/api/gastos-recurrentes"
 } as const
-
-export const categories = [
-  "Alimentación",
-  "Transporte",
-  "Entretenimiento",
-  "Salud",
-  "Educación",
-  "Compras",
-  "Servicios",
-  "Otros",
-]
 
 // Chips de categoria: tinte suave sobre la paleta de charts, legible en ambos
 // temas. Las claves van normalizadas (sin acentos, minusculas) porque los
@@ -76,23 +46,4 @@ export function getCategoriaColor(nombre?: string | null): string {
     .toLowerCase()
     .trim()
   return COLORES_CATEGORIA[key] ?? NEUTRO_CATEGORIA
-}
-
-export const paymentMethods = [
-  "Efectivo",
-  "Tarjeta de débito",
-  "Tarjeta de crédito",
-  "Transferencia",
-  "Otro",
-]
-
-export const categoryIcons: { [key: string]: string } = {
-  Alimentación: "🍽️",
-  Transporte: "🚗",
-  Entretenimiento: "🎬",
-  Salud: "🏥",
-  Educación: "📚",
-  Compras: "🛍️",
-  Servicios: "⚡",
-  Otros: "📦",
 }

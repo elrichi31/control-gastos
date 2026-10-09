@@ -10,13 +10,6 @@ export interface BudgetMonth {
   estado: string
 }
 
-export interface ExpenseStats {
-  anio: number
-  mes: number
-  cantidad_gastos: number
-  monto_total: number
-}
-
 export interface MonthlyDataGrid {
   [key: string]: {
     total: number
@@ -45,22 +38,6 @@ export async function fetchBudgetsByYear(year: string, includeExpenseCount: bool
     return await response.json()
   } catch (error) {
     console.error('Error fetching budgets:', error)
-    throw error
-  }
-}
-
-/**
- * Obtiene las estadísticas reales de gastos para un mes específico
- */
-export async function fetchExpenseStats(year: number, month: number): Promise<ExpenseStats> {
-  try {
-    const response = await fetch(`/api/gastos/stats?anio=${year}&mes=${month}`)
-    if (!response.ok) {
-      throw new Error('Error al obtener estadísticas de gastos')
-    }
-    return await response.json()
-  } catch (error) {
-    console.error('Error fetching expense stats:', error)
     throw error
   }
 }

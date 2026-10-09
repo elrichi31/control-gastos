@@ -28,22 +28,20 @@ export async function GET(req: NextRequest) {
 
   if (errorCategorias) return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
 
-  // Para cada categoria, obtenemos los movimientos
-  const movimientosPorCategoria = []
-  for (const cat of categorias || []) {
-    const { data: movimientos, error: errorMov } = await supabase
-      .from('movimiento_presupuesto')
-      .select('id, descripcion, monto, fecha, metodo_pago_id, tags')
-      .eq('presupuesto_categoria_id', cat.id)
-      .eq('user_id', userId)
-      .order('fecha', { ascending: false })
-    if (errorMov) return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
-    movimientosPorCategoria.push({
-      categoria_id: cat.categoria_id,
-      categoria_nombre: (Array.isArray(cat.categoria) ? cat.categoria[0] : cat.categoria)?.nombre,
-      movimientos
-    })
-  }
+  // Una sola consulta para los movimientos de todas las categorías.
+  const { data: movimientos, error: errorMov } = await supabase
+    .from('movimiento_presupuesto')
+    .select('id, descripcion, monto, fecha, metodo_pago_id, tags, presupuesto_categoria_id')
+    .in('presupuesto_categoria_id', (categorias || []).map(cat => cat.id))
+    .eq('user_id', userId)
+    .order('fecha', { ascending: false })
+  if (errorMov) return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
+
+  const movimientosPorCategoria = (categorias || []).map(cat => ({
+    categoria_id: cat.categoria_id,
+    categoria_nombre: (Array.isArray(cat.categoria) ? cat.categoria[0] : cat.categoria)?.nombre,
+    movimientos: (movimientos || []).filter(m => m.presupuesto_categoria_id === cat.id).map(({ presupuesto_categoria_id, ...m }) => m)
+  }))
 
   return NextResponse.json(movimientosPorCategoria)
 }

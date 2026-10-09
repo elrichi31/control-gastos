@@ -86,20 +86,22 @@ export async function POST(req: NextRequest) {
     }
 
     // 6. Obtener los movimientos de presupuesto para cada categoría del mes anterior
+    const { data: todosMovimientos, error: errorLectura } = await supabase
+      .from('movimiento_presupuesto')
+      .select('descripcion, monto, metodo_pago_id, fecha, presupuesto_categoria_id')
+      .in('presupuesto_categoria_id', categoriasAnteriores.map(categoria => categoria.id))
+      .eq('user_id', userId)
+
+    if (errorLectura) {
+      return NextResponse.json({ error: errorLectura.message }, { status: 500 })
+    }
+
     const categoriasConMovimientos: { categoria_id: number; nombreCategoria: string; movimientos: any[] }[] = []
     for (const categoria of categoriasAnteriores) {
-      const { data: movimientos, error: errorMovimientos } = await supabase
-        .from('movimiento_presupuesto')
-        .select('descripcion, monto, metodo_pago_id, fecha')
-        .eq('presupuesto_categoria_id', categoria.id)
-        .eq('user_id', userId)
-
-      if (errorMovimientos) {
-        return NextResponse.json({ error: errorMovimientos.message }, { status: 500 })
-      }
+      const movimientos = (todosMovimientos || []).filter(m => m.presupuesto_categoria_id === categoria.id).map(({ presupuesto_categoria_id, ...m }) => m)
 
       // Solo incluir categorías que tengan movimientos de presupuesto
-      if (movimientos && movimientos.length > 0) {
+      if (movimientos.length > 0) {
         categoriasConMovimientos.push({
           categoria_id: categoria.categoria_id,
           nombreCategoria: (categoria as any).categoria?.nombre || 'Categoría sin nombre',

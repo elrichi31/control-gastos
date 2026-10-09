@@ -27,25 +27,23 @@ export async function GET(req: NextRequest) {
 
   if (errorCategorias) return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
 
-  // Para cada categoría, obtener los movimientos
-  const resultado = []
-  for (const cat of categorias || []) {
-    const { data: movimientos, error: errorMov } = await supabase
-      .from('movimiento_presupuesto')
-      .select('id, descripcion, monto, fecha, metodo_pago_id, tags')
-      .eq('presupuesto_categoria_id', cat.id)
-      .eq('user_id', userId)
-      .order('fecha', { ascending: false })
-    if (errorMov) return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
-    resultado.push({
-      id: cat.id,
-      categoria_id: cat.categoria_id,
-      total_categoria: cat.total_categoria,
-      cantidad_gastos: cat.cantidad_gastos,
-      categoria: (cat.categoria && Array.isArray(cat.categoria) && cat.categoria.length > 0) ? cat.categoria[0] : cat.categoria,
-      movimientos
-    })
-  }
+  // Una sola consulta para los movimientos de todas las categorías.
+  const { data: movimientos, error: errorMov } = await supabase
+    .from('movimiento_presupuesto')
+    .select('id, descripcion, monto, fecha, metodo_pago_id, tags, presupuesto_categoria_id')
+    .in('presupuesto_categoria_id', (categorias || []).map(cat => cat.id))
+    .eq('user_id', userId)
+    .order('fecha', { ascending: false })
+  if (errorMov) return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
+
+  const resultado = (categorias || []).map(cat => ({
+    id: cat.id,
+    categoria_id: cat.categoria_id,
+    total_categoria: cat.total_categoria,
+    cantidad_gastos: cat.cantidad_gastos,
+    categoria: (cat.categoria && Array.isArray(cat.categoria) && cat.categoria.length > 0) ? cat.categoria[0] : cat.categoria,
+    movimientos: (movimientos || []).filter(m => m.presupuesto_categoria_id === cat.id).map(({ presupuesto_categoria_id, ...m }) => m)
+  }))
 
   return NextResponse.json(resultado)
 }

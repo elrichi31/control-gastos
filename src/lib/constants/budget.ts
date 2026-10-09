@@ -21,29 +21,6 @@ export const allMonths: MonthData[] = [
   { name: "Diciembre", value: "diciembre", number: 12 },
 ]
 
-// Estructura que devuelve el backend
-export interface PresupuestoBackend {
-  id: number
-  anio: number
-  mes: number // 1-12
-  total: number
-  gastos_registrados: number
-  tendencia: string | null
-  estado: string // "En progreso", "Completado", etc
-}
-
-export function mapEstado(estado: string): "completed" | "in-progress" | "pending" {
-  if (estado.toLowerCase().includes("complet")) return "completed"
-  if (estado.toLowerCase().includes("progreso")) return "in-progress"
-  return "pending"
-}
-
-export function mapTendencia(tendencia: string | null): "up" | "down" | "stable" {
-  if (tendencia === "up" || tendencia === "UP") return "up"
-  if (tendencia === "down" || tendencia === "DOWN") return "down"
-  return "stable"
-}
-
 // Interfaces para el detalle de presupuesto
 export interface MovimientoPresupuesto {
   id: number

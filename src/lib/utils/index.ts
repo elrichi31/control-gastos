@@ -8,6 +8,5 @@ export {
   formatDisplayDate,
   toLocalDateFromString,
   toDateWithTime,
-  formatGroupTitle,
   formatDateWithLocale
 } from './date'

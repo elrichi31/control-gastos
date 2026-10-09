@@ -7,8 +7,8 @@ const Module = require('node:module')
 let calls = [], authorized = true
 const db = { from(table) {
   const call = { table, filters: [] }; calls.push(call)
-  const result = () => ({ data: table === 'presupuesto_categoria' ? [{ id: 2, categoria_id: 1, categoria: { nombre: 'Comida' } }] : { id: 1, tags: ['viaje'], ...(call.insert?.[0] || call.insert || call.update) }, error: null })
-  const q = { select(value) { call.select = value; return q }, eq(...value) { call.filters.push(value); return q }, order() { return q }, insert(value) { call.insert = value; return q }, update(value) { call.update = value; return q }, single() { return Promise.resolve(result()) }, then(resolve, reject) { return Promise.resolve(result()).then(resolve, reject) } }
+  const result = () => ({ data: table === 'presupuesto_categoria' ? [{ id: 2, categoria_id: 1, categoria: { nombre: 'Comida' } }] : table === 'movimiento_presupuesto' && !call.insert && !call.update ? [] : { id: 1, tags: ['viaje'], ...(call.insert?.[0] || call.insert || call.update) }, error: null })
+  const q = { select(value) { call.select = value; return q }, eq(...value) { call.filters.push(value); return q }, in(...value) { call.filters.push(value); return q }, order() { return q }, insert(value) { call.insert = value; return q }, update(value) { call.update = value; return q }, single() { return Promise.resolve(result()) }, then(resolve, reject) { return Promise.resolve(result()).then(resolve, reject) } }
   return q
 } }
 const load = Module._load

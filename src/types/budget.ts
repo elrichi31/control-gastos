@@ -11,17 +11,6 @@ export type Expense = {
 }
 
 
-export const categories = [
-  "Alimentación",
-  "Transporte",
-  "Entretenimiento",
-  "Servicios",
-  "Suscripciones",
-  "Salud",
-  "Educación",
-  "Otros",
-]
-
 export interface PresupuestoCategoriaDetalle {
   id: number
   categoria_id: number
