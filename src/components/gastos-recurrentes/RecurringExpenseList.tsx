@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,7 @@ import {
 import { Trash2, Repeat, Edit, Plus, SkipForward, Sparkles } from "lucide-react"
 import { GastoRecurrente, MESES, costoAnual } from "@/types/recurring-expense"
 import { fetchRecurringExpenses, deleteRecurringExpense, updateRecurringExpense, createRecurringExpense, fetchRecurringPrices, fetchRecurringPlan, skipRecurringCharge } from "@/services/recurring-expenses"
-import { fetchExpenses } from "@/services/expenses"
+import { useExpensesStore } from "@/hooks/useExpensesStore"
 import { detectSubscriptions, type DetectorExpense, type SubscriptionSuggestion } from "@/lib/subscription-detector"
 import type { PriceChange } from "@/lib/recurring-actions"
 import { fetchCategories, type Category } from "@/services/categories"
@@ -51,7 +51,7 @@ export function RecurringExpenseList() {
   const [nextDates, setNextDates] = useState<Record<number, string | null>>({})
   const [prices, setPrices] = useState<PriceChange[]>([])
   const [skipTarget, setSkipTarget] = useState<GastoRecurrente | null>(null)
-  const [manualExpenses, setManualExpenses] = useState<DetectorExpense[]>([])
+  const { gastos: storedExpenses } = useExpensesStore()
   const [dismissed, setDismissed] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem(DISMISSED_KEY) || "[]") } catch { return [] }
   })
@@ -61,13 +61,10 @@ export function RecurringExpenseList() {
     fetchRecurringPrices()
       .then(d => { if (Array.isArray(d)) setPrices(d) })
       .catch(() => {})
-  const loadManualExpenses = () =>
-    fetchExpenses()
-      .then(list => setManualExpenses(list.map(e => ({
-        descripcion: e.descripcion, monto: Number(e.monto), fecha: e.fecha, categoria_id: e.categoria_id,
-        metodo_pago_id: (e as { metodo_pago_id?: number }).metodo_pago_id ?? e.metodo_pago?.id ?? null, is_recurrent: e.is_recurrent,
-      }))))
-      .catch(() => {})
+  const manualExpenses = useMemo<DetectorExpense[]>(() => storedExpenses.map(e => ({
+    descripcion: e.descripcion, monto: Number(e.monto), fecha: e.fecha, categoria_id: e.categoria_id,
+    metodo_pago_id: e.metodo_pago_id ?? e.metodo_pago?.id ?? null, is_recurrent: e.is_recurrent,
+  })), [storedExpenses])
 
   // The public recurring API hides scheduling state (mobile contract); the web-only plan endpoint exposes it.
   const loadNextDates = () =>
@@ -98,7 +95,6 @@ export function RecurringExpenseList() {
     loadData()
     loadNextDates()
     loadPrices()
-    loadManualExpenses()
   }, [])
 
   const handleSkip = async () => {

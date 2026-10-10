@@ -1,7 +1,16 @@
 // src/hooks/useExpenseDetailsData.ts
-import { useState, useEffect, useCallback } from 'react'
-import { fetchExpenseDetailsData, deleteExpense, type ExpenseDetailsData } from '@/services/expense-details'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { fetchExpenseDetailsData, deleteExpense, type ExpenseDetailsCatalogs } from '@/services/expense-details'
+import { useExpensesStore } from '@/hooks/useExpensesStore'
+import type { Category } from '@/services/categories'
+import type { PaymentMethod } from '@/services/paymentMethods'
+import type { Expense } from '@/types'
 
+export interface ExpenseDetailsData {
+  gastos: Expense[]
+  categories: Category[]
+  paymentMethods: PaymentMethod[]
+}
 
 interface UseExpenseDetailsDataResult {
   data: ExpenseDetailsData | null
@@ -12,57 +21,56 @@ interface UseExpenseDetailsDataResult {
 }
 
 export function useExpenseDetailsData(): UseExpenseDetailsDataResult {
-  const [data, setData] = useState<ExpenseDetailsData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const store = useExpensesStore()
+  const { refresh } = store
+  const [catalogs, setCatalogs] = useState<ExpenseDetailsCatalogs | null>(null)
+  const [catalogsLoading, setCatalogsLoading] = useState(true)
+  const [catalogsError, setCatalogsError] = useState<string | null>(null)
 
-  const loadData = useCallback(async () => {
+  const loadCatalogs = useCallback(async () => {
     try {
-      setLoading(true)
-      setError(null)
-      const result = await fetchExpenseDetailsData()
-      setData(result)
+      setCatalogsLoading(true)
+      setCatalogsError(null)
+      setCatalogs(await fetchExpenseDetailsData())
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error desconocido'
-      setError(message)
+      setCatalogsError(message)
       console.error('Error loading expense details data:', err)
     } finally {
-      setLoading(false)
+      setCatalogsLoading(false)
     }
   }, [])
 
   const refreshData = useCallback(async () => {
-    await loadData()
-  }, [loadData])
+    await Promise.all([loadCatalogs(), refresh()])
+  }, [loadCatalogs, refresh])
 
   const deleteGasto = useCallback(async (id: number) => {
     try {
       await deleteExpense(id)
-      
-      // Actualizar la lista local eliminando el gasto
-      if (data) {
-        const updatedGastos = data.gastos.filter(gasto => gasto.id !== id)
-        setData({
-          ...data,
-          gastos: updatedGastos
-        })
-      }
+      await refresh()
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error al eliminar el gasto'
       console.error('Error deleting expense:', err)
       throw new Error(message)
     }
-  }, [data])
+  }, [refresh])
 
-  // Cargar datos inicialmente
+  // Cargar categorías y métodos de pago inicialmente
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    loadCatalogs()
+  }, [loadCatalogs])
+
+  const loading = catalogsLoading || store.loading
+  const data = useMemo(
+    () => (catalogs && !store.loading ? { gastos: store.gastos, ...catalogs } : null),
+    [catalogs, store.loading, store.gastos],
+  )
 
   return {
     data,
     loading,
-    error,
+    error: catalogsError ?? (store.error ? 'Error al cargar los datos de gastos' : null),
     refreshData,
     deleteGasto
   }

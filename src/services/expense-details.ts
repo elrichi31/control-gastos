@@ -1,29 +1,24 @@
 // src/services/expense-details.ts
-import { fetchExpenses, type Expense } from './expenses'
 import { fetchCategories, type Category } from './categories'
 import { fetchPaymentMethods, type PaymentMethod } from './paymentMethods'
 
-export interface ExpenseDetailsData {
-  gastos: Expense[]
+export interface ExpenseDetailsCatalogs {
   categories: Category[]
   paymentMethods: PaymentMethod[]
 }
 
 /**
- * Obtiene todos los datos necesarios para la página de detalle de gastos
- * Incluye gastos, categorías y métodos de pago
+ * Obtiene categorías y métodos de pago de la página de detalle de gastos.
+ * Los gastos salen del store compartido (useExpensesStore).
  */
-export async function fetchExpenseDetailsData(): Promise<ExpenseDetailsData> {
+export async function fetchExpenseDetailsData(): Promise<ExpenseDetailsCatalogs> {
   try {
-    // Hacer las tres peticiones en paralelo para mejor performance
-    const [gastos, categories, paymentMethods] = await Promise.all([
-      fetchExpenses(),
+    const [categories, paymentMethods] = await Promise.all([
       fetchCategories(),
       fetchPaymentMethods()
     ])
 
     return {
-      gastos,
       categories,
       paymentMethods
     }

@@ -1,26 +1,7 @@
-import { useEffect, useState } from "react"
-import { fetchExpenses } from "@/services/expenses"
-import type { Gasto } from "@/types"
+import { useExpensesStore } from "@/hooks/useExpensesStore"
 
 export function useGastosPorCategoriaDelMes(mes: number, anio: number) {
-  const [gastos, setGastos] = useState<Gasto[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    async function fetchGastos() {
-      setLoading(true)
-      setError(null)
-      try {
-        const data = await fetchExpenses()
-        setGastos(data)
-      } catch (e: any) {
-        setError(e.message || "Error de red")
-      }
-      setLoading(false)
-    }
-    fetchGastos()
-  }, [])
+  const { gastos, loading, error } = useExpensesStore()
 
   // Filtrar y agrupar por categoría solo los del mes/año actual
   const gastosPorCategoria: Record<number, { nombre: string; total: number }> = {}

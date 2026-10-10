@@ -13,6 +13,7 @@ import { REVIEW_PAGE_SIZE as PAGE_SIZE } from '@/lib/email-review-page'
 import { ForeignTaxInline } from '@/components/gastos/ForeignTaxField'
 import { computeForeignTax, emptyForeignTax, validateForeignTax, type ForeignTaxState } from '@/lib/foreign-tax'
 import { fetchCategories } from '@/services/categories'
+import { refreshExpenses } from '@/hooks/useExpensesStore'
 import { fetchEmailImportPage, saveEmailAlias, syncEmailImport, updateEmailImport } from '@/services/email-import'
 import styles from './review.module.css'
 
@@ -89,7 +90,8 @@ export default function EmailExpensesPage() {
     return queue.current!.subscribe({
       onChange: next => { if (mounted.current) { ++loadVersion.current; setJobs(next) } },
       // One reconciliation per drained batch, not a slow full read after every click.
-      onIdle: () => { if (mounted.current) void load() },
+      // Aceptar o vincular movimientos cambia los gastos: el store compartido se vuelve a descargar una vez por lote.
+      onIdle: () => { void refreshExpenses(); if (mounted.current) void load() },
     })
   }, [load])
 
@@ -180,6 +182,7 @@ export default function EmailExpensesPage() {
     try {
       const body = await syncEmailImport()
       toast.success(body.nuevos ? `${body.nuevos} movimientos nuevos.` : 'No hay movimientos nuevos.', { id })
+      void refreshExpenses()
       await load()
     } catch (cause) { toast.error((cause as Error).message || 'No se pudo conectar.', { id }) }
     finally { if (mounted.current) setSyncing(false) }
