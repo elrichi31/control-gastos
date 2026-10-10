@@ -27,9 +27,9 @@ Corrección: el servidor accede a los datos solo con `service_role` (`getAuthent
 
 Orden obligatorio: desplegar el código antes de la migración. **Tablas nuevas:** Supabase concede por defecto acceso a `anon` en tablas nuevas de `public`; cada migración que cree una debe activar RLS y revocar `anon`/`authenticated`, como `gasto_recurrente_precio`.
 
-### P1 — Los cron no autentican la invocación
+### P1 — Los cron no autentican la invocación (resuelto)
 
-**Estado actualizado:** resuelto en el procesador único de recurrentes: valida `CRON_SECRET` antes de acceder a Supabase, utiliza service role privada y la RPC está restringida a `service_role`. El cron mensual fue eliminado. Requiere [activar la migración y configuración](RECURRING_EXPENSES.md). El hallazgo siguiente describe el estado original revisado.
+**Estado:** Resuelto (`src/app/api/cron/process-recurring-expenses/route.ts:11-12` y `sync-email/route.ts:16-17` devuelven 503 sin `CRON_SECRET`; verifican el secreto antes de acceder a datos). Detalle: resuelto en el procesador único de recurrentes: valida `CRON_SECRET` antes de acceder a Supabase, utiliza service role privada y la RPC está restringida a `service_role`. El cron mensual fue eliminado. Requiere [activar la migración y configuración](RECURRING_EXPENSES.md). El hallazgo siguiente describe el estado original revisado.
 
 Archivos: `src/app/api/cron/process-recurring-expenses/route.ts:9`, `generate-monthly-instances/route.ts:8` y `src/middleware.ts:52`.
 
@@ -37,7 +37,9 @@ Los handlers no reciben/verifican `Authorization` ni `CRON_SECRET`; el middlewar
 
 Corrección propuesta: validar el secreto antes de crear el cliente/consultar datos. Configurar el secreto en Vercel antes de desplegar esa protección para no detener el scheduler. Los cron usan actualmente la clave anon; no sustituirla a ciegas por service_role antes de asegurar el endpoint.
 
-### P1 — El procesamiento recurrente no es atómico ni idempotente
+### P1 — El procesamiento recurrente no es atómico ni idempotente (resuelto)
+
+**Estado:** Resuelto. El cron llama a la RPC `process_recurring_expenses` (`process-recurring-expenses/route.ts:28`), que bloquea con `FOR UPDATE SKIP LOCKED` y está respaldada por el índice único `gasto_recurring_date_unique` (`supabase/migrations/20261003_recurring_single_cron.sql:40,96`). Texto original:
 
 Archivo: `src/app/api/cron/process-recurring-expenses/route.ts:90-125`.
 
@@ -45,7 +47,9 @@ Se inserta el gasto y después se actualiza la instancia en otra operación. Si 
 
 Corrección propuesta: transacción/RPC con bloqueo de instancia y una garantía de unicidad por instancia; verificar rollback, repetición y concurrencia en PostgreSQL aislado. Esto requiere una migración nueva, no editar retrospectivamente las migraciones ya aplicadas. El resultado HTTP debe reflejar fallos de procesamiento, no solo incluir un contador de errores bajo 200.
 
-### P1 — Falta ownership explícito en dos lecturas de presupuesto
+### P1 — Falta ownership explícito en dos lecturas de presupuesto (resuelto)
+
+**Estado:** Resuelto. `movimientos-categoria/route.ts:19` y `presupuesto-mensual-detalle` usan `requireOwnedBudget` (`src/lib/auth/budget-ownership.ts`) y filtran por `user_id`. Texto original:
 
 Archivos: `src/app/api/movimientos-categoria/route.ts:7-32` (GET) y `src/app/api/presupuesto-mensual-detalle/route.ts:7-32`.
 
@@ -55,7 +59,9 @@ Reproducción aislada: usuario A + categorías/movimientos de B devuelve 200 con
 
 Corrección propuesta: restringir por propietario (incluyendo validación del presupuesto padre en las creaciones relacionadas) y comprobar RLS. Probar lectura propia, ID ajeno, ausencia de sesión y token mobile. Se mantuvieron los bindings `userId`: no ocultar el hallazgo borrando la variable que debería usarse.
 
-### P1 — El callback NextAuth confunde prefijo con origen
+### P1 — El callback NextAuth confunde prefijo con origen (resuelto)
+
+**Estado:** Resuelto. `src/lib/auth/auth.ts:109-118` parsea la URL y compara `URL.origin`; lo inválido cae a `/dashboard`. Texto original:
 
 Archivo: `src/lib/auth/auth.ts:96-106`.
 
@@ -63,7 +69,9 @@ Archivo: `src/lib/auth/auth.ts:96-106`.
 
 Corrección propuesta: parsear URLs y comparar `URL.origin` exacto, conservar callbacks relativos válidos y fallback al dashboard; probar dominios parecidos, credenciales en URL y URLs inválidas. No se alteró el login durante esta limpieza.
 
-### P1 — PWA puede reutilizar respuestas privadas entre sesiones
+### P1 — PWA puede reutilizar respuestas privadas entre sesiones (resuelto)
+
+**Estado:** Resuelto. La PWA usa Serwist con política explícita (`src/app/sw.ts`, `src/lib/pwa/cache-policy.ts`) y `clearPrivateCaches` al activarse el service worker (`sw.ts:28`) y al cerrar sesión (`SessionSecurity.tsx:36`). Ver [PWA.md](PWA.md). Texto original:
 
 Archivo: `next.config.ts:13-59`.
 
@@ -73,7 +81,9 @@ Riesgo: con fallback offline/timeout, una misma URL puede devolver contenido de 
 
 Corrección propuesta: `NetworkOnly` para autenticación/OAuth/MCP; decidir si se mantienen datos financieros offline con partición por usuario y limpieza de cachés al salir. Conservar caché de recursos públicos. No desactivar el modo offline financiero sin acordar su comportamiento.
 
-### P1 — Dependencias con avisos de seguridad pendientes
+### P1 — Dependencias con avisos de seguridad pendientes (resuelto)
+
+**Estado:** Resuelto al 2026-10-10. `next-pwa` y las 14 dependencias huérfanas ya no están en `package.json`; el último aviso (`source-map-js`, high) se corrigió con HU-9 y `npm audit --omit=dev` reporta 0 vulnerabilidades. Texto original (39 paquetes, revisión inicial):
 
 `npm audit --omit=dev` devolvió 39 paquetes afectados (4 critical, 27 high, 6 moderate, 2 low), contando dependencias directas y transitivas. No significa 39 vulnerabilidades explotables en esta aplicación.
 
@@ -83,7 +93,9 @@ El árbol del repo no tiene referencias de código a 14 dependencias directas (a
 
 Corrección propuesta: retirar dependencias realmente huérfanas y actualizar Next/NextAuth por separado, con build y smoke de login, MCP y PWA. Referencias de ejemplo: [Next Middleware bypass](https://github.com/advisories/GHSA-26hh-7cqf-hhc6), [NextAuth getToken](https://github.com/advisories/GHSA-xmf8-cvqr-rfgj). El JSON completo del audit se obtuvo durante la revisión; no contiene una prueba de exploitabilidad.
 
-### P2 — Fechas recurrentes y reloj del dashboard
+### P2 — Fechas recurrentes y reloj del dashboard (resuelto)
+
+**Estado:** Resuelto. Día 31 en meses cortos: se cobra el último día del mes y el cron mensual ya no existe ([RECURRING_EXPENSES.md](RECURRING_EXPENSES.md), `20261005_recurring_calendar_tz.sql`). `vercel.json` ya no existe: los cron corren como Schedules de Dokploy en UTC (ver README). Reloj del dashboard: estado reactivo en `src/app/dashboard/page.tsx:27`. `res.ok`: `src/services/budget.ts:9,15,26`. Texto original:
 
 - El generador mensual construye el día directamente; un día 31 en un mes más corto produce una fecha inválida. Solo prepara el mes siguiente y no repara huecos del actual. Su generación no comprueba `fecha_inicio`. Definir política de fin de mes y recuperación antes de modificarlo.
 - `vercel.json` programa `0 1 * * *` / `0 1 1 * *`; no hay zona horaria local declarada. Los comentarios de “1am” no especifican UTC.

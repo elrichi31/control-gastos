@@ -10,16 +10,21 @@ Sistema de gestión de gastos personales desarrollado por **Bethalabs**. Incluye
 - **Estadísticas Detalladas**: Análisis visual de gastos por categoría, período y tendencias
 - **Multi-Usuario**: Autenticación segura con NextAuth.js y Supabase
 - **Filtros Avanzados**: Búsqueda y agrupación por día, semana o mes
+- **Etiquetas en gastos**: ver [docs/EXPENSE_TAGS.md](docs/EXPENSE_TAGS.md)
+- **Compras en el exterior** con impuesto: ver [docs/FOREIGN_TAX.md](docs/FOREIGN_TAX.md)
+- **Importación de movimientos bancarios desde el correo** y sugerencias web: ver [docs/WEB_EXPENSE_SUGGESTIONS.md](docs/WEB_EXPENSE_SUGGESTIONS.md)
+- **PWA instalable** con caché offline controlada: ver [docs/PWA.md](docs/PWA.md)
+- **MCP para ChatGPT**: ver [docs/MCP.md](docs/MCP.md)
 
 ## 🛠️ Tecnologías
 
-- **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS
+- **Frontend**: Next.js 16 (App Router), React 18, TypeScript, Tailwind CSS
 - **UI Components**: shadcn/ui (Radix UI)
 - **Backend**: Next.js API Routes
 - **Base de Datos**: Supabase (PostgreSQL)
 - **Autenticación**: NextAuth.js + Supabase Auth
 - **Automatización**: Schedule diario en Dokploy
-- **Utilidades**: date-fns, react-hot-toast
+- **Utilidades**: date-fns, sonner
 
 ## 📦 Instalación
 
@@ -33,7 +38,7 @@ npm install
 
 # Configurar variables de entorno
 cp .env.example .env.local
-# Editar .env.local con tus credenciales de Supabase
+# Completar .env.local (cada variable indica si es obligatoria u opcional)
 
 # Ejecutar servidor de desarrollo
 npm run dev
@@ -44,19 +49,12 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 ## 🗄️ Configuración de Base de Datos
 
 1. Crea un proyecto en [Supabase](https://supabase.com)
-2. Ejecuta los scripts SQL en orden:
-   - `db/setup-recurring-expenses.sql` - Tablas de gastos recurrentes
-   - `db/add-is-recurrent-field.sql` - Campo de identificación de gastos recurrentes
+2. Aplica en orden, por nombre, las migraciones de `supabase/migrations/` en el SQL Editor
+3. Cada tabla nueva debe activar RLS y revocar `anon`/`authenticated` (ver [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md))
 
 ## ⚙️ Variables de Entorno
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=tu_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_supabase_anon_key
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=tu_secret_generado
-CRON_SECRET=tu_cron_secret
-```
+Todas están en [.env.example](.env.example), agrupadas por bloque (Supabase, NextAuth, Google, sesiones, cron, MCP, correo Yahoo, Jev) e indicando si son obligatorias. Las mínimas para levantar la app: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXTAUTH_URL` y `NEXTAUTH_SECRET`; `CRON_SECRET` para los cron.
 
 El único cron de recurrentes requiere también `SUPABASE_SERVICE_ROLE_KEY` privada y aplicar la migración SQL en Supabase. Guardar una regla no genera un gasto inmediatamente. Ver [modelo, compatibilidad y activación](docs/RECURRING_EXPENSES.md).
 
@@ -143,7 +141,14 @@ npm run dev
 # Build de producción
 npm run build
 
-# Ejecutar linter
+# Servidor de producción
+npm run start
+
+# Pruebas y tipos
+npm test
+npm run typecheck
+
+# Linter
 npm run lint
 ```
 
