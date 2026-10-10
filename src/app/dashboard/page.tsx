@@ -17,7 +17,7 @@ import { StatTile, StatTileRow } from "@/components/stats/stat-tile"
 import { formatMoney } from "@/lib/utils"
 import { getDaysInMonth, differenceInCalendarDays } from "date-fns"
 import { MonthPlanning, MonthPlanningSummary } from "@/components/dashboard/MonthPlanning"
-import { buildMonthPlan } from "@/lib/month-planning"
+import { buildMonthPlan, categoryUsage } from "@/lib/month-planning"
 import { fetchBudgetsForMonthPlan } from "@/services/budget-general"
 import { fetchBudgetCategoriesForMonthPlan } from "@/services/budget-details"
 import { fetchRecurringPlan } from "@/services/recurring-expenses"
@@ -151,27 +151,14 @@ export default function DashboardPage() {
     const categoryProgress = useMemo(() => {
         if (budgetCategories.length === 0) return []
 
-        const categoryTotals: Record<number, number> = {}
-        currentMonthExpenses.forEach(g => {
-            categoryTotals[g.categoria_id] = (categoryTotals[g.categoria_id] || 0) + g.monto
-        })
-
-        return budgetCategories.map(cat => {
-            // El presupuesto por categoría es la suma de los movimientos (gastos presupuestados)
-            const presupuestado = cat.movimientos?.reduce((sum: number, mov: any) => {
-                const monto = typeof mov.monto === "string" ? parseFloat(mov.monto) : mov.monto || 0
-                return sum + monto
-            }, 0) || 0
-
-            return {
-                id: cat.categoria_id,
-                nombre: cat.categoria.nombre,
-                icono: cat.categoria.icono || '📊',
-                gastado: categoryTotals[cat.categoria_id] || 0,
-                presupuestado: presupuestado
-            }
-        })
-    }, [budgetCategories, currentMonthExpenses])
+        return categoryUsage(budgetCategories, currentMonthExpenses, monthKey).map(cat => ({
+            id: cat.categoria_id,
+            nombre: cat.nombre,
+            icono: cat.icono || '📊',
+            gastado: cat.gastado,
+            presupuestado: cat.presupuestado
+        }))
+    }, [budgetCategories, currentMonthExpenses, monthKey])
 
     // Ranking por categoría del mes contra el mes anterior (mismo formato que Estadísticas).
     const categoryRanking = useMemo(() => {

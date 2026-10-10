@@ -13,13 +13,32 @@ import { formatMoney } from '@/lib/utils'
 import { parseExpenseTags } from '@/lib/expense-tags'
 import { getCategoriaColor } from '@/lib/constants'
 import { createExpense } from "@/services/expenses"
+import { fetchBudgetsByYear } from "@/services/budget-general"
+import { fetchPresupuestoCategorias } from "@/services/budget"
+import { budgetCrossing, categoryUsage } from "@/lib/month-planning"
 import { fetchCategories, type Category } from "@/services/categories"
 import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
 import { predictExpenseSelection, resolveExpenseSelection, type SuggestionHistory } from "@/lib/expense-suggestions"
 
 const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0]
 
-export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: () => void | Promise<void>; history?: readonly SuggestionHistory[] }) {
+/** Avisa si el gasto recién guardado cruza el 80% o el 100% del presupuesto de su categoría. Es solo una ayuda: nunca falla visiblemente. */
+async function warnBudgetCrossing(saved: { categoryId: number; date: string; total: number }, expenses: readonly { categoria_id: number; monto: number; fecha: string }[]) {
+  try {
+    const year = Number(saved.date.slice(0, 4)), month = Number(saved.date.slice(5, 7))
+    const budget = (await fetchBudgetsByYear(String(year), false)).find(b => b.anio === year && b.mes === month)
+    if (!budget) return
+    const category = categoryUsage(await fetchPresupuestoCategorias(String(budget.id)), expenses, saved.date.slice(0, 7)).find(c => c.categoria_id === saved.categoryId)
+    if (!category) return
+    // ponytail: `expenses` es la lista previa al guardado; dos guardados antes de que refresque pueden saltarse un aviso.
+    const after = category.gastado + saved.total
+    const crossing = budgetCrossing(category.gastado, after, category.presupuestado)
+    if (crossing === 'near') toast.warning(`Llevas el ${Math.round(after / category.presupuestado * 100)}% del presupuesto de ${category.nombre} (${formatMoney(after)} de ${formatMoney(category.presupuestado)}).`)
+    else if (crossing === 'exceeded') toast.warning(`Te pasaste del presupuesto de ${category.nombre} por ${formatMoney(after - category.presupuestado)}.`)
+  } catch { /* el aviso es opcional */ }
+}
+
+export function ExpenseForm({ fetchExpenses, history = [], expenses = [] }: { fetchExpenses: () => void | Promise<void>; history?: readonly SuggestionHistory[]; expenses?: readonly { categoria_id: number; monto: number; fecha: string }[] }) {
   const [formData, setFormData] = useState({ description: "", amount: "", categoryId: "", date: today(), paymentMethodId: "", tags: "" })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const submitting = useRef(false)
@@ -99,9 +118,10 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
     const another = (event.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'another'
     submitting.current = true
     setIsSubmitting(true)
+    const saved = { categoryId: parseInt(selection.categoryId), date: formData.date, total: computeForeignTax(amount, foreignTax).total }
     try {
       // Con "Compra en el exterior" se guarda el total que cobró el banco, impuestos incluidos.
-      await createExpense({ descripcion: formData.description.trim(), monto: computeForeignTax(amount, foreignTax).total, categoria_id: parseInt(selection.categoryId), fecha: formData.date, metodo_pago_id: parseInt(selection.paymentMethodId), is_recurrent: false, tags: withForeignTag(tags, foreignTax), impuesto_exterior: storedForeignTax(amount, foreignTax) })
+      await createExpense({ descripcion: formData.description.trim(), monto: saved.total, categoria_id: parseInt(selection.categoryId), fecha: formData.date, metodo_pago_id: parseInt(selection.paymentMethodId), is_recurrent: false, tags: withForeignTag(tags, foreignTax), impuesto_exterior: storedForeignTax(amount, foreignTax) })
     } catch (error) {
       console.error("Error al agregar gasto:", error)
       setSubmitError("No se pudo guardar el gasto. Tus datos siguen aquí; vuelve a intentar.")
@@ -114,6 +134,7 @@ export function ExpenseForm({ fetchExpenses, history = [] }: { fetchExpenses: ()
     if (!another) setForeignTax(emptyForeignTax())
     setErrors({})
     toast.success("Gasto guardado")
+    void warnBudgetCrossing(saved, expenses)
     if (another) requestAnimationFrame(() => amountRef.current?.focus())
     try { await fetchExpenses() } catch (error) {
       console.error("Error al actualizar gastos:", error)
