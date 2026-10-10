@@ -4,19 +4,18 @@ import { useEffect, useState } from "react"
 import { formatDistanceToNowStrict } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
+import { fetchCronRuns, type CronRun } from "@/services/cron"
 
-type Run = { job: string; ran_at: string; ok: boolean; nuevos?: number }
 const LABELS: Record<string, string> = { "sync-email": "Correo", "recurring-expenses": "Recurrentes" }
 
 /** Última corrida de cada cron, para saber si la sincronización automática está viva. */
 export function CronStatus() {
-  const [runs, setRuns] = useState<Run[] | null>(null)
+  const [runs, setRuns] = useState<CronRun[] | null>(null)
 
   useEffect(() => {
     let alive = true
-    const load = () => fetch("/api/cron/status", { cache: "no-store" })
-      .then(r => (r.ok ? r.json() : null))
-      .then(body => { if (alive && Array.isArray(body?.runs)) setRuns(body.runs) })
+    const load = () => fetchCronRuns()
+      .then(runs => { if (alive) setRuns(runs) })
       .catch(() => {})
     void load()
     // El cron de correo corre cada 30 min; refrescar cada 5 basta.

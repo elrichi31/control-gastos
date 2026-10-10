@@ -3,7 +3,8 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const React = require('react')
 const { renderToStaticMarkup } = require('react-dom/server')
-const { ProjectionPanel, fetchExpenseForecast } = require('../src/components/stats/projection-panel.tsx')
+const { ProjectionPanel } = require('../src/components/stats/projection-panel.tsx')
+const { fetchExpenseForecast } = require('../src/services/stats.ts')
 const { buildExpenseForecast } = require('../src/lib/expense-forecast.ts')
 
 test('carga privada sin caché y rechaza HTTP fallido y respuestas incompletas', async () => {

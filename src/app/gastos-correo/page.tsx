@@ -12,6 +12,8 @@ import { getSessionEmailReviewQueue, type ReviewJob } from '@/lib/email-review-q
 import { REVIEW_PAGE_SIZE as PAGE_SIZE } from '@/lib/email-review-page'
 import { ForeignTaxInline } from '@/components/gastos/ForeignTaxField'
 import { computeForeignTax, emptyForeignTax, validateForeignTax, type ForeignTaxState } from '@/lib/foreign-tax'
+import { fetchCategories } from '@/services/categories'
+import { fetchEmailImportPage, saveEmailAlias, syncEmailImport, updateEmailImport } from '@/services/email-import'
 import styles from './review.module.css'
 
 type Gasto = { id: number; descripcion: string; monto: number; fecha: string; categoria?: { nombre: string } | null }
@@ -21,7 +23,6 @@ type Categoria = { id: number; nombre: string }
 type Tab = 'nuevos' | 'duplicados' | 'recibidos'
 type PageMeta = { counts: Record<Tab, number>; total: number; page: number; pages: number }
 const tabOf = (p: Pendiente, otros: Set<number>): Tab => p.tipo === 'ingreso' ? 'recibidos' : p.coincidencias.length && !otros.has(p.id) ? 'duplicados' : 'nuevos'
-const API = '/api/email-import/yahoo'
 const money = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' })
 const selectClass = 'h-11 w-full min-w-0 rounded-lg border border-input bg-card px-2.5 text-base shadow-xs dark:[color-scheme:dark] focus-visible:outline-2 focus-visible:outline-ring sm:h-8 sm:text-[13px]'
 const half = (n: number) => Math.round(n * 50) / 100
@@ -59,18 +60,15 @@ export default function EmailExpensesPage() {
   const load = useCallback(async () => {
     const version = ++loadVersion.current
     const { tab, page, query, otros } = params.current
-    const url = `${API}?${new URLSearchParams({ tab, page: String(page), ...(query ? { q: query } : {}), ...(otros.size ? { otros: [...otros].join(',') } : {}) })}`
     setLoading(true)
     try {
-      const response = await fetch(url, { cache: 'no-store' })
-      const body = await response.json().catch(() => null)
-      if (!response.ok || !body || !Array.isArray(body.pendientes)) throw new Error(body?.error || 'No se pudieron cargar los movimientos.')
+      const body = await fetchEmailImportPage<Pendiente>({ tab, page, query, otros })
       if (!mounted.current || version !== loadVersion.current) return
       setEnabled(body.enabled === true)
       setPendientes(body.pendientes)
       setMeta(body.counts ? { counts: body.counts, total: body.total, page: body.page, pages: body.pages } : null)
       if (body.page && body.page !== page) setPage(body.page)
-      const available = new Set<number>(body.pendientes.map((p: Pendiente) => p.id))
+      const available = new Set<number>(body.pendientes.map(p => p.id))
       setSelected(prev => new Set([...prev].filter(id => available.has(id))))
       setLoadError('')
     } catch (cause) {
@@ -97,7 +95,7 @@ export default function EmailExpensesPage() {
 
   useEffect(() => {
     mounted.current = true
-    fetch('/api/categorias').then(r => { if (!r.ok) throw new Error(); return r.json() }).then(data => {
+    fetchCategories().then(data => {
       if (mounted.current) setCategorias(Array.isArray(data) ? data : [])
     }).catch(() => { if (mounted.current) setMessage('No se cargaron las categorías. Recarga antes de aceptar gastos.') })
     return () => { mounted.current = false }
@@ -147,9 +145,7 @@ export default function EmailExpensesPage() {
     const alias = aliasDraft(p).trim()
     setAliasSaving(p.destinatario)
     try {
-      const response = await fetch(API, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id, alias }) })
-      const body = await response.json().catch(() => null)
-      if (!response.ok || body?.destinatario !== p.destinatario || body?.alias !== alias) throw new Error(body?.error || 'No se pudo confirmar el alias.')
+      await saveEmailAlias(p.id, alias, p.destinatario)
       if (!mounted.current) return
       ++loadVersion.current
       setPendientes(prev => prev.map(row => row.destinatario === p.destinatario ? { ...row, alias, descripcion: alias || row.descripcion_original || row.descripcion } : row))
@@ -166,10 +162,7 @@ export default function EmailExpensesPage() {
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), 120000)
       try {
-        const response = await fetch(API, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: controller.signal })
-        const body = await response.json().catch(() => null)
-        if (!response.ok) throw new Error(body?.error || 'No se pudo confirmar el guardado. Revisa antes de reintentar.')
-        if (body?.[countKey] !== 1) throw new Error('El movimiento ya cambió. Actualizaremos la lista; no se confirmó una nueva operación.')
+        await updateEmailImport(payload, countKey, controller.signal)
       } finally { clearTimeout(timeout) }
     } })
     if (added) {
@@ -185,9 +178,7 @@ export default function EmailExpensesPage() {
     setSyncing(true); setMessage('')
     const id = toast.loading('Buscando movimientos nuevos…')
     try {
-      const response = await fetch(API, { method: 'POST' })
-      const body = await response.json().catch(() => null)
-      if (!response.ok) throw new Error(body?.error || 'No se pudo sincronizar.')
+      const body = await syncEmailImport()
       toast.success(body.nuevos ? `${body.nuevos} movimientos nuevos.` : 'No hay movimientos nuevos.', { id })
       await load()
     } catch (cause) { toast.error((cause as Error).message || 'No se pudo conectar.', { id }) }

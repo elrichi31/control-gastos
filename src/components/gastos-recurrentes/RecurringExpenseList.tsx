@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table"
 import { Trash2, Repeat, Edit, Plus, SkipForward, Sparkles } from "lucide-react"
 import { GastoRecurrente, MESES, costoAnual } from "@/types/recurring-expense"
-import { fetchRecurringExpenses, deleteRecurringExpense, updateRecurringExpense, createRecurringExpense } from "@/services/recurring-expenses"
+import { fetchRecurringExpenses, deleteRecurringExpense, updateRecurringExpense, createRecurringExpense, fetchRecurringPrices, fetchRecurringPlan, skipRecurringCharge } from "@/services/recurring-expenses"
 import { fetchExpenses } from "@/services/expenses"
 import { detectSubscriptions, type DetectorExpense, type SubscriptionSuggestion } from "@/lib/subscription-detector"
 import type { PriceChange } from "@/lib/recurring-actions"
@@ -58,8 +58,7 @@ export function RecurringExpenseList() {
 
   // Optional extras: the list still works if they fail or their migration is missing.
   const loadPrices = () =>
-    fetch("/api/gastos-recurrentes/precios", { cache: "no-store" })
-      .then(r => (r.ok ? r.json() : []))
+    fetchRecurringPrices()
       .then(d => { if (Array.isArray(d)) setPrices(d) })
       .catch(() => {})
   const loadManualExpenses = () =>
@@ -72,9 +71,8 @@ export function RecurringExpenseList() {
 
   // The public recurring API hides scheduling state (mobile contract); the web-only plan endpoint exposes it.
   const loadNextDates = () =>
-    fetch(`/api/dashboard/recurring-plan?month=${format(new Date(), "yyyy-MM")}`, { cache: "no-store" })
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (d && Array.isArray(d.rules)) setNextDates(Object.fromEntries(d.rules.map((r: { id: number; proxima_fecha?: string | null }) => [r.id, r.proxima_fecha ?? null]))) })
+    fetchRecurringPlan(format(new Date(), "yyyy-MM"))
+      .then(d => { if (d && Array.isArray(d.rules)) setNextDates(Object.fromEntries(d.rules.map(r => [r.id, r.proxima_fecha ?? null]))) })
       .catch(() => {})
 
   const loadData = async () => {
@@ -108,9 +106,7 @@ export function RecurringExpenseList() {
     const target = skipTarget
     setSkipTarget(null)
     try {
-      const res = await fetch(`/api/gastos-recurrentes/${target.id}/saltar`, { method: "POST" })
-      const body = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(body.error || "No se pudo saltar el cobro")
+      const body = await skipRecurringCharge(target.id)
       loadNextDates()
       toast.success(`Se omitió el cobro del ${format(parseISO(body.omitida), "d MMM", { locale: es })} de ${target.descripcion}`)
     } catch (error) {

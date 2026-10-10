@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { PageTitle } from '@/components/layout/PageTitle'
 import { ModeToggle } from '@/components/layout/mode-toggle'
 import { Eye, EyeOff, Wallet } from 'lucide-react'
+import { registerUser } from '@/services/auth'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -51,22 +52,12 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          password: formData.password,
-        }),
+      const data = await registerUser({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
       })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al crear la cuenta')
-      }
 
       if (typeof data.needsEmailConfirmation !== 'boolean') throw new Error('Respuesta de registro inválida')
       setSuccess(data.message || (data.needsEmailConfirmation

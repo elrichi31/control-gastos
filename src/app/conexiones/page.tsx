@@ -7,7 +7,7 @@ import { PageTitle } from '@/components/layout/PageTitle'
 import { Button } from '@/components/ui/button'
 import { McpStatusCard } from '@/components/conexiones/McpStatusCard'
 import { SessionSecurity } from '@/components/conexiones/SessionSecurity'
-import { isMcpStatus, type McpStatus } from '@/services/mcp-status'
+import { fetchMcpStatus, type McpStatus } from '@/services/mcp-status'
 
 export default function ConnectionsPage() {
   const [status, setStatus] = useState<McpStatus | null>(null)
@@ -20,9 +20,7 @@ export default function ConnectionsPage() {
     setLoading(true); setStatus(null); setError(''); setCopyMessage('')
     async function load() {
       try {
-        const response = await fetch('/api/mcp/status', { cache: 'no-store', signal: controller.signal })
-        const body: unknown = await response.json()
-        if (!isMcpStatus(body) || (!response.ok && !(response.status === 503 && body.state === 'unavailable'))) throw new Error('Status unavailable')
+        const body = await fetchMcpStatus(controller.signal)
         if (!controller.signal.aborted) setStatus(body)
       } catch {
         if (!controller.signal.aborted) setError('No se pudo verificar MCP. Intenta nuevamente.')

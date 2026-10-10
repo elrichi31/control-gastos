@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, Inbox } from "lucide-react"
+import { fetchEmailImportPending } from "@/services/email-import"
 
 /** Avisa cuántos movimientos del correo esperan revisión. Solo aparece si hay alguno. */
 export function EmailPendingBanner() {
@@ -10,9 +11,8 @@ export function EmailPendingBanner() {
 
   useEffect(() => {
     let alive = true
-    fetch("/api/email-import/yahoo?resumen=1", { cache: "no-store" })
-      .then(r => (r.ok ? r.json() : null))
-      .then(body => { if (alive && body?.enabled && typeof body.total === "number") setTotal(body.total) })
+    fetchEmailImportPending()
+      .then(pending => { if (alive && pending !== null) setTotal(pending) })
       .catch(() => {})
     return () => { alive = false }
   }, [])

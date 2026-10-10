@@ -4,14 +4,9 @@ import { useState } from 'react'
 import { Bot, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-
-type Connection = { id: string; created_at: string; expires_at: string; scopes: string[] | null }
+import { fetchMcpConnections, revokeMcpConnection, type McpConnection as Connection } from '@/services/mcp-status'
 
 const formatDate = (value: string) => new Date(value).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
-
-function isConnections(value: unknown): value is { connections: Connection[] } {
-  return Boolean(value && typeof value === 'object' && Array.isArray((value as Record<string, unknown>).connections))
-}
 
 export function McpConnectionsDialog({ onChanged }: { onChanged: () => void }) {
   const [open, setOpen] = useState(false)
@@ -24,18 +19,14 @@ export function McpConnectionsDialog({ onChanged }: { onChanged: () => void }) {
   async function load() {
     setConnections(null); setError(''); setConfirming(null)
     try {
-      const response = await fetch('/api/mcp/connections', { cache: 'no-store', headers: { Accept: 'application/json' } })
-      const body: unknown = await response.json()
-      if (!response.ok || !isConnections(body)) throw new Error('Invalid connections')
-      setConnections(body.connections)
+      setConnections(await fetchMcpConnections())
     } catch { setError('No se pudieron cargar las conexiones. Intenta nuevamente.') }
   }
 
   async function revoke(id: string) {
     setBusy(id); setError('')
     try {
-      const response = await fetch('/api/mcp/connections', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grant_id: id }) })
-      if (!response.ok) throw new Error('Revocation failed')
+      await revokeMcpConnection(id)
       setConnections(list => list?.filter(c => c.id !== id) ?? null)
       setChanged(true)
     } catch { setError('No se pudo revocar el acceso. Intenta nuevamente.') }

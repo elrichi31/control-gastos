@@ -1,4 +1,5 @@
 // src/services/budget-general.ts
+import { MONTH_PLAN_ERROR } from './recurring-expenses'
 
 export interface BudgetMonth {
   id: number
@@ -180,4 +181,11 @@ export async function fetchAvailableYears(): Promise<number[]> {
     const currentYear = new Date().getFullYear()
     return [currentYear, currentYear + 1]
   }
+}
+
+/** Presupuestos del año para el plan del mes del dashboard. */
+export async function fetchBudgetsForMonthPlan(year: number, signal: AbortSignal): Promise<unknown> {
+  const response = await fetch(`/api/presupuestos?anio=${year}`, { signal, cache: 'no-store' })
+  if (!response.ok) throw new Error(MONTH_PLAN_ERROR)
+  return response.json()
 }

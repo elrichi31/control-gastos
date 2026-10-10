@@ -18,6 +18,9 @@ import { formatMoney } from "@/lib/utils"
 import { getDaysInMonth, differenceInCalendarDays } from "date-fns"
 import { MonthPlanning, MonthPlanningSummary } from "@/components/dashboard/MonthPlanning"
 import { buildMonthPlan } from "@/lib/month-planning"
+import { fetchBudgetsForMonthPlan } from "@/services/budget-general"
+import { fetchBudgetCategoriesForMonthPlan } from "@/services/budget-details"
+import { fetchRecurringPlan } from "@/services/recurring-expenses"
 import type { PlanningRule } from "@/lib/month-planning"
 import { CategoryRanking } from "@/components/stats/category-ranking"
 import { EmailPendingBanner } from "@/components/dashboard/EmailPendingBanner"
@@ -62,18 +65,13 @@ export default function DashboardPage() {
             setRules([])
             setRecurringLinks({})
             try {
-                const read = async (url: string) => {
-                    const response = await fetch(url, { signal: controller.signal, cache: 'no-store' })
-                    if (!response.ok) throw new Error('No se pudo cargar el plan del mes. Verifica el presupuesto y la migración de recurrentes e intenta de nuevo.')
-                    return response.json()
-                }
                 const [budgets, recurring] = await Promise.all([
-                    read(`/api/presupuestos?anio=${currentDate.getFullYear()}`),
-                    read(`/api/dashboard/recurring-plan?month=${monthKey}`),
+                    fetchBudgetsForMonthPlan(currentDate.getFullYear(), controller.signal),
+                    fetchRecurringPlan(monthKey, controller.signal),
                 ])
                 if (!Array.isArray(budgets) || !Array.isArray(recurring.rules) || !Array.isArray(recurring.links)) throw new Error('La respuesta del plan del mes no es válida.')
                 const budget = budgets.find((b: any) => Number(b.mes) === currentDate.getMonth() + 1 && Number(b.anio) === currentDate.getFullYear())
-                const categories = budget ? await read(`/api/presupuesto-mensual-detalle?presupuesto_mensual_id=${budget.id}`) : []
+                const categories = budget ? await fetchBudgetCategoriesForMonthPlan(budget.id, controller.signal) : []
                 if (!Array.isArray(categories) || (budget && !Number.isFinite(Number(budget.total)))) throw new Error('El presupuesto del mes no es válido.')
                 if (controller.signal.aborted) return
                 setBudgetTotal(budget ? Number(budget.total) : undefined)

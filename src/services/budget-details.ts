@@ -1,4 +1,5 @@
 // Servicio para operaciones específicas del detalle de presupuesto
+import { MONTH_PLAN_ERROR } from "@/services/recurring-expenses"
 import { 
   PresupuestoCategoriaDetalle, 
   CategoriaDB, 
@@ -111,4 +112,11 @@ export const calculateTotalGastosRegistrados = (presupuestoCategorias: Presupues
     if (!Array.isArray(cat.movimientos)) return count
     return count + cat.movimientos.length
   }, 0)
+}
+
+/** Categorías del presupuesto del mes para el plan del dashboard. */
+export const fetchBudgetCategoriesForMonthPlan = async (budgetId: number | string, signal: AbortSignal): Promise<unknown> => {
+  const response = await fetch(`/api/presupuesto-mensual-detalle?presupuesto_mensual_id=${budgetId}`, { signal, cache: 'no-store' })
+  if (!response.ok) throw new Error(MONTH_PLAN_ERROR)
+  return response.json()
 }
