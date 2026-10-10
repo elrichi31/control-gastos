@@ -1,20 +1,9 @@
 import { useEffect, useState, useCallback } from "react"
 import { DEFAULT_METODO_PAGO } from "@/lib/constants"
-import type { StoredForeignTax } from "@/lib/foreign-tax"
+import type { Gasto } from "@/types"
 import { fetchExpenses, deleteExpense } from "@/services/expenses"
 
-export interface Gasto {
-  id: number
-  descripcion: string
-  monto: number
-  fecha: string // "2025-07-15"
-  categoria_id: number
-  categoria: { id: number; nombre: string }
-  metodo_pago?: { id: number; nombre: string }
-  is_recurrent?: boolean
-  tags?: string[]
-  impuesto_exterior?: StoredForeignTax | null
-}
+export type { Gasto } from "@/types"
 
 export function useGastosFiltrados() {
   const [gastos, setGastos] = useState<Gasto[]>([])

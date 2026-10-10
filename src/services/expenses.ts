@@ -13,18 +13,8 @@ export interface CreateExpenseData {
   impuesto_exterior?: StoredForeignTax | null
 }
 
-export interface Expense {
-  id: number
-  descripcion: string
-  monto: number
-  fecha: string
-  categoria_id: number
-  categoria: { id: number; nombre: string }
-  metodo_pago?: { id: number; nombre: string }
-  is_recurrent?: boolean
-  tags?: string[]
-  impuesto_exterior?: StoredForeignTax | null
-}
+import type { Expense } from '@/types'
+export type { Expense }
 
 /**
  * Obtiene todos los gastos

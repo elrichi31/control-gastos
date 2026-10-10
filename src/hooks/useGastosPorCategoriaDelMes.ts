@@ -1,14 +1,6 @@
 import { useEffect, useState } from "react"
 import { fetchExpenses } from "@/services/expenses"
-
-interface Gasto {
-  id: number
-  descripcion: string
-  monto: number
-  fecha: string // "2025-07-15"
-  categoria_id: number
-  categoria: { id: number; nombre: string }
-}
+import type { Gasto } from "@/types"
 
 export function useGastosPorCategoriaDelMes(mes: number, anio: number) {
   const [gastos, setGastos] = useState<Gasto[]>([])

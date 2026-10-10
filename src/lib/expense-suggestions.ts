@@ -4,7 +4,7 @@ export type SuggestionHistory = {
   categoria_id?: number | null
   metodo_pago_id?: number | null
   categoria?: { id: number }
-  metodo_pago?: { id: number }
+  metodo_pago?: { id: number } | null
 }
 const EMPTY: ExpenseSelection = { categoryId: '', paymentMethodId: '' }
 const STOP_WORDS = new Set(['de', 'del', 'la', 'las', 'el', 'los', 'en', 'con', 'y', 'para', 'por', 'un', 'una'])

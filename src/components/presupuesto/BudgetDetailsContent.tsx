@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import CategoriaRow from "@/components/presupuesto/CategoriaRow"
 import { PresupuestoCategoriaDetalle, CategoriaDB } from "@/lib/constants"
+import type { MovimientoPresupuesto } from "@/types"
 
 interface BudgetDetailsContentProps {
   // Datos
@@ -22,8 +23,8 @@ interface BudgetDetailsContentProps {
   onCopyFromPreviousMonth: () => void
 
   // Funciones de gastos
-  onEditExpense: (expense: any, categoryId: number) => void
-  onDeleteExpense: (expense: any) => void
+  onEditExpense: (expense: MovimientoPresupuesto, categoryId: number) => void
+  onDeleteExpense: (expense: MovimientoPresupuesto) => void
   onAddExpenseClick: (categoryId: number) => void
 
   // Funciones de cálculo

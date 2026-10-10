@@ -28,6 +28,7 @@ import {
   AddBudgetExpenseData,
   UpdateBudgetExpenseData
 } from "@/services/budget-details"
+import type { MovimientoPresupuesto } from "@/types"
 
 export const useBudgetDetailsData = (presupuestoId: string) => {
   // Estados principales
@@ -256,7 +257,7 @@ export const useBudgetDetailsData = (presupuestoId: string) => {
     })
   }
 
-  const prepareEditExpense = (expense: any, categoryId: number) => {
+  const prepareEditExpense = (expense: MovimientoPresupuesto, categoryId: number) => {
     setEditingExpense({ expense, categoryId })
     setFormData({
       name: expense.descripcion,
@@ -268,7 +269,7 @@ export const useBudgetDetailsData = (presupuestoId: string) => {
     })
   }
 
-  const prepareDeleteExpense = (expense: any) => {
+  const prepareDeleteExpense = (expense: MovimientoPresupuesto) => {
     setExpenseToDelete({ id: expense.id, descripcion: expense.descripcion })
   }
 

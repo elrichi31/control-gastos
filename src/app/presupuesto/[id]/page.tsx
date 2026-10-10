@@ -12,6 +12,7 @@ import { BudgetSummary } from "@/components/presupuesto/BudgetSummary"
 import { useBudgetDetailsData } from "@/hooks/useBudgetDetailsData"
 import { useBudgetCalculations } from "@/hooks/useBudgetCalculations"
 import { useGastosPorCategoriaDelMes } from "@/hooks/useGastosPorCategoriaDelMes"
+import type { MovimientoPresupuesto } from "@/types"
 
 export default function BudgetPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -45,7 +46,7 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
   }
 
   // Manejo de editar gasto
-  const handleEditExpense = (expense: any, categoryId: number) => {
+  const handleEditExpense = (expense: MovimientoPresupuesto, categoryId: number) => {
     budgetData.prepareEditExpense(expense, categoryId)
     setIsExpenseDialogOpen(true)
   }
