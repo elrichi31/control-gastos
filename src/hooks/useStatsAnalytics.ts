@@ -4,7 +4,7 @@ import { useMemo } from "react"
 import {
   startOfMonth, endOfMonth, startOfYear, endOfYear,
   subMonths, subYears, differenceInCalendarDays, addDays,
-  isSameDay, getDate, getDaysInMonth, format,
+  isSameDay, getDate, getDaysInMonth, format, endOfDay,
 } from "date-fns"
 import { es } from "date-fns/locale"
 import { toDateWithTime } from "@/lib/utils"
@@ -95,7 +95,7 @@ export function useStatsAnalytics(gastos: any[], filtros: FilterOptions, filtere
     // En un período en curso solo han transcurrido algunos días: usarlos como
     // denominador evita que el promedio diario parezca artificialmente bajo.
     const diasTranscurridos = rango
-      ? (enCurso ? differenceInCalendarDays(hoy, rango.desde) + 1 : diasDelRango)
+      ? Math.max(0, Math.min(diasDelRango, differenceInCalendarDays(hoy, rango.desde) + 1))
       : 0
 
     // Los gráficos muestran el período previo COMPLETO (sirve de referencia de
@@ -105,7 +105,7 @@ export function useStatsAnalytics(gastos: any[], filtros: FilterOptions, filtere
     const gastosPreviosCompletos = enRango(previo)
     const previoComparable: Rango | null = previo
       ? (enCurso
-          ? { desde: previo.desde, hasta: addDays(previo.desde, diasTranscurridos - 1) }
+          ? { desde: previo.desde, hasta: new Date(Math.min(previo.hasta.getTime(), endOfDay(addDays(previo.desde, diasTranscurridos - 1)).getTime())) }
           : previo)
       : null
     const gastosPrevios = previoComparable
@@ -130,7 +130,7 @@ export function useStatsAnalytics(gastos: any[], filtros: FilterOptions, filtere
       : 0
     const promedioDiarioPrevio = diasPreviosComparables > 0 ? totalPrevio / diasPreviosComparables : 0
 
-    const hayComparacion = previo !== null && gastosPrevios.length > 0
+    const hayComparacion = previo !== null && diasTranscurridos > 0 && gastosPrevios.length > 0
 
     const kpis = {
       total,
@@ -183,7 +183,7 @@ export function useStatsAnalytics(gastos: any[], filtros: FilterOptions, filtere
       const agruparPorDia = filtros.filterType === "year-month" || diasDelRango <= 62
 
       if (agruparPorDia) {
-        const puntos: { etiqueta: string; actual: number; previo: number | null }[] = []
+        const puntos: { etiqueta: string; actual: number | null; previo: number | null }[] = []
         for (let i = 0; i < diasDelRango; i++) {
           const dia = addDays(rango.desde, i)
           const delDia = gastosActuales.filter(g => isSameDay(toDateWithTime(g.fecha), dia))
@@ -196,7 +196,7 @@ export function useStatsAnalytics(gastos: any[], filtros: FilterOptions, filtere
           }
           puntos.push({
             etiqueta: filtros.filterType === "year-month" ? String(getDate(dia)) : format(dia, "d MMM", { locale: es }),
-            actual: suma(delDia),
+            actual: i < diasTranscurridos ? suma(delDia) : null,
             previo: previoDia,
           })
         }
@@ -204,20 +204,24 @@ export function useStatsAnalytics(gastos: any[], filtros: FilterOptions, filtere
       }
 
       // Rangos largos: por mes
-      const meses: { etiqueta: string; actual: number; previo: number | null }[] = []
-      const cursor = new Date(rango.desde)
+      const meses: { etiqueta: string; actual: number | null; previo: number | null }[] = []
+      const cursor = startOfMonth(rango.desde)
       while (cursor <= rango.hasta) {
         const ini = startOfMonth(cursor)
         const fin = endOfMonth(cursor)
         const delMes = gastosActuales.filter(g => { const d = toDateWithTime(g.fecha); return d >= ini && d <= fin })
-        const iniPrevio = previo ? startOfMonth(subYears(ini, 1)) : null
-        const finPrevio = previo ? endOfMonth(subYears(ini, 1)) : null
+        const iniPrevio = previo ? (filtros.filterType === "custom"
+          ? addDays(previo.desde, Math.max(0, differenceInCalendarDays(ini, rango.desde)))
+          : startOfMonth(subYears(ini, 1))) : null
+        const finPrevio = previo ? (filtros.filterType === "custom"
+          ? endOfDay(addDays(previo.desde, differenceInCalendarDays(fin > rango.hasta ? rango.hasta : fin, rango.desde)))
+          : endOfMonth(subYears(ini, 1))) : null
         const delMesPrevio = iniPrevio && finPrevio
           ? suma(gastosPreviosCompletos.filter(g => { const d = toDateWithTime(g.fecha); return d >= iniPrevio && d <= finPrevio }))
           : null
         meses.push({
-          etiqueta: format(ini, "MMM", { locale: es }),
-          actual: suma(delMes),
+          etiqueta: format(ini, filtros.filterType === "custom" ? "MMM yy" : "MMM", { locale: es }),
+          actual: ini <= hoy ? suma(delMes) : null,
           previo: delMesPrevio,
         })
         cursor.setMonth(cursor.getMonth() + 1)
@@ -230,11 +234,11 @@ export function useStatsAnalytics(gastos: any[], filtros: FilterOptions, filtere
       let a = 0
       let p = 0
       return evolucion.map(punto => {
-        a += punto.actual
+        if (punto.actual !== null) a += punto.actual
         if (punto.previo !== null) p += punto.previo
         return {
           etiqueta: punto.etiqueta,
-          actual: a,
+          actual: punto.actual !== null ? a : null,
           previo: punto.previo !== null ? p : null,
         }
       })
@@ -265,6 +269,21 @@ export function useStatsAnalytics(gastos: any[], filtros: FilterOptions, filtere
         }))
         .sort((a, b) => b.total - a.total)
     })()
+
+    // Incluye categorías que desaparecieron: también explican una bajada del total.
+    const cambiosCategoria = hayComparacion ? (() => {
+      const map = new Map<string, { nombre: string; actual: number; previo: number; diferencia: number }>()
+      for (const [items, campo] of [[gastosActuales, "actual"], [gastosPrevios, "previo"]] as const) {
+        items.forEach(g => {
+          const nombre = g.categoria?.nombre ?? "Sin categoría"
+          const row = map.get(nombre) ?? { nombre, actual: 0, previo: 0, diferencia: 0 }
+          row[campo] += g.monto
+          map.set(nombre, row)
+        })
+      }
+      return [...map.values()].map(c => ({ ...c, diferencia: c.actual - c.previo }))
+        .sort((a, b) => Math.abs(b.diferencia) - Math.abs(a.diferencia))
+    })() : []
 
     // ---------- Métodos de pago (dato que no se estaba usando) ----------
     const porMetodoPago = (() => {
@@ -334,7 +353,51 @@ export function useStatsAnalytics(gastos: any[], filtros: FilterOptions, filtere
     ).size
     const diasSinGasto = Math.max(0, diasTranscurridos - diasConGasto)
 
+    // Resúmenes interpretables; las semanas son bloques de 7 días desde el inicio.
+    const porDia = new Map<string, { fecha: string; total: number; conteo: number }>()
+    const porTamano = [
+      { etiqueta: "Hasta $10", limite: 10, total: 0, conteo: 0, porcentaje: 0 },
+      { etiqueta: "$10–$50", limite: 50, total: 0, conteo: 0, porcentaje: 0 },
+      { etiqueta: "$50–$100", limite: 100, total: 0, conteo: 0, porcentaje: 0 },
+      { etiqueta: "Más de $100", limite: Infinity, total: 0, conteo: 0, porcentaje: 0 },
+    ]
+    gastosActuales.forEach(g => {
+      const fecha = format(toDateWithTime(g.fecha), "yyyy-MM-dd")
+      const dia = porDia.get(fecha) ?? { fecha, total: 0, conteo: 0 }
+      dia.total += g.monto
+      dia.conteo++
+      porDia.set(fecha, dia)
+      const banda = porTamano.find(b => g.monto <= b.limite)!
+      banda.total += g.monto
+      banda.conteo++
+    })
+    porTamano.forEach(b => { b.porcentaje = total > 0 ? b.total / total * 100 : 0 })
+    const montos = gastosActuales.map(g => g.monto as number).sort((a, b) => a - b)
+    const mitad = Math.floor(montos.length / 2)
+    const mediana = montos.length ? (montos.length % 2 ? montos[mitad] : (montos[mitad - 1] + montos[mitad]) / 2) : null
+    const diaPico = [...porDia.values()].sort((a, b) => b.total - a.total)[0] ?? null
+    const porSemana: { etiqueta: string; total: number; conteo: number; dias: number; promedio: number }[] = []
+    if (rango && diasDelRango <= 62) {
+      for (let i = 0; i < diasTranscurridos; i += 7) {
+        const dias = Math.min(7, diasTranscurridos - i)
+        const desde = addDays(rango.desde, i)
+        const hasta = addDays(desde, dias - 1)
+        let totalSemana = 0, conteo = 0
+        for (let j = 0; j < dias; j++) {
+          const dia = porDia.get(format(addDays(desde, j), "yyyy-MM-dd"))
+          totalSemana += dia?.total ?? 0
+          conteo += dia?.conteo ?? 0
+        }
+        porSemana.push({ etiqueta: `${format(desde, "d MMM", { locale: es })} – ${format(hasta, "d MMM", { locale: es })}`,
+          total: totalSemana, conteo, dias, promedio: totalSemana / dias })
+      }
+    }
+
     return {
+      porSemana,
+      porTamano,
+      mediana,
+      diaPico,
       rango,
       previo,
       enCurso,
@@ -343,6 +406,7 @@ export function useStatsAnalytics(gastos: any[], filtros: FilterOptions, filtere
       evolucion,
       acumulado,
       porCategoria,
+      cambiosCategoria,
       porMetodoPago,
       porDiaSemana,
       composicion,

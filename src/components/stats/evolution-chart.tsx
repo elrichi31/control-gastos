@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import {
-  Area, AreaChart, CartesianGrid, Line, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Area, Bar, ComposedChart, CartesianGrid, Line, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useChartTheme } from "@/hooks/useChartTheme"
@@ -10,7 +10,7 @@ import { formatMoney } from "@/lib/utils"
 
 interface Punto {
   etiqueta: string
-  actual: number
+  actual: number | null
   previo: number | null
 }
 
@@ -20,17 +20,18 @@ interface Props {
   titulo: string
   /** Nombre del período previo para la leyenda, ej. "julio". */
   etiquetaPrevio?: string
+  esDiario?: boolean
 }
 
 const compacto = (v: number) =>
   Math.abs(v) >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${Math.round(v)}`
 
-export function EvolutionChart({ diario, acumulado, titulo, etiquetaPrevio }: Props) {
+export function EvolutionChart({ diario, acumulado, titulo, etiquetaPrevio, esDiario = false }: Props) {
   const [modo, setModo] = useState<"diario" | "acumulado">("diario")
   const t = useChartTheme()
 
   const data = modo === "diario" ? diario : acumulado
-  const hayPrevio = data.some(d => d.previo !== null)
+  const hayPrevio = !!etiquetaPrevio && data.some(d => d.previo !== null)
 
   const Tip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null
@@ -39,7 +40,7 @@ export function EvolutionChart({ diario, acumulado, titulo, etiquetaPrevio }: Pr
         className="rounded-lg border px-3 py-2 text-xs shadow-md"
         style={{ background: t.superficie, borderColor: t.borde, color: t.texto }}
       >
-        <p className="font-medium mb-1">{label}</p>
+        <p className="font-medium mb-1">{esDiario && /^\d+$/.test(String(label)) ? `Día ${label}` : label}</p>
         {payload.map((p: any) => (
           <p key={p.dataKey} className="flex items-center gap-2">
             <span className="inline-block w-2 h-2 rounded-full" style={{ background: p.color }} />
@@ -53,9 +54,10 @@ export function EvolutionChart({ diario, acumulado, titulo, etiquetaPrevio }: Pr
 
   return (
     <Card className="h-full">
-      <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-        <div>
+      <CardHeader className="flex-row flex-wrap items-start justify-between gap-3 space-y-0 pb-2">
+        <div className="min-w-0">
           <CardTitle className="text-base font-semibold">{titulo}</CardTitle>
+          <p className="mt-1 text-xs text-muted-foreground">{modo === "diario" ? "Cada barra muestra lo gastado en esa fecha." : "La curva suma lo gastado desde el inicio."} Los días futuros no cuentan como cero.</p>
           {hayPrevio && (
             <div className="flex items-center gap-3 mt-1.5">
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -74,12 +76,14 @@ export function EvolutionChart({ diario, acumulado, titulo, etiquetaPrevio }: Pr
           {(["diario", "acumulado"] as const).map(m => (
             <button
               key={m}
+              type="button"
+              aria-pressed={modo === m}
               onClick={() => setModo(m)}
-              className={`px-2.5 py-1 text-xs font-medium rounded-sm transition-colors capitalize ${
+              className={`min-h-10 px-2.5 py-1 text-xs font-medium rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 modo === m ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {m}
+              {m === "acumulado" ? "Acumulado" : esDiario ? "Por día" : "Por mes"}
             </button>
           ))}
         </div>
@@ -87,7 +91,7 @@ export function EvolutionChart({ diario, acumulado, titulo, etiquetaPrevio }: Pr
       <CardContent>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <ComposedChart accessibilityLayer data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradActual" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={t.actual} stopOpacity={0.28} />
@@ -113,9 +117,12 @@ export function EvolutionChart({ diario, acumulado, titulo, etiquetaPrevio }: Pr
                 tickFormatter={compacto}
               />
               <Tooltip content={<Tip />} cursor={{ stroke: t.grid }} />
+              {modo === "diario" ? <Bar dataKey="actual" fill={t.actual} radius={[3, 3, 0, 0]} maxBarSize={24} /> : <Area
+                type="linear" dataKey="actual" stroke={t.actual} strokeWidth={2}
+                fill="url(#gradActual)" dot={false} activeDot={{ r: 3.5, strokeWidth: 0 }} />}
               {hayPrevio && (
                 <Line
-                  type="monotone"
+                  type="linear"
                   dataKey="previo"
                   stroke={t.previo}
                   strokeWidth={1.5}
@@ -124,16 +131,7 @@ export function EvolutionChart({ diario, acumulado, titulo, etiquetaPrevio }: Pr
                   connectNulls
                 />
               )}
-              <Area
-                type="monotone"
-                dataKey="actual"
-                stroke={t.actual}
-                strokeWidth={2}
-                fill="url(#gradActual)"
-                dot={false}
-                activeDot={{ r: 3.5, strokeWidth: 0 }}
-              />
-            </AreaChart>
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </CardContent>

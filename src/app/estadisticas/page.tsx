@@ -9,13 +9,14 @@ import { PaymentMethodChart, WeekdayChart, FixedVsVariable } from "@/components/
 import { ProjectionPanel } from "@/components/stats/projection-panel"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TopExpenses } from "@/components/stats/top-expenses"
+import { InsightsSummary, WeeklySpending, CategoryChanges, PurchaseSizes } from "@/components/stats/spending-insights"
 import { PageShell, PageHeader } from "@/components/ui/page-layout"
 import { PageTitle } from "@/components/layout/PageTitle"
 import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
 import { useDataProcessing } from "@/hooks/useDataProcessing"
 import { useStatsAnalytics, type FilterOptions } from "@/hooks/useStatsAnalytics"
 import { formatMoney } from "@/lib/utils"
-import { format } from "date-fns"
+import { format, differenceInCalendarDays } from "date-fns"
 import { es } from "date-fns/locale"
 
 export default function EstadisticasPage() {
@@ -61,8 +62,10 @@ export default function EstadisticasPage() {
     }
   }
 
-  const etiquetaPrevio = a.previo
-    ? format(a.previo.desde, currentFilters.filterType === "year" ? "yyyy" : "MMMM", { locale: es })
+  const etiquetaPrevio = a.kpis.hayComparacion && a.previo
+    ? (currentFilters.filterType === "custom"
+      ? `${format(a.previo.desde, "d MMM yyyy", { locale: es })} – ${format(a.previo.hasta, "d MMM yyyy", { locale: es })}`
+      : format(a.previo.desde, currentFilters.filterType === "year" ? "yyyy" : "MMMM yyyy", { locale: es }))
     : undefined
 
   const tituloEvolucion =
@@ -110,7 +113,7 @@ export default function EstadisticasPage() {
             <StatTile etiqueta="Gasto total" valor={formatMoney(a.kpis.total)} delta={a.kpis.totalDelta} />
             <StatTile
               etiqueta={a.enCurso ? "Promedio diario (a hoy)" : "Promedio diario"}
-              valor={formatMoney(a.kpis.promedioDiario)}
+              valor={a.diasTranscurridos > 0 ? formatMoney(a.kpis.promedioDiario) : "—"}
               delta={a.kpis.promedioDiarioDelta}
             />
             <StatTile
@@ -122,12 +125,21 @@ export default function EstadisticasPage() {
             <StatTile etiqueta="Ticket promedio" valor={formatMoney(a.kpis.ticket)} delta={a.kpis.ticketDelta} />
           </StatTileRow>
 
+          <InsightsSummary analytics={a} />
+          {a.kpis.hayComparacion && <p className="text-xs text-muted-foreground">{a.enCurso ? "Variaciones calculadas con los mismos días transcurridos; la línea del período anterior muestra su cierre completo como referencia." : "Variaciones frente al período anterior completo."}</p>}
+
           <EvolutionChart
             diario={a.evolucion}
             acumulado={a.acumulado}
             titulo={tituloEvolucion}
             etiquetaPrevio={etiquetaPrevio}
+            esDiario={!!a.rango && differenceInCalendarDays(a.rango.hasta, a.rango.desde) < 62}
           />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <CategoryChanges analytics={a} />
+            <WeeklySpending analytics={a} />
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
             <div className="lg:col-span-7">
@@ -140,25 +152,28 @@ export default function EstadisticasPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
             <WeekdayChart dias={a.porDiaSemana} />
-            <FixedVsVariable composicion={a.composicion} />
+            <PurchaseSizes analytics={a} />
           </div>
 
-          <TopExpenses gastos={a.topGastos} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <FixedVsVariable composicion={a.composicion} />
+            <TopExpenses gastos={a.topGastos} />
+          </div>
 
           {/* Cierre con datos de hábito, que no dan para un gráfico */}
           <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-border rounded-xl border border-border bg-card overflow-hidden">
             <div className="px-5 py-4">
               <p className="text-xs font-medium text-muted-foreground">Días con gasto</p>
               <p className="text-2xl font-semibold text-foreground tabular-nums mt-1">{a.diasConGasto}</p>
-              <p className="text-xs text-muted-foreground mt-1.5">de {a.diasTranscurridos} días</p>
+              <p className="text-xs text-muted-foreground mt-1.5">{a.rango ? `de ${a.diasTranscurridos} días transcurridos` : "fechas distintas con registros"}</p>
             </div>
             <div className="px-5 py-4">
               <p className="text-xs font-medium text-muted-foreground">Días sin gastar</p>
-              <p className="text-2xl font-semibold text-foreground tabular-nums mt-1">{a.diasSinGasto}</p>
+              <p className="text-2xl font-semibold text-foreground tabular-nums mt-1">{a.rango ? a.diasSinGasto : "—"}</p>
               <p className="text-xs text-muted-foreground mt-1.5">
                 {a.diasTranscurridos > 0
                   ? `${((a.diasSinGasto / a.diasTranscurridos) * 100).toFixed(0)}% del período`
-                  : "—"}
+                  : "Requiere un período continuo iniciado"}
               </p>
             </div>
             <div className="px-5 py-4">

@@ -135,7 +135,7 @@ export function WeekdayChart({ dias }: { dias: DiaSemana[] }) {
         <CardTitle className="text-base font-semibold">Patrón semanal</CardTitle>
         <p className="text-xs text-muted-foreground">
           {pico
-            ? <>Gastas más los <span className="font-medium text-foreground">{pico.dia}</span></>
+            ? <>Mayor gasto acumulado: <span className="font-medium text-foreground">{pico.dia}</span>. Totales del período, no promedio por día.</>
             : "Sin gastos en este período."}
         </p>
       </CardHeader>
@@ -153,7 +153,7 @@ export function WeekdayChart({ dias }: { dias: DiaSemana[] }) {
                       titulo={label}
                       filas={[
                         `Total: ${formatMoney(payload[0].value)}`,
-                        `${payload[0].payload.conteo} gastos · ${formatMoney(payload[0].payload.promedio)} promedio`,
+                        `${payload[0].payload.conteo} gastos · ${formatMoney(payload[0].payload.promedio)} por compra`,
                       ]}
                       t={t}
                     />
@@ -193,10 +193,10 @@ export function FixedVsVariable({ composicion }: { composicion: Composicion }) {
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">Fijo vs. variable</CardTitle>
+        <CardTitle className="text-base font-semibold">Recurrentes vs. puntuales</CardTitle>
         <p className="text-xs text-muted-foreground">
           {totalGeneral > 0
-            ? <>El <span className="font-medium text-foreground tabular-nums">{porcentajeRecurrente.toFixed(0)}%</span> de tu gasto está comprometido en recurrentes</>
+            ? <>El <span className="font-medium text-foreground tabular-nums">{porcentajeRecurrente.toFixed(0)}%</span> del gasto registrado es recurrente; no incluye cargos futuros.</>
             : "Sin gastos en este período."}
         </p>
       </CardHeader>

@@ -39,8 +39,8 @@ export function useDataProcessing({ gastos, currentFilters }: DataProcessingHook
         
         case "custom":
           if (!currentFilters.dateFrom || !currentFilters.dateTo) return true
-          const fromDate = new Date(currentFilters.dateFrom)
-          const toDate = new Date(currentFilters.dateTo)
+          const fromDate = toDateWithTime(currentFilters.dateFrom)
+          const toDate = toDateWithTime(currentFilters.dateTo, "end")
           return fecha >= fromDate && fecha <= toDate
         
         case "all":
