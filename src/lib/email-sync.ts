@@ -24,7 +24,7 @@ export async function syncYahoo(supabase: Db, userId: string, since: Date): Prom
   const [categorias, metodos, historial, vistos] = await Promise.all([
     supabase.from('categoria').select('id, nombre'),
     supabase.from('metodo_pago').select('id, nombre'),
-    supabase.from('gasto').select('descripcion, categoria_id, metodo_pago_id').eq('user_id', userId).order('fecha', { ascending: false }).order('id', { ascending: false }).limit(500),
+    supabase.from('gasto').select('descripcion, categoria_id, metodo_pago_id').eq('user_id', userId).order('id', { ascending: false }).limit(500),
     supabase.from('correo_consumo').select('email_message_id').eq('user_id', userId).gte('fecha', since.toISOString().slice(0, 10)),
   ])
   const readError = categorias.error || metodos.error || historial.error || vistos.error

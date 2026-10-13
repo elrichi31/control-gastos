@@ -1,0 +1,28 @@
+require('./helpers/register-ts.cjs')
+const test = require('node:test')
+const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const path = require('node:path')
+const React = require('react')
+const { renderToStaticMarkup } = require('react-dom/server')
+require.extensions['.css'] = module => { module.exports = { __esModule: true, default: new Proxy({}, { get: (_, name) => name }) } }
+const render = (name) => renderToStaticMarkup(React.createElement(require(`../src/components/landing/${name}.tsx`)[name]))
+test('landing communicates the product without waiting for animated text', () => {
+  const html = render('Hero')
+  assert.match(html, /Tus finanzas personales/)
+  assert.match(html, /bajo control/)
+  assert.match(html, /href="\/auth\/register"/)
+  assert.match(html, /Vista de ejemplo/)
+  assert.doesNotMatch(html, /Datos 100% seguros|animate-float|bg-gradient/)
+})
+test('landing retains section anchors and registration at the close', () => {
+  assert.match(render('Features'), /id="features"/)
+  assert.match(render('HowItWorks'), /id="how-it-works"/)
+  assert.match(render('CTA'), /href="\/auth\/register"/)
+})
+test('mobile navigation exposes its expanded state and controlled menu', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../src/components/landing/Navbar.tsx'), 'utf8')
+  assert.match(source, /aria-expanded=/)
+  assert.match(source, /aria-controls=/)
+  assert.match(source, /aria-label=/)
+})

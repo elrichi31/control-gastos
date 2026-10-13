@@ -1,132 +1,21 @@
-"use client"
-
-import { 
-  Calculator, 
-  Repeat, 
-  BarChart3, 
-  FolderOpen,
-  TrendingUp,
-  Shield
-} from "lucide-react"
+import { Calculator, Repeat, BarChart3, FolderOpen, TrendingUp, Shield } from 'lucide-react'
+import styles from './landing.module.css'
 
 const features = [
-  {
-    icon: Calculator,
-    title: "Presupuestos mensuales",
-    description: "Establece límites de gasto por categoría y recibe alertas cuando te acerques al límite.",
-    color: "blue"
-  },
-  {
-    icon: Repeat,
-    title: "Gastos recurrentes",
-    description: "Automatiza el registro de gastos que se repiten como suscripciones, servicios y más.",
-    color: "purple"
-  },
-  {
-    icon: BarChart3,
-    title: "Estadísticas visuales",
-    description: "Gráficos claros que te muestran hacia dónde va tu dinero cada mes.",
-    color: "green"
-  },
-  {
-    icon: FolderOpen,
-    title: "Categorías personalizadas",
-    description: "Organiza tus gastos en categorías que tengan sentido para ti.",
-    color: "orange"
-  },
-  {
-    icon: TrendingUp,
-    title: "Seguimiento de progreso",
-    description: "Compara mes a mes y observa cómo mejoran tus hábitos financieros.",
-    color: "indigo"
-  },
-  {
-    icon: Shield,
-    title: "Datos seguros",
-    description: "Tu información financiera está protegida con las mejores prácticas de seguridad.",
-    color: "teal"
-  }
+  { Icon: Calculator, title: 'Presupuestos mensuales', description: 'Establece límites de gasto por categoría y recibe alertas cuando te acerques al límite.' },
+  { Icon: Repeat, title: 'Gastos recurrentes', description: 'Automatiza el registro de suscripciones, servicios y otros gastos que se repiten.' },
+  { Icon: BarChart3, title: 'Estadísticas visuales', description: 'Gráficos claros que te muestran hacia dónde va tu dinero cada mes.' },
+  { Icon: FolderOpen, title: 'Categorías personalizadas', description: 'Organiza tus gastos en categorías que tengan sentido para ti.' },
+  { Icon: TrendingUp, title: 'Seguimiento de progreso', description: 'Compara mes a mes y conoce tus hábitos financieros.' },
+  { Icon: Shield, title: 'Datos seguros', description: 'Tu información financiera está protegida con prácticas de seguridad.' },
 ]
-
-const colorClasses = {
-  blue: {
-    bg: "bg-green-50 dark:bg-green-900/20",
-    icon: "text-primary",
-    hover: "group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
-  },
-  purple: {
-    bg: "bg-green-50 dark:bg-green-900/20",
-    icon: "text-primary",
-    hover: "group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
-  },
-  green: {
-    bg: "bg-green-50 dark:bg-green-900/20",
-    icon: "text-primary",
-    hover: "group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
-  },
-  orange: {
-    bg: "bg-green-50 dark:bg-green-900/20",
-    icon: "text-primary",
-    hover: "group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
-  },
-  indigo: {
-    bg: "bg-green-50 dark:bg-green-900/20",
-    icon: "text-primary",
-    hover: "group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
-  },
-  teal: {
-    bg: "bg-green-50 dark:bg-green-900/20",
-    icon: "text-primary",
-    hover: "group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
-  }
-}
 
 export function Features() {
   return (
-    <section id="features" className="py-24 bg-white dark:bg-neutral-950">
-      <div className="max-w-6xl mx-auto px-6">
-        {/* Section header */}
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Todo lo que necesitas para{" "}
-            <span className="text-gradient-green">controlar tus gastos</span>
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Herramientas simples pero poderosas diseñadas para ayudarte a 
-            entender y mejorar tus finanzas personales.
-          </p>
-        </div>
-
-        {/* Features grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => {
-            const colors = colorClasses[feature.color as keyof typeof colorClasses]
-            const Icon = feature.icon
-            
-            return (
-              <div 
-                key={feature.title}
-                className="group p-6 rounded-2xl border border-gray-100 dark:border-neutral-800 hover:border-gray-200 dark:hover:border-neutral-700 hover:shadow-lg hover:shadow-gray-100/50 dark:hover:shadow-neutral-900/50 transition-all duration-300 bg-white dark:bg-neutral-900"
-                style={{
-                  animationDelay: `${index * 100}ms`
-                }}
-              >
-                {/* Icon */}
-                <div className={`inline-flex p-3 rounded-xl ${colors.bg} ${colors.hover} transition-colors mb-4`}>
-                  <Icon className={`w-6 h-6 ${colors.icon}`} />
-                </div>
-                
-                {/* Content */}
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  {feature.description}
-                </p>
-              </div>
-            )
-          })}
-        </div>
+    <section id="features" className={styles.features} aria-labelledby="features-title">
+      <div className={styles.container}>
+        <div className={styles.sectionIntro}><h2 id="features-title">Todo lo que necesitas.<br />Nada que te distraiga.</h2><p>Herramientas simples para entender y organizar tus finanzas personales.</p></div>
+        <div className={styles.featureGrid}>{features.map(({ Icon, title, description }) => <article className={styles.feature} key={title}><Icon size={23} strokeWidth={1.7} aria-hidden="true" /><h3>{title}</h3><p>{description}</p></article>)}</div>
       </div>
     </section>
   )

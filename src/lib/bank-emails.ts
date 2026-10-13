@@ -53,12 +53,12 @@ export function normalizeName(text: string) {
   return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 }
 
-/** Historial del dueño ordenado de más reciente a más antiguo; solo el mismo nombre completo. */
-export function categoryFromHistory(description: string, history: readonly { descripcion: string; categoria_id?: number | null }[], categories: readonly { id: number }[]): number | undefined {
-  const name = normalizeName(description)
-  if (!name) return undefined
+/** Historial del dueño ordenado por registro (id descendente); nombre completo o alias, nunca fragmentos. */
+export function categoryFromHistory(description: string, history: readonly { descripcion: string; categoria_id?: number | null }[], categories: readonly { id: number }[], aliases: readonly string[] = []): number | undefined {
+  const names = new Set([description, ...aliases].map(normalizeName).filter(Boolean))
+  if (!names.size) return undefined
   const valid = new Set(categories.map(c => c.id))
-  return history.find(g => normalizeName(g.descripcion) === name && g.categoria_id != null && valid.has(g.categoria_id))?.categoria_id ?? undefined
+  return history.find(g => names.has(normalizeName(g.descripcion)) && g.categoria_id != null && valid.has(g.categoria_id))?.categoria_id ?? undefined
 }
 
 /** "8.50", "3,50", "1.234,56", "USD 4", "$3,50 USD" → número; 3 dígitos tras el separador = miles. */

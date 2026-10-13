@@ -28,8 +28,14 @@ test('ingresos: gastos previos mayores a lo recibido; el doble exacto primero', 
 function fakeDb(tables) {
   let nextId = 100
   function query(table) {
-    const filters = []; let op = 'select', payload, returning = false, single = false
-    const rows = () => (tables[table] ?? []).filter(r => filters.every(f => f(r)))
+    const filters = [], orders = []; let op = 'select', payload, returning = false, single = false
+    const rows = () => (tables[table] ?? []).filter(r => filters.every(f => f(r))).sort((a, b) => {
+      for (const [key, ascending] of orders) {
+        if (a[key] === b[key]) continue
+        return (a[key] < b[key] ? -1 : 1) * (ascending ? 1 : -1)
+      }
+      return 0
+    })
     const run = () => {
       if (op === 'upsert') { const existing = tables[table].find(r => r.user_id === payload.user_id && r.destinatario === payload.destinatario); if (existing) Object.assign(existing, payload); else tables[table].push(payload); return { data: null, error: null } }
       if (op === 'delete') { const hit = rows(); tables[table] = tables[table].filter(r => !hit.includes(r)); return { data: null, error: null } }
@@ -45,7 +51,7 @@ function fakeDb(tables) {
       delete() { op = 'delete'; return q },
       eq(k, v) { filters.push(r => r[k] === v); return q },
       in(k, v) { filters.push(r => v.includes(r[k])); return q },
-      order() { return q },
+      order(key, { ascending = true } = {}) { orders.push([key, ascending]); return q },
       limit() { return q },
       gte(k, v) { filters.push(r => r[k] >= v); return q },
       lte(k, v) { filters.push(r => r[k] <= v); return q },
@@ -71,6 +77,27 @@ Module._load = realLoad
 const patch = body => PATCH(new Request('https://fixture.invalid/api/email-import/yahoo', { method: 'PATCH', body: JSON.stringify(body) }))
 const put = body => PUT(new Request('https://fixture.invalid/api/email-import/yahoo', { method: 'PUT', body: JSON.stringify(body) }))
 const pending = (id, extra) => ({ id, user_id: owner, estado: 'pendiente', tipo: 'gasto', fecha: '2026-10-02', descripcion: 'Correo', monto: 20, categoria_id: 1, metodo_pago_id: 2, gasto_id: null, ...extra })
+
+test('correo sugiere la categoría del último registro aunque tenga una fecha anterior', async () => {
+  db = fakeDb({ correo_consumo: [pending(1, { descripcion: 'CYRANO CUMBAYA' })], correo_alias: [], categoria: [{ id: 1 }, { id: 3 }], gasto: [
+    { id: 10, user_id: owner, descripcion: 'Cyrano Cumbayá', categoria_id: 1, fecha: '2026-10-10', monto: 100 },
+    { id: 20, user_id: owner, descripcion: 'Cyrano Cumbaya', categoria_id: 3, fecha: '2026-09-01', monto: 100 },
+    { id: 30, user_id: 'otro', descripcion: 'Cyrano Cumbaya', categoria_id: 1, fecha: '2026-10-11', monto: 100 },
+  ] })
+  const response = await GET(new Request('https://fixture.invalid/api/email-import/yahoo?tab=nuevos'))
+  assert.equal(response.status, 200)
+  assert.equal((await response.json()).pendientes[0].categoria_id, 3)
+})
+
+test('correo reconoce la última categoría guardada con el alias de una transferencia', async () => {
+  db = fakeDb({ correo_consumo: [pending(1, { descripcion: 'Deuna a JUAN PEREZ' })], correo_alias: [{ user_id: owner, destinatario: 'juan perez', alias: 'Gimnasio' }], categoria: [{ id: 1 }, { id: 3 }], gasto: [
+    { id: 10, user_id: owner, descripcion: 'Transferencia a Juan Perez', categoria_id: 1, fecha: '2026-09-01', monto: 100 },
+    { id: 20, user_id: owner, descripcion: 'GIMNASIO', categoria_id: 3, fecha: '2026-09-01', monto: 100 },
+  ] })
+  const response = await GET(new Request('https://fixture.invalid/api/email-import/yahoo?tab=nuevos'))
+  assert.equal(response.status, 200)
+  assert.equal((await response.json()).pendientes[0].categoria_id, 3)
+})
 
 test('aceptar con mitad registra tu parte con tags auto + compartido; repetir no duplica', async () => {
   const tables = { correo_consumo: [pending(1), pending(2, { monto: 7.5 })], gasto: [] }

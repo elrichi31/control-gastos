@@ -57,7 +57,7 @@ export async function GET(request: Request) {
   const [aliasResult, history, categories] = await Promise.all([
     supabase.from('correo_alias').select('destinatario, alias').eq('user_id', userId),
     supabase.from('gasto').select('descripcion, categoria_id').eq('user_id', userId)
-      .order('fecha', { ascending: false }).order('id', { ascending: false }).limit(500),
+      .order('id', { ascending: false }).limit(500),
     supabase.from('categoria').select('id'),
   ])
   const { data: aliases } = aliasResult
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
   const pendientes = (data ?? []).map(row => {
     const destinatario = row.tipo === 'gasto' ? transferRecipient(row.descripcion) : null
     const alias = destinatario ? (aliases ?? []).find(rule => rule.destinatario === destinatario)?.alias ?? '' : ''
-    const category = row.tipo === 'gasto' ? categoryFromHistory(row.descripcion, history.data ?? [], categories.data ?? []) : undefined
+    const category = row.tipo === 'gasto' ? categoryFromHistory(row.descripcion, history.data ?? [], categories.data ?? [], alias ? [alias] : []) : undefined
     return { ...row, categoria_id: category ?? row.categoria_id, monto: Number(row.monto), descripcion_original: row.descripcion, descripcion: alias || row.descripcion, destinatario, alias }
   })
   if (!pendientes.length) return NextResponse.json({ enabled: true, pendientes: [], counts: { nuevos: 0, duplicados: 0, recibidos: 0 }, total: 0, page: 1, pages: 1 })
