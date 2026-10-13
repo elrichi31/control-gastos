@@ -34,26 +34,25 @@ export function Hero() {
     { name: 'Transporte', category: 'Transporte', amount: '$3.50', Icon: Bus },
   ]
   return (
-    <section className={`${styles.container} ${styles.hero}`} aria-labelledby="landing-title">
+    <section className={`${styles.container} ${styles.hero}`} aria-labelledby="landing-title" data-hero-layout="split">
       <div className={styles.heroCopy}>
-        <h1 id="landing-title">Tus finanzas personales,<br />bajo control.</h1>
+        <h1 id="landing-title">Tu dinero.<br /><span className={styles.heroEmphasis}>bajo control.</span></h1>
         <p>Registra tus gastos, establece presupuestos y visualiza tu progreso financiero. Todo en un solo lugar.</p>
         <div className={styles.actions}><Link href="/auth/register" className={styles.primary}>Comenzar gratis <ArrowRight size={18} aria-hidden="true" /></Link><Link href="#features" className={styles.secondary}>Explorar BethaSpend</Link></div>
       </div>
       <figure className={styles.productFigure}>
         <div ref={stage} className={styles.heroStage} data-scene="expense" data-demo-phase={phase}>
-          <div className={styles.stageLight} aria-hidden="true" />
-          <div className={`${styles.categoryFloat} ${styles.animated}`} aria-hidden="true"><span className={styles.iconTile}><Coffee size={28} /></span><span>Alimentación<small>Cada gasto, en su lugar.</small></span></div>
-          <div className={styles.phone}>
-            <div className={styles.phoneIsland} aria-hidden="true" />
-            <div className={styles.productTop}><span><Wallet size={18} aria-hidden="true" /> BethaSpend</span><span>Tu mes</span></div>
+          <div className={styles.workspace}>
+            <div className={styles.productTop}><span><Wallet size={20} aria-hidden="true" /> BethaSpend</span><span>Resumen de tu mes</span></div>
             <div className={styles.productBody}>
-              <div className={styles.balance}><span>Gasto del mes</span><strong>${total.toFixed(2)}</strong><span>Presupuesto mensual · $600.00</span></div>
+              <div className={styles.workspaceSummary}>
+                <div className={styles.balance}><span>Gasto del mes</span><strong>${total.toFixed(2)}</strong><span>Presupuesto mensual · $600.00</span></div>
+                <div className={styles.heroAvailable}><span>Disponible</span><strong>${(600 - total).toFixed(2)}</strong></div>
+              </div>
               <div className={styles.budgetTrack} role="img" aria-label={`Ejemplo: ${Math.round(total / 6)}% del presupuesto utilizado`}><span style={{ transform: `scaleX(${total / 600})` }} /></div>
               <div className={styles.budgetLabels}><span>{Math.round(total / 6)}% utilizado</span><span>${(600 - total).toFixed(2)} disponibles</span></div>
               <div className={styles.transactionHeading}><strong>Últimos gastos</strong><span>Este mes</span></div>
               <div className={styles.transactionList}>{rows.map(({ name, category, amount, Icon }) => <div className={styles.transaction} key={name}><Icon size={18} aria-hidden="true" /><div><strong>{name}</strong><span>{category}</span></div><strong>{amount}</strong></div>)}</div>
-              <div className={styles.phoneNav} aria-hidden="true"><Wallet size={18} /><span className={styles.phoneAdd}><Plus size={22} /></span><span>Resumen</span></div>
             </div>
           </div>
           <div className={`${styles.expenseFloat} ${styles.animated}`}>

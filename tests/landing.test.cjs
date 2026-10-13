@@ -9,8 +9,11 @@ require.extensions['.css'] = module => { module.exports = { __esModule: true, de
 const render = (name) => renderToStaticMarkup(React.createElement(require(`../src/components/landing/${name}.tsx`)[name]))
 test('landing communicates the product without waiting for animated text', () => {
   const html = render('Hero')
-  assert.match(html, /Tus finanzas personales/)
+  assert.match(html, /Tu dinero\./)
   assert.match(html, /bajo control/)
+  assert.match(html, /data-hero-layout="split"/)
+  assert.match(html, /class="workspace"/)
+  assert.doesNotMatch(html, /phoneIsland/)
   assert.match(html, /href="\/auth\/register"/)
   assert.match(html, /Vista de ejemplo/)
   assert.doesNotMatch(html, /Datos 100% seguros|animate-float|bg-gradient/)
@@ -44,6 +47,14 @@ test('marketing motion has a pause control and reduced-motion policy', () => {
   assert.match(css, /prefers-reduced-motion:reduce/)
   assert.match(css, /animation-play-state: paused !important/)
   assert.doesNotMatch(css, /transition:\s*all|@keyframes[^}]*\b(?:width|height|left|top):/)
+})
+
+test('landing uses the app palette without metallic or pastel surface treatments', () => {
+  const css = fs.readFileSync(path.join(__dirname, '../src/components/landing/landing.module.css'), 'utf8')
+  for (const token of ['background', 'foreground', 'primary', 'card', 'border']) {
+    assert.ok(css.includes(`hsl(var(--${token}))`), `Missing app token: ${token}`)
+  }
+  assert.doesNotMatch(css, /(?:linear|radial)-gradient\(|,\s*inset\b|#[0-9a-f]{3,8}\b/i)
 })
 
 test('mobile navigation exposes its expanded state and controlled menu', () => {
