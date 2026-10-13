@@ -1,17 +1,12 @@
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Receipt, Wallet, BarChart3 } from 'lucide-react'
 import styles from './landing.module.css'
 
-const steps = [
-  { title: 'Crea tu cuenta', description: 'Regístrate gratis. Sin tarjeta de crédito, sin compromisos.' },
-  { title: 'Registra tus gastos', description: 'Añade tus gastos diarios, elige su categoría y establece tus presupuestos.' },
-  { title: 'Visualiza tu progreso', description: 'Analiza tus patrones de gasto y toma mejores decisiones financieras.' },
-]
 export function HowItWorks() {
   return (
     <section id="how-it-works" className={`${styles.container} ${styles.how}`} aria-labelledby="how-title">
-      <div><h2 id="how-title">Empieza simple.<br />Hazlo parte de tu día.</h2><p>No necesitas ser experto en finanzas para tomar el control de tu dinero.</p><Link href="/auth/register" className={styles.textLink}>Crear mi cuenta <ArrowRight size={18} aria-hidden="true" /></Link></div>
-      <ol className={styles.steps}>{steps.map(step => <li key={step.title}><h3>{step.title}</h3><p>{step.description}</p></li>)}</ol>
+      <h2 id="how-title" className={styles.bigStatement} data-reveal><span>Registra <span className={`${styles.statementObject} ${styles.statementGreen}`} aria-hidden="true"><Receipt size={40} /></span> tus gastos.</span><span>Organiza <span className={`${styles.statementObject} ${styles.statementBlue}`} aria-hidden="true"><Wallet size={40} /></span> tu mes.</span><span>Entiende <span className={`${styles.statementObject} ${styles.statementOrange}`} aria-hidden="true"><BarChart3 size={40} /></span> tu dinero.</span></h2>
+      <div className={styles.howBottom}><p>Crea tu cuenta, añade tu primer gasto y empieza a ver tus finanzas con más claridad.</p><Link href="/auth/register" className={styles.textLink}>Crear mi cuenta <ArrowRight size={18} aria-hidden="true" /></Link></div>
     </section>
   )
 }

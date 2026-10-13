@@ -20,6 +20,32 @@ test('landing retains section anchors and registration at the close', () => {
   assert.match(render('HowItWorks'), /id="how-it-works"/)
   assert.match(render('CTA'), /href="\/auth\/register"/)
 })
+test('landing demonstrates expenses in layered product scenes instead of icon-only tiles', () => {
+  const html = render('Features')
+  assert.match(html, /data-scene="budget"/)
+  assert.match(html, /data-scene="recurring"/)
+  assert.match(html, /data-scene="categories"/)
+  assert.match(html, /datos ilustrativos/)
+})
+test('hero expense demo can be replayed without altering real financial data', () => {
+  const html = render('Hero')
+  assert.match(html, /Reproducir demo/)
+  assert.match(html, /data-demo-phase="0"/)
+  assert.match(html, /Vista de ejemplo/)
+})
+
+test('marketing motion has a pause control and reduced-motion policy', () => {
+  const { LandingMotion, MotionToggle } = require('../src/components/landing/LandingMotion.tsx')
+  const html = renderToStaticMarkup(React.createElement(LandingMotion, null, React.createElement(MotionToggle)))
+  assert.match(html, /data-motion-paused="false"/)
+  assert.match(html, /aria-label="Pausar animaciones"/)
+  assert.match(html, /aria-pressed="false"/)
+  const css = fs.readFileSync(path.join(__dirname, '../src/components/landing/landing.module.css'), 'utf8')
+  assert.match(css, /prefers-reduced-motion:reduce/)
+  assert.match(css, /animation-play-state: paused !important/)
+  assert.doesNotMatch(css, /transition:\s*all|@keyframes[^}]*\b(?:width|height|left|top):/)
+})
+
 test('mobile navigation exposes its expanded state and controlled menu', () => {
   const source = fs.readFileSync(path.join(__dirname, '../src/components/landing/Navbar.tsx'), 'utf8')
   assert.match(source, /aria-expanded=/)

@@ -1,15 +1,15 @@
 import { Navbar, Hero, Features, HowItWorks, CTA, Footer } from "@/components/landing"
-import styles from '@/components/landing/landing.module.css'
+import { LandingMotion } from '@/components/landing/LandingMotion'
 
 export default function LandingPage() {
   return (
-    <div className={styles.landing}>
+    <LandingMotion>
       <Navbar />
       <Hero />
       <Features />
       <HowItWorks />
       <CTA />
       <Footer />
-    </div>
+    </LandingMotion>
   )
 }
