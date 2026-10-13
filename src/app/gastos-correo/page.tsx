@@ -47,7 +47,6 @@ export default function EmailExpensesPage() {
   const [query, setQuery] = useState('')
   const [meta, setMeta] = useState<PageMeta | null>(null)
   const [loading, setLoading] = useState(false)
-  const [aliasDrafts, setAliasDrafts] = useState<Record<string, string>>({})
   const [aliasSaving, setAliasSaving] = useState<string | null>(null)
   const [descriptionDrafts, setDescriptionDrafts] = useState<Record<number, string>>({})
   const [exteriorPor, setExteriorPor] = useState<Record<number, ForeignTaxState>>({})
@@ -136,23 +135,21 @@ export default function EmailExpensesPage() {
   const total = chosen.reduce((sum, p) => sum + aGuardar(p).total, 0)
   const category = (p: Pendiente) => categoriaPor[p.id] ?? p.categoria_id
   const validCategory = (p: Pendiente) => categorias.some(c => c.id === category(p))
-  const aliasDraft = (p: Pendiente) => p.destinatario ? aliasDrafts[p.destinatario] ?? p.alias ?? '' : ''
-  const aliasDirty = (p: Pendiente) => aliasDraft(p).trim() !== (p.alias ?? '')
   const saveAs = (p: Pendiente) => descriptionDrafts[p.id] ?? p.descripcion
   const validDescription = (p: Pendiente) => saveAs(p).trim().length > 0 && saveAs(p).trim().length <= 200
-  const canAccept = (p: Pendiente) => validCategory(p) && validDescription(p) && !validateForeignTax(exterior(p)) && !aliasDirty(p) && aliasSaving === null
+  const canAccept = (p: Pendiente) => validCategory(p) && validDescription(p) && !validateForeignTax(exterior(p)) && aliasSaving === null
 
-  async function saveAlias(p: Pendiente) {
+  // Recordar (alias = nombre escrito) u olvidar (alias = '') el nombre para este destinatario.
+  async function saveAlias(p: Pendiente, alias: string) {
     if (!p.destinatario || syncing || inFlight || aliasSaving !== null) return
-    const alias = aliasDraft(p).trim()
     setAliasSaving(p.destinatario)
     try {
       await saveEmailAlias(p.id, alias, p.destinatario)
       if (!mounted.current) return
       ++loadVersion.current
       setPendientes(prev => prev.map(row => row.destinatario === p.destinatario ? { ...row, alias, descripcion: alias || row.descripcion_original || row.descripcion } : row))
-      setAliasDrafts(prev => { const next = { ...prev }; delete next[p.destinatario!]; return next })
-      toast.success(alias ? 'Alias guardado para próximas transferencias' : 'Alias eliminado')
+      if (!alias) setDescriptionDrafts(prev => { const next = { ...prev }; delete next[p.id]; return next })
+      toast.success(alias ? 'Nombre recordado para próximas transferencias' : 'Nombre olvidado')
       await load()
     } catch (cause) { toast.error((cause as Error).message || 'No se pudo guardar el alias.') }
     finally { if (mounted.current) setAliasSaving(null) }
@@ -231,19 +228,14 @@ export default function EmailExpensesPage() {
                       <p className="font-medium text-foreground break-words">{p.descripcion}</p>
                       {p.alias && <p className="mt-1 break-words text-xs text-muted-foreground">{p.descripcion_original}</p>}
                       <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"><span className="tabular-nums">{p.fecha}</span><span className="rounded-md border bg-muted/50 px-1.5 text-[11px] leading-4">{p.origen}</span></p>
-                      {p.destinatario && <details className="mt-2 text-xs text-muted-foreground">
-                        <summary className="cursor-pointer py-1 hover:text-foreground">{p.alias ? 'Editar alias' : 'Asignar alias'}</summary>
-                        <div className="mt-1 flex flex-wrap items-center gap-2">
-                          <Input aria-label={`Alias para ${p.descripcion_original ?? p.descripcion}`} placeholder="Ej. Gimnasio" maxLength={200} value={aliasDraft(p)} disabled={syncing || inFlight > 0 || aliasSaving !== null} onChange={e => setAliasDrafts(prev => ({ ...prev, [p.destinatario!]: e.target.value }))} className="h-11 min-w-0 flex-1 text-base sm:h-8 sm:text-[13px]" />
-                          <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" aria-label={`Guardar alias para ${p.descripcion_original ?? p.descripcion}`} disabled={syncing || inFlight > 0 || aliasSaving !== null || !aliasDirty(p)} onClick={() => saveAlias(p)}>{aliasSaving === p.destinatario ? 'Guardando…' : aliasDraft(p).trim() ? 'Guardar' : 'Quitar alias'}</Button>
-                        </div>
-                        <p className="mt-1">Se usará para este destinatario en próximos gastos. Vacíalo para quitarlo.</p>
-                        {aliasDirty(p) && <p className="mt-1 text-foreground" role="status">Guarda el alias antes de aceptar.</p>}
-                      </details>}
                       {tab === 'nuevos' && <div className="mt-2">
-                        <label htmlFor={`guardar-como-${p.id}`} className="text-xs text-muted-foreground">Guardar como</label>
-                        <Input id={`guardar-como-${p.id}`} aria-label={`Guardar como para ${p.descripcion_original ?? p.descripcion}`} aria-describedby={`guardar-como-ayuda-${p.id}`} aria-invalid={!validDescription(p)} placeholder="Ej. Almuerzo, taxi, regalo…" maxLength={200} value={saveAs(p)} disabled={syncing} onChange={e => setDescriptionDrafts(prev => ({ ...prev, [p.id]: e.target.value }))} className="mt-1 h-11 w-full min-w-0 text-base sm:h-8 sm:text-[13px]" />
-                        <p id={`guardar-como-ayuda-${p.id}`} className={`mt-1 text-xs ${validDescription(p) ? 'text-muted-foreground' : 'text-destructive'}`}>{validDescription(p) ? 'Solo para este gasto; no cambia el alias.' : 'Escribe una razón de entre 1 y 200 caracteres.'}</p>
+                        <label htmlFor={`guardar-como-${p.id}`} className="text-xs font-medium text-muted-foreground">Nombre del gasto</label>
+                        <Input id={`guardar-como-${p.id}`} aria-label={`Nombre del gasto para ${p.descripcion_original ?? p.descripcion}`} aria-describedby={`guardar-como-ayuda-${p.id}`} aria-invalid={!validDescription(p)} placeholder="Ej. Almuerzo, taxi, regalo…" maxLength={200} value={saveAs(p)} disabled={syncing} onChange={e => setDescriptionDrafts(prev => ({ ...prev, [p.id]: e.target.value }))} className="mt-1 h-11 w-full min-w-0 text-base sm:h-8 sm:text-[13px]" />
+                        <div id={`guardar-como-ayuda-${p.id}`} className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                          {!validDescription(p) ? <span className="text-destructive">Escribe un nombre de entre 1 y 200 caracteres.</span> : p.destinatario && (p.alias && saveAs(p).trim() === p.alias
+                            ? <><span className="inline-flex items-center gap-1"><Check className="h-3 w-3" aria-hidden="true" />Recordado para este destinatario</span><button type="button" className="underline underline-offset-2 hover:text-foreground disabled:opacity-50" disabled={syncing || inFlight > 0 || aliasSaving !== null} onClick={() => saveAlias(p, '')}>Olvidar</button></>
+                            : <button type="button" className="underline underline-offset-2 hover:text-foreground disabled:opacity-50" disabled={syncing || inFlight > 0 || aliasSaving !== null} onClick={() => saveAlias(p, saveAs(p).trim())}>{aliasSaving === p.destinatario ? 'Guardando…' : 'Usar este nombre siempre para este destinatario'}</button>)}
+                        </div>
                         <ForeignTaxInline id={`exterior-${p.id}`} base={parte(p)} value={exterior(p)} disabled={syncing} onChange={value => setExteriorPor(prev => ({ ...prev, [p.id]: value }))} />
                       </div>}
                       {errors.get(p.id) && <p className="mt-2 text-xs text-destructive" role="alert">{errors.get(p.id)}</p>}
