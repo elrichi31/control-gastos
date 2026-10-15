@@ -15,10 +15,10 @@ import { computeForeignTax, emptyForeignTax, validateForeignTax, type ForeignTax
 import { fetchCategories } from '@/services/categories'
 import { refreshExpenses } from '@/hooks/useExpensesStore'
 import { fetchEmailImportPage, saveEmailAlias, syncEmailImport, updateEmailImport } from '@/services/email-import'
+import type { Candidate } from '@/lib/email-matches'
 import styles from './review.module.css'
 
-type Gasto = { id: number; descripcion: string; monto: number; fecha: string; categoria?: { nombre: string } | null }
-type Coincidencia = { gasto: Gasto; kind: 'igual' | 'mitad' | 'otro'; dias: number; veredicto?: 'encaja' | 'desconocido' | 'no_encaja'; probabilidad?: number }
+type Coincidencia = Candidate
 type Pendiente = { id: number; tipo: 'gasto' | 'ingreso'; origen: string; fecha: string; descripcion: string; descripcion_original?: string; destinatario?: string | null; alias?: string; monto: number; categoria_id: number | null; coincidencias: Coincidencia[] }
 type Categoria = { id: number; nombre: string }
 type Tab = 'nuevos' | 'duplicados' | 'recibidos'
@@ -50,6 +50,7 @@ export default function EmailExpensesPage() {
   const [aliasSaving, setAliasSaving] = useState<string | null>(null)
   const [descriptionDrafts, setDescriptionDrafts] = useState<Record<number, string>>({})
   const [exteriorPor, setExteriorPor] = useState<Record<number, ForeignTaxState>>({})
+  const [updatePrice, setUpdatePrice] = useState<Record<string, boolean>>({})
   const mounted = useRef(true)
   const loadVersion = useRef(0)
   const queue = useRef<ReturnType<typeof getSessionEmailReviewQueue> | null>(null)
@@ -185,7 +186,7 @@ export default function EmailExpensesPage() {
     finally { if (mounted.current) setSyncing(false) }
   }
   const toggle = (id: number) => setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
-  const description = { nuevos: 'Elige la categoría y registra solo los gastos que correspondan.', duplicados: 'Compara antes de registrar: vincular conserva tu gasto sin crear otro.', recibidos: 'Descuenta una devolución de un gasto existente o descártala.' }
+  const description = { nuevos: 'Elige la categoría y registra solo los gastos que correspondan.', duplicados: 'Confirma duplicados o cobros recurrentes sin crear otro gasto.', recibidos: 'Descuenta una devolución de un gasto existente o descártala.' }
 
   return (
     <PageShell fill>
@@ -222,6 +223,8 @@ export default function EmailExpensesPage() {
                 <thead><tr>{tab === 'nuevos' && <th scope="col"><span className="sr-only">Selección</span></th>}<th scope="col">Movimiento</th>{tab === 'nuevos' ? <><th scope="col">Categoría</th><th scope="col">Tu parte</th></> : <th scope="col">{tab === 'duplicados' ? 'Gasto existente' : 'Descontar de'}</th>}<th scope="col" className="text-right">Importe</th><th scope="col">Acciones</th></tr></thead>
                 <tbody>{rows.map(p => {
                   const elegido = p.coincidencias.find(c => c.gasto.id === elegidoPor[p.id]) ?? p.coincidencias[0]
+                  const recurring = elegido?.recurrente
+                  const priceKey = recurring ? `${p.id}:${recurring.id}:${recurring.fecha}` : ''
                   return <tr key={p.id}>
                     {tab === 'nuevos' && <td className={styles.selection}><label className="inline-flex min-h-11 min-w-6 items-center"><input type="checkbox" className="h-4 w-4 accent-primary" disabled={syncing} checked={selected.has(p.id)} onChange={() => toggle(p.id)} aria-label={`Seleccionar ${p.descripcion}`} /></label></td>}
                     <td data-label="Movimiento" className={styles.movement}>
@@ -246,8 +249,14 @@ export default function EmailExpensesPage() {
                     </> : <td data-label={tab === 'duplicados' ? 'Gasto existente' : 'Descontar de'} className={styles.match}>
                       {elegido ? <>
                         <select className={selectClass} disabled={syncing} aria-label={`Gasto existente para ${p.descripcion}`} value={elegido.gasto.id} onChange={e => setElegidoPor(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}>{p.coincidencias.map(c => <option key={c.gasto.id} value={c.gasto.id}>{c.gasto.descripcion} · {money.format(c.gasto.monto)}</option>)}</select>
-                        <p className="mt-1.5 text-xs text-muted-foreground">{elegido.gasto.fecha}{tab === 'recibidos' ? ` · Quedará en ${money.format(elegido.gasto.monto - p.monto)}` : ` · ${elegido.kind === 'mitad' ? 'Registraste la mitad' : 'Mismo monto'} · ${elegido.dias ? `${elegido.dias} día(s) de diferencia` : 'Mismo día'}`}</p>
-                        {tab === 'duplicados' && <details className="mt-1 text-xs text-muted-foreground"><summary className="cursor-pointer py-1 hover:text-foreground">Ver comparación</summary><p className="py-1 break-words">{elegido.gasto.descripcion}{elegido.gasto.categoria ? ` · ${elegido.gasto.categoria.nombre}` : ''}. {elegido.veredicto === 'encaja' ? 'El comercio encaja con tu descripción.' : elegido.veredicto === 'desconocido' ? 'El correo no especifica qué se compró.' : 'Coincidencia por fecha e importe; confirma antes de vincular.'}</p></details>}
+                        {recurring ? <div className="mt-2 space-y-1.5 text-xs">
+                          <p className="font-medium">Posible cobro recurrente · {recurring.fecha}</p>
+                          <p className="text-muted-foreground">Esperado {money.format(recurring.esperado)} · Correo {money.format(recurring.cobrado)}{recurring.impuestos ? ' (sin impuestos configurados)' : ''}</p>
+                          <p className={recurring.diferencia ? 'font-medium' : 'text-muted-foreground'}>{recurring.diferencia > 0 ? `Subió ${money.format(recurring.diferencia)}` : recurring.diferencia < 0 ? `Bajó ${money.format(-recurring.diferencia)}` : 'Sin cambio de precio'}</p>
+                          {recurring.impuestos && <p className="text-muted-foreground">Total con tus impuestos: {money.format(recurring.total)}</p>}
+                          {recurring.diferencia !== 0 && <label className="flex min-h-11 cursor-pointer items-center gap-2 sm:min-h-8"><input type="checkbox" className="h-4 w-4 shrink-0 accent-primary" aria-label={`Actualizar próximos cobros de ${elegido.gasto.descripcion}`} disabled={syncing} checked={updatePrice[priceKey] ?? false} onChange={e => setUpdatePrice(prev => ({ ...prev, [priceKey]: e.target.checked }))} />Usar este precio en próximos cobros</label>}
+                        </div> : <p className="mt-1.5 text-xs text-muted-foreground">{elegido.gasto.fecha}{tab === 'recibidos' ? ` · Quedará en ${money.format(elegido.gasto.monto - p.monto)}` : ` · ${elegido.kind === 'mitad' ? 'Registraste la mitad' : 'Mismo monto'} · ${elegido.dias ? `${elegido.dias} día(s) de diferencia` : 'Mismo día'}`}</p>}
+                        {tab === 'duplicados' && !recurring && <details className="mt-1 text-xs text-muted-foreground"><summary className="cursor-pointer py-1 hover:text-foreground">Ver comparación</summary><p className="py-1 break-words">{elegido.gasto.descripcion}{elegido.gasto.categoria ? ` · ${elegido.gasto.categoria.nombre}` : ''}. {elegido.veredicto === 'encaja' ? 'El comercio encaja con tu descripción.' : elegido.veredicto === 'desconocido' ? 'El correo no especifica qué se compró.' : 'Coincidencia por fecha e importe; confirma antes de vincular.'}</p></details>}
                       </> : <p className="text-xs text-muted-foreground">No hay un gasto compatible de los últimos 20 días.</p>}
                     </td>}
                     <td data-label={tab === 'recibidos' ? 'Recibido' : 'Importe'} className={styles.amount}><span className="font-semibold tabular-nums">{tab === 'recibidos' ? '+' : ''}{money.format(tab === 'nuevos' ? aGuardar(p).total : p.monto)}</span>{tab === 'nuevos' && mitadPor[p.id] && <span className="mt-0.5 block text-xs text-muted-foreground">de {money.format(p.monto)}</span>}{tab === 'nuevos' && aGuardar(p).taxTotal > 0 && <span className="mt-0.5 block text-xs text-muted-foreground">incl. {money.format(aGuardar(p).taxTotal)} imp.</span>}</td>
@@ -257,7 +266,7 @@ export default function EmailExpensesPage() {
                           <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || !canAccept(p)} aria-label={`Aceptar ${p.descripcion}`} onClick={() => aceptar([p])}><Check aria-hidden="true" />Aceptar</Button>
                           <Button size="sm" variant="ghost" className="min-h-11 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:min-h-0 sm:w-8 sm:px-0" disabled={syncing} aria-label={`Descartar ${p.descripcion}`} title="Descartar" onClick={() => descartar(p)}><X aria-hidden="true" /><span className="sm:sr-only">Descartar</span></Button>
                         </> : <>
-                          {elegido && <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || (tab === 'recibidos' && elegido.gasto.monto <= p.monto)} onClick={() => enqueue(p, { vincular: [{ id: p.id, gasto_id: elegido.gasto.id }] }, 'vinculados', `${tab === 'duplicados' ? 'Vinculado sin duplicar' : 'Devolución descontada'} · ${p.descripcion}`)}>{tab === 'duplicados' ? 'Es el mismo' : 'Descontar'}</Button>}
+                          {elegido && (recurring ? <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing} aria-label={`Confirmar cobro de ${elegido.gasto.descripcion}`} onClick={() => enqueue(p, { recurrente: { id: p.id, recurrente_id: recurring.id, fecha: recurring.fecha, esperado: recurring.esperado, actualizar_precio: recurring.diferencia !== 0 && !!updatePrice[priceKey] } }, 'vinculados', `Cobro confirmado${updatePrice[priceKey] ? ' y precio actualizado' : ''} · ${elegido.gasto.descripcion}`)}>Confirmar cobro</Button> : <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || (tab === 'recibidos' && elegido.gasto.monto <= p.monto)} onClick={() => enqueue(p, { vincular: [{ id: p.id, gasto_id: elegido.gasto.id }] }, 'vinculados', `${tab === 'duplicados' ? 'Vinculado sin duplicar' : 'Devolución descontada'} · ${p.descripcion}`)}>{tab === 'duplicados' ? 'Es el mismo' : 'Descontar'}</Button>)}
                           {tab === 'duplicados' ? <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" disabled={syncing} onClick={() => { setNoEsDuplicado(prev => new Set(prev).add(p.id)); goTo('nuevos') }}>Es otro gasto</Button> : null}
                           <Button size="sm" variant="ghost" className="min-h-11 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:min-h-0" disabled={syncing} onClick={() => descartar(p)}>Descartar</Button>
                         </>}

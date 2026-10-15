@@ -25,6 +25,26 @@ async function harness(run) {
   const originalFetch = global.fetch; events.length = 0
   try { await run({ slots, render }) } finally { unsubscribe?.(); Object.assign(React, originals); global.fetch = originalFetch }
 }
+test('recurrente muestra aumento y solo cambia próximos precios con consentimiento', async () => {
+  await harness(async ({ slots, render }) => {
+    slots[12] = 'duplicados'
+    slots[1] = [row(901, { descripcion: 'NETFLIX.COM', monto: 12, coincidencias: [{ gasto: { id: 20, descripcion: 'Netflix', monto: 10, fecha: '2026-10-15' }, kind: 'otro', dias: 1, recurrente: { id: 7, fecha: '2026-10-15', esperado: 10, cobrado: 12, diferencia: 2, total: 12, impuestos: false } }] })]
+    const calls = []
+    global.fetch = async (url, options) => { if (options?.method === 'PATCH') calls.push(JSON.parse(options.body)); return { ok: true, json: async () => ({ vinculados: 1, enabled: true, pendientes: [] }) } }
+    let tree = render()
+    const toggle = tree.find(x => x.props?.['aria-label'] === 'Actualizar próximos cobros de Netflix')
+    assert.ok(toggle)
+    assert.equal(toggle.props.checked, false)
+    toggle.props.onChange({ target: { checked: true } })
+    tree = render()
+    const button = tree.find(x => x.props?.['aria-label'] === 'Confirmar cobro de Netflix')
+    assert.ok(button)
+    button.props.onClick()
+    await new Promise(resolve => setTimeout(resolve, 20))
+    assert.deepEqual(calls, [{ recurrente: { id: 901, recurrente_id: 7, fecha: '2026-10-15', esperado: 10, actualizar_precio: true } }])
+  })
+})
+
 test('Correo provides count-bearing tabs and a semantic desktop table with mobile labels', async () => {
   await harness(async ({ render }) => {
     const tree = render()

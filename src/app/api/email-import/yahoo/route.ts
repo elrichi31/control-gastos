@@ -3,11 +3,11 @@ import { getAuthenticatedSupabaseClient } from '@/lib/auth'
 import { scoreSameExpense } from '@/lib/jev'
 import { AUTO_EXPENSE_TAG, MAX_EXPENSE_TAGS, SHARED_EXPENSE_TAG } from '@/lib/expense-tags'
 import { computeForeignTax, isMissingColumnError, parseForeignTaxInput, storedForeignTax, withForeignTag, type ForeignTaxState } from '@/lib/foreign-tax'
-import { findCandidates, type Candidate, type ExistingExpense } from '@/lib/email-matches'
+import { findCandidates, findRecurringCandidates, recurringEmailStatus, type Candidate, type ExistingExpense } from '@/lib/email-matches'
 import { isMissingMigration, syncYahoo, yahooImportUserId } from '@/lib/email-sync'
 import { pageReviewRows, parseReviewQuery } from '@/lib/email-review-page'
 import { emailAliasDescription, transferRecipient } from '@/lib/email-aliases'
-import { categoryFromHistory, normalizeName } from '@/lib/bank-emails'
+import { categoryFromHistory, normalizeName, ecuadorDate } from '@/lib/bank-emails'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -42,6 +42,16 @@ export async function GET(request: Request) {
   if (yahooImportUserId() !== auth.userId) return NextResponse.json({ enabled: false, pendientes: [] })
   const { supabase, userId } = auth
   const url = new URL(request.url)
+  if (url.searchParams.has('recurrentes')) {
+    const [rules, evidence] = await Promise.all([
+      supabase.from('gasto_recurrente').select('*').eq('user_id', userId),
+      supabase.from('correo_consumo').select('recurrente_id, fecha_programada, fecha, monto').eq('user_id', userId).eq('tipo', 'gasto').eq('estado', 'vinculado').not('recurrente_id', 'is', null),
+    ])
+    const error = rules.error || evidence.error
+    if (error) return dbFailure('recurring evidence', error.code)
+    const today = ecuadorDate(new Date())
+    return NextResponse.json({ enabled: true, estados: Object.fromEntries((rules.data ?? []).map(r => [r.id, recurringEmailStatus(r, evidence.data ?? [], today)])) })
+  }
   if (url.searchParams.has('resumen')) {
     const { count, error } = await supabase.from('correo_consumo').select('id', { count: 'exact', head: true })
       .eq('user_id', userId).eq('estado', 'pendiente')
@@ -72,25 +82,31 @@ export async function GET(request: Request) {
   if (!pendientes.length) return NextResponse.json({ enabled: true, pendientes: [], counts: { nuevos: 0, duplicados: 0, recibidos: 0 }, total: 0, page: 1, pages: 1 })
 
   const fechas = pendientes.map(p => p.fecha).sort()
-  const [gastos, vinculados] = await Promise.all([
-    supabase.from('gasto').select('id, descripcion, monto, fecha, tags, categoria (nombre)')
+  const [gastos, vinculados, recurrentes] = await Promise.all([
+    supabase.from('gasto').select('id, descripcion, monto, fecha, tags, gasto_recurrente_id, categoria (nombre)')
       .eq('user_id', userId).gte('fecha', shiftDate(fechas[0], -21)).lte('fecha', shiftDate(fechas[fechas.length - 1], 3)),
     supabase.from('correo_consumo').select('gasto_id').eq('user_id', userId).eq('tipo', 'gasto').not('gasto_id', 'is', null),
+    supabase.from('gasto_recurrente').select('*').eq('user_id', userId),
   ])
-  if (gastos.error || vinculados.error) return dbFailure('matches', (gastos.error || vinculados.error)?.code)
+  if (gastos.error || vinculados.error || recurrentes.error) return dbFailure('matches', (gastos.error || vinculados.error || recurrentes.error)?.code)
   const yaVinculados = new Set((vinculados.data ?? []).map(row => row.gasto_id))
   const todos = (gastos.data ?? []).map(g => ({
-    id: g.id, descripcion: g.descripcion, monto: Number(g.monto), fecha: g.fecha, tags: g.tags as string[] | null,
+    id: g.id, descripcion: g.descripcion, monto: Number(g.monto), fecha: g.fecha, tags: g.tags as string[] | null, gasto_recurrente_id: g.gasto_recurrente_id,
     categoria: (Array.isArray(g.categoria) ? g.categoria[0] : g.categoria) as ExistingExpense['categoria'],
   }))
   // Un duplicado solo puede ser un gasto manual que aún no esté vinculado a otro correo.
   // Un ingreso (te devolvieron) sí puede descontarse de un gasto importado.
   const manuales = todos.filter(g => !g.tags?.includes(AUTO_EXPENSE_TAG) && !yaVinculados.has(g.id))
 
-  const withCandidates = pendientes.map(p => ({ ...p, coincidencias: findCandidates(p, p.tipo === 'ingreso' ? todos : manuales) as Candidate[] }))
+  const withCandidates = pendientes.map(p => {
+    const recurring = findRecurringCandidates(p, recurrentes.data ?? [], todos.filter(g => !yaVinculados.has(g.id)))
+    const recurringIds = new Set(recurring.map(c => c.gasto.id))
+    const ordinary = findCandidates(p, p.tipo === 'ingreso' ? todos : manuales).filter(c => !recurringIds.has(c.gasto.id) && (p.tipo === 'ingreso' || !todos.find(g => g.id === c.gasto.id)?.gasto_recurrente_id))
+    return { ...p, coincidencias: [...recurring, ...ordinary] as Candidate[] }
+  })
   const page = pageReviewRows(withCandidates, query)
   // Jev (API externa, lenta) solo para los duplicados de esta página, no para todos.
-  const pairs = page.rows.flatMap(p => p.tipo === 'gasto' ? p.coincidencias.map(c => ({ p, c })) : [])
+  const pairs = page.rows.flatMap(p => p.tipo === 'gasto' ? p.coincidencias.filter(c => !c.recurrente).map(c => ({ p, c })) : [])
   if (pairs.length) {
     const verdicts = await scoreSameExpense(pairs.map(({ p, c }) => ({
       correo: { descripcion: p.descripcion },
@@ -157,6 +173,38 @@ export async function PATCH(request: Request) {
   if ('error' in auth) return auth.error
   const { supabase, userId } = auth
   const body = await request.json().catch(() => null)
+
+  if (body?.recurrente !== undefined) {
+    const choice = body.recurrente
+    if (!choice || !Number.isSafeInteger(choice.id) || choice.id <= 0 || !Number.isSafeInteger(choice.recurrente_id) || choice.recurrente_id <= 0 ||
+      typeof choice.fecha !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(choice.fecha) ||
+      typeof choice.actualizar_precio !== 'boolean' || typeof choice.esperado !== 'number' || !Number.isFinite(choice.esperado) ||
+      body.aceptar !== undefined || body.vincular !== undefined || body.descartar !== undefined) {
+      return NextResponse.json({ error: 'Revisa el cobro recurrente seleccionado' }, { status: 400 })
+    }
+    const [mail, rule, expenses, aliases] = await Promise.all([
+      supabase.from('correo_consumo').select('*').eq('user_id', userId).eq('id', choice.id).eq('estado', 'pendiente').maybeSingle(),
+      supabase.from('gasto_recurrente').select('*').eq('user_id', userId).eq('id', choice.recurrente_id).maybeSingle(),
+      supabase.from('gasto').select('id, descripcion, monto, fecha, gasto_recurrente_id').eq('user_id', userId).eq('gasto_recurrente_id', choice.recurrente_id).eq('fecha', choice.fecha),
+      supabase.from('correo_alias').select('destinatario, alias').eq('user_id', userId),
+    ])
+    const error = mail.error || rule.error || expenses.error || aliases.error
+    if (error) return dbFailure('recurring match', error.code)
+    if (!mail.data || !rule.data) return NextResponse.json({ error: 'El movimiento o recurrente ya cambió. Actualiza la lista.' }, { status: 409 })
+    const row = { ...mail.data, monto: Number(mail.data.monto), descripcion_original: mail.data.descripcion, descripcion: emailAliasDescription(mail.data.descripcion, aliases.data ?? []) }
+    const match = findRecurringCandidates(row, [rule.data], expenses.data ?? []).find(c => c.recurrente?.fecha === choice.fecha)?.recurrente
+    if (!match || match.esperado !== choice.esperado) return NextResponse.json({ error: 'La coincidencia o el precio cambió. Revisa de nuevo.' }, { status: 409 })
+    const result = await supabase.rpc('confirm_email_recurring', {
+      p_user_id: userId, p_correo_id: choice.id, p_recurrente_id: choice.recurrente_id, p_fecha: choice.fecha,
+      p_update_price: choice.actualizar_precio, p_expected_amount: Number(rule.data.monto), p_expected_tax: rule.data.impuesto_exterior ?? null,
+    })
+    if (result.error) {
+      if (['23505', '40001', '22023'].includes(result.error.code)) return NextResponse.json({ error: 'El cobro ya cambió o fue confirmado. Actualiza antes de reintentar.' }, { status: 409 })
+      if (result.error.code === 'PGRST202') return NextResponse.json({ error: 'Falta aplicar la migración de confirmación de recurrentes por correo' }, { status: 503 })
+      return dbFailure('confirm recurring', result.error.code)
+    }
+    return NextResponse.json(result.data)
+  }
 
   const aceptarPor = new Map<number, { categoria_id: number; monto?: number; descripcion?: string; impuestos?: ForeignTaxState }>()
   for (const item of list(body?.aceptar)) {

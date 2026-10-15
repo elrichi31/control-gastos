@@ -1,7 +1,16 @@
 // src/services/email-import.ts
 // Movimientos bancarios importados del correo (Yahoo). Las funciones lanzan Error con el mensaje que ve el usuario.
 
+import type { RecurringEmailStatus } from '@/lib/email-matches'
+
 const API = '/api/email-import/yahoo'
+
+export async function fetchRecurringEmailStatus(): Promise<Record<number, RecurringEmailStatus> | null> {
+  const response = await fetch(`${API}?recurrentes=1`, { cache: 'no-store' })
+  const body = await response.json().catch(() => null)
+  if (!response.ok || !body || (body.enabled !== false && (!body.estados || typeof body.estados !== 'object'))) throw new Error(body?.error || 'No se pudo consultar la confirmación por correo')
+  return body.enabled === false ? null : body.estados
+}
 
 export type EmailImportTab = 'nuevos' | 'duplicados' | 'recibidos'
 

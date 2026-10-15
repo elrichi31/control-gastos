@@ -25,6 +25,9 @@ import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMetho
 import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { EditRecurringExpenseModal } from "@/components/gastos-recurrentes/EditRecurringExpenseModal"
 import { getCategoriaColor } from "@/lib/constants"
+import { fetchRecurringEmailStatus } from '@/services/email-import'
+import type { RecurringEmailStatus } from '@/lib/email-matches'
+import { RecurringEmailIndicator } from './RecurringEmailIndicator'
 import { toast } from "sonner"
 import { format, parseISO, addDays } from "date-fns"
 import { es } from "date-fns/locale"
@@ -55,6 +58,12 @@ export function RecurringExpenseList() {
   const [dismissed, setDismissed] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem(DISMISSED_KEY) || "[]") } catch { return [] }
   })
+  const [emailStatuses, setEmailStatuses] = useState<Record<number, RecurringEmailStatus> | null>(null)
+  const [emailError, setEmailError] = useState('')
+  const loadEmailStatuses = async () => {
+    try { setEmailStatuses(await fetchRecurringEmailStatus()); setEmailError('') }
+    catch (error) { setEmailStatuses(null); setEmailError((error as Error).message) }
+  }
 
   // Optional extras: the list still works if they fail or their migration is missing.
   const loadPrices = () =>
@@ -83,6 +92,7 @@ export function RecurringExpenseList() {
       setExpenses(expensesData)
       setCategories(categoriesData)
       setPaymentMethods(paymentMethodsData)
+      void loadEmailStatuses()
     } catch (error) {
       console.error("Error al cargar datos:", error)
       toast.error("Error al cargar los gastos recurrentes")
@@ -285,6 +295,7 @@ export function RecurringExpenseList() {
     <>
       {suggestionsCard}
       <Card className="overflow-hidden lg:fill-y">
+        {emailError && <div role="alert" className="flex flex-wrap items-center gap-2 border-b px-4 py-2 text-xs text-muted-foreground"><span className="min-w-0 flex-1">Estado por correo no disponible: {emailError}</span><Button variant="ghost" size="sm" onClick={() => void loadEmailStatuses()}>Reintentar</Button></div>}
         {/* Tabla para desktop */}
         <div className="hidden md:block lg:fill-y">
           <Table>
@@ -310,6 +321,7 @@ export function RecurringExpenseList() {
                   <TableCell className="py-2.5 pl-5 font-medium text-foreground">
                     {expense.descripcion}
                     {describePrecio(expense) && <div className="text-[11px] font-normal text-muted-foreground tabular-nums">{describePrecio(expense)}</div>}
+                    {emailStatuses?.[expense.id] && <RecurringEmailIndicator status={emailStatuses[expense.id]} />}
                   </TableCell>
                   <TableCell className="py-2.5 text-muted-foreground whitespace-nowrap">
                     {describeFrecuencia(expense)}
@@ -381,6 +393,7 @@ export function RecurringExpenseList() {
                   <p className="font-medium text-sm text-foreground truncate">{expense.descripcion}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{describeFrecuencia(expense)}</p>
                   {describePrecio(expense) && <p className="text-[11px] text-muted-foreground tabular-nums">{describePrecio(expense)}</p>}
+                  {emailStatuses?.[expense.id] && <RecurringEmailIndicator status={emailStatuses[expense.id]} />}
                 </div>
                 <div className="text-right shrink-0">
                   <span className="text-sm font-medium text-foreground tabular-nums">${expense.monto.toFixed(2)}</span>

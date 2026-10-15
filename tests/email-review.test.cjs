@@ -78,6 +78,62 @@ const patch = body => PATCH(new Request('https://fixture.invalid/api/email-impor
 const put = body => PUT(new Request('https://fixture.invalid/api/email-import/yahoo', { method: 'PUT', body: JSON.stringify(body) }))
 const pending = (id, extra) => ({ id, user_id: owner, estado: 'pendiente', tipo: 'gasto', fecha: '2026-10-02', descripcion: 'Correo', monto: 20, categoria_id: 1, metodo_pago_id: 2, gasto_id: null, ...extra })
 
+test('resumen recurrente expone evidencia solo del dueño y para el vencimiento actual', async () => {
+  db = fakeDb({ gasto_recurrente: [{ id: 7, user_id: owner, descripcion: 'Netflix', monto: 10, activo: true, frecuencia: 'mensual', dia_mes: 1, fecha_inicio: '2020-01-01' }, { id: 8, user_id: 'otro', descripcion: 'Privado' }], correo_consumo: [] })
+  const res = await GET(new Request('https://fixture.invalid/api/email-import/yahoo?recurrentes=1'))
+  assert.equal(res.status, 200)
+  const body = await res.json()
+  assert.deepEqual(Object.keys(body.estados), ['7'])
+  assert.equal(body.estados[7].estado, 'sin_confirmar')
+})
+
+test('correo identifica el recurrente aunque cambie el monto y excluye otro usuario', async () => {
+  db = fakeDb({ correo_consumo: [pending(1, { descripcion: 'NETFLIX.COM', monto: 12, fecha: '2026-10-16' })], correo_alias: [], categoria: [],
+    gasto: [{ id: 20, user_id: owner, gasto_recurrente_id: 7, descripcion: 'Netflix', monto: 10, fecha: '2026-10-15' }],
+    gasto_recurrente: [{ id: 7, user_id: owner, descripcion: 'Netflix', monto: 10, activo: true, frecuencia: 'mensual', dia_mes: 15, fecha_inicio: '2026-01-01' }, { id: 8, user_id: 'otro', descripcion: 'Netflix', monto: 10 }] })
+  const res = await GET(new Request('https://fixture.invalid/api/email-import/yahoo?tab=duplicados'))
+  assert.equal(res.status, 200)
+  const body = await res.json()
+  assert.equal(body.pendientes.length, 1)
+  assert.equal(body.pendientes[0].coincidencias[0].recurrente.id, 7)
+  assert.equal(body.pendientes[0].coincidencias[0].recurrente.diferencia, 2)
+})
+
+test('confirmación recurrente rechaza payload inválido, coincidencia ajena y precios obsoletos sin escribir', async () => {
+  const choice = { id: 1, recurrente_id: 7, fecha: '2026-10-15', esperado: 10, actualizar_precio: false }
+  let rpcCalls = 0
+  db = { from: () => { throw new Error('No debe acceder a la base con payload inválido') } }
+  for (const extra of [{ id: -1 }, { recurrente_id: 0 }, { fecha: '15/10/2026' }, { actualizar_precio: 'true' }, { esperado: '10' }]) {
+    assert.equal((await patch({ recurrente: { ...choice, ...extra } })).status, 400)
+  }
+  assert.equal((await patch({ recurrente: choice, aceptar: [] })).status, 400)
+  const tables = { correo_consumo: [pending(1, { descripcion: 'NETFLIX.COM', fecha: '2026-10-16', monto: 12 })], gasto_recurrente: [{ id: 7, user_id: owner, descripcion: 'Netflix', monto: 10, activo: true, frecuencia: 'mensual', dia_mes: 15, fecha_inicio: '2026-01-01' }], gasto: [{ id: 20, user_id: owner, gasto_recurrente_id: 7, descripcion: 'Netflix', monto: 10, fecha: '2026-10-15' }], correo_alias: [] }
+  db = { ...fakeDb(tables), rpc: async () => { rpcCalls++; return { data: null, error: { code: '23505' } } } }
+  assert.equal((await patch({ recurrente: { ...choice, esperado: 9 } })).status, 409)
+  tables.gasto_recurrente[0].user_id = 'otro'
+  assert.equal((await patch({ recurrente: choice })).status, 409)
+  tables.gasto_recurrente[0].user_id = owner
+  tables.correo_consumo[0].descripcion = 'SPOTIFY'
+  assert.equal((await patch({ recurrente: choice })).status, 409)
+  assert.equal(rpcCalls, 0)
+  tables.correo_consumo[0].descripcion = 'NETFLIX.COM'
+  assert.equal((await patch({ recurrente: choice })).status, 409)
+  assert.equal(rpcCalls, 1)
+  db.rpc = async () => ({ error: { code: 'PGRST202' }, data: null })
+  assert.equal((await patch({ recurrente: choice })).status, 503)
+  assert.equal(tables.correo_consumo[0].estado, 'pendiente')
+})
+
+test('confirmar recurrente envía solo la decisión validada y deriva el usuario y precio en servidor', async () => {
+  const tables = { correo_consumo: [pending(1, { descripcion: 'NETFLIX.COM', fecha: '2026-10-16', monto: 12 })], gasto_recurrente: [{ id: 7, user_id: owner, descripcion: 'Netflix', monto: 10, activo: true, frecuencia: 'mensual', dia_mes: 15, fecha_inicio: '2026-01-01' }], gasto: [{ id: 20, user_id: owner, gasto_recurrente_id: 7, descripcion: 'Netflix', monto: 10, fecha: '2026-10-15' }], correo_alias: [] }
+  const calls = []
+  db = { ...fakeDb(tables), rpc: async (name, args) => { calls.push({ name, args }); return { data: { vinculados: 1 }, error: null } } }
+  const response = await patch({ recurrente: { id: 1, recurrente_id: 7, fecha: '2026-10-15', esperado: 10, actualizar_precio: true }, user_id: 'otro', monto: 1 })
+  assert.equal(response.status, 200)
+  assert.deepEqual(await response.json(), { vinculados: 1 })
+  assert.deepEqual(calls, [{ name: 'confirm_email_recurring', args: { p_user_id: owner, p_correo_id: 1, p_recurrente_id: 7, p_fecha: '2026-10-15', p_update_price: true, p_expected_amount: 10, p_expected_tax: null } }])
+})
+
 test('correo sugiere la categoría del último registro aunque tenga una fecha anterior', async () => {
   db = fakeDb({ correo_consumo: [pending(1, { descripcion: 'CYRANO CUMBAYA' })], correo_alias: [], categoria: [{ id: 1 }, { id: 3 }], gasto: [
     { id: 10, user_id: owner, descripcion: 'Cyrano Cumbayá', categoria_id: 1, fecha: '2026-10-10', monto: 100 },
