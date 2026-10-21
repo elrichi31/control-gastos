@@ -10,15 +10,16 @@
 .landing a { text-underline-offset: 5px; }
 .landing svg { flex-shrink: 0; }
 .container { width: min(100% - 48px, 1440px); margin-inline: auto; }
-.header { position: sticky; top: 0; z-index: 30; background: var(--landing-bg); border-bottom: 1px solid var(--landing-line); }
-.nav { min-height: 76px; display: flex; flex-wrap: wrap; align-items: center; gap: 40px; }
+.header { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb,var(--landing-bg) 82%,transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--landing-line); }
+.nav { min-height: 76px; display: flex; flex-wrap: wrap; align-items: center; gap: 32px; }
 .brand { display: inline-flex; align-items: center; gap: 9px; font-size: 22px; font-weight: 700; letter-spacing: -.035em; text-decoration: none; }
 .brand svg { color: var(--landing-accent); }
 .desktopLinks,.navActions,.desktopAuth { display: flex; align-items: center; gap: 24px; }
-.desktopLinks { font-size: 14px; color: var(--landing-muted); }
+.desktopLinks { gap: 4px; font-size: 14px; color: var(--landing-muted); }
+.desktopLinks a { display: inline-flex; align-items: center; min-height: 40px; padding-inline: 14px; border-radius: 999px; text-decoration: none; transition: background-color 160ms ease,color 160ms ease; }
 .navActions { margin-left: auto; gap: 8px; }
 .desktopAuth { gap: 8px; }
-.navActions > button,.motionToggle,.menuButton { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--landing-line); border-radius: 50%; background: transparent; color: var(--landing-muted); cursor: pointer; }
+.navActions > button,.menuButton { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--landing-line); border-radius: 50%; background: transparent; color: var(--landing-muted); cursor: pointer; }
 .primary,.secondary,.outline { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 46px; border-radius: 999px; padding: 12px 23px; font-size: 15px; font-weight: 550; line-height: 1.4; text-decoration: none; transition: transform 160ms var(--ease-out),background-color 160ms ease,color 160ms ease; }
 .primary { background: var(--landing-accent); color: var(--on-accent); border: 1px solid var(--landing-accent); }
 .secondary { border: 1px solid var(--landing-line); background: transparent; color: var(--landing-ink); }
@@ -185,12 +186,13 @@
   .primary:hover { background: color-mix(in srgb,var(--landing-accent) 88%,black); }
   .secondary:hover,.outline:hover { background: var(--landing-soft); }
   .cta .primary:hover { background: color-mix(in srgb,var(--landing-accent) 88%,black); }
+  .desktopLinks a:hover { background: var(--landing-soft); color: var(--landing-ink); }
   .sceneCopy a:hover,.textLink:hover,.footer a:hover { text-decoration: underline; }
   .cornerLink:hover { background: var(--scene-line); }
 }
 @media (max-width:1100px) {
   .nav { gap: 24px; }
-  .desktopLinks { gap: 16px; }
+  .desktopLinks { gap: 0; }
   .desktopAuth .outline { display: none; }
   .heroGrid { grid-template-columns: minmax(0,1fr) 440px minmax(0,1fr); gap: 16px; }
   .heroAside p { font-size: 15px; }

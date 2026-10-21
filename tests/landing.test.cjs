@@ -44,12 +44,11 @@ test('hero is scroll-driven, illustrative and labelled as sample data', () => {
   assert.match(css, /\.heroStage\[data-static="true"\]/)
 })
 
-test('marketing motion has a pause control and reduced-motion policy', () => {
-  const { LandingMotion, MotionToggle } = require('../src/components/landing/LandingMotion.tsx')
-  const html = renderToStaticMarkup(React.createElement(LandingMotion, null, React.createElement(MotionToggle)))
+test('marketing motion honours reduced motion and has no manual pause button', () => {
+  const { LandingMotion } = require('../src/components/landing/LandingMotion.tsx')
+  const html = renderToStaticMarkup(React.createElement(LandingMotion, null))
   assert.match(html, /data-motion-paused="false"/)
-  assert.match(html, /aria-label="Pausar animaciones"/)
-  assert.match(html, /aria-pressed="false"/)
+  assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '../src/components/landing/Navbar.tsx'), 'utf8'), /MotionToggle/)
   const css = fs.readFileSync(path.join(__dirname, '../src/components/landing/landing.module.css'), 'utf8')
   assert.match(css, /prefers-reduced-motion:reduce/)
   assert.match(css, /animation-play-state: paused !important/)
