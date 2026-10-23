@@ -66,9 +66,8 @@ export function Sidebar({ isOpen, onClose, isMobile, isCollapsed, onToggleCollap
 				{collapsed ? (
 					<BethaMark size={28} className="shrink-0 text-primary" />
 				) : (
-					<div className="min-w-0 flex-1 space-y-1">
+					<div className="min-w-0 flex-1">
 						<BethaLogo size={16} />
-						<p className="truncate text-[11px] leading-none text-sidebar-muted">Control de gastos</p>
 					</div>
 				)}
 				{isMobile && (
