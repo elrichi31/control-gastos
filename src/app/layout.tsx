@@ -45,7 +45,7 @@ export default function RootLayout({
         <meta name="description" content="Aplicación para el control y gestión de gastos personales" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#0c0c0d" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#0b0d0c" media="(prefers-color-scheme: dark)" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 

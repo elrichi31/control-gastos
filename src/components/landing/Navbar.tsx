@@ -3,7 +3,8 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
-import { Wallet, Menu, X } from "lucide-react"
+import { Menu, X } from "lucide-react"
+import { BethaMark } from "@/components/brand/BethaMark"
 import { ModeToggle } from "@/components/layout/mode-toggle"
 import styles from './landing.module.css'
 
@@ -15,7 +16,7 @@ export function Navbar() {
   return (
     <header className={styles.header}>
       <nav className={`${styles.container} ${styles.nav}`} aria-label="Navegación principal">
-        <Link href="/" className={styles.brand}><Wallet size={24} aria-hidden="true" />BethaSpend</Link>
+        <Link href="/" className={styles.brand}><BethaMark size={24} />BethaSpend</Link>
         <div className={styles.desktopLinks}><Link href="/#features">Características</Link><Link href="/#how-it-works">Cómo funciona</Link></div>
         <div className={styles.navActions}><ModeToggle /><div className={styles.desktopAuth}>
           {authenticated ? <Link href="/dashboard" className={styles.primary}>Ir al dashboard</Link> : <><Link href="/auth/login" className={styles.outline}>Iniciar sesión</Link><Link href="/auth/register" className={styles.primary}>Comenzar gratis</Link></>}

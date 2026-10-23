@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label'
 import { PageTitle } from '@/components/layout/PageTitle'
 import { ModeToggle } from '@/components/layout/mode-toggle'
 import { safeLoginReturn } from '@/lib/mcp/login-return'
-import { Eye, EyeOff, Wallet } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
+import { BethaMark } from '@/components/brand/BethaMark'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -82,7 +83,7 @@ export default function LoginPage() {
         <div className="absolute top-6 left-6 sm:left-8 lg:left-16 xl:left-24 flex items-center gap-4">
           <Link href="/" className="flex items-center gap-2 group">
             <div className="p-2 rounded-lg bg-primary text-primary-foreground group-hover:bg-primary/90 transition-colors">
-              <Wallet className="w-5 h-5" />
+              <BethaMark size={20} />
             </div>
             <span className="text-lg font-semibold text-foreground">
               BethaSpend
@@ -219,7 +220,7 @@ export default function LoginPage() {
           {/* Main Message */}
           <div className="text-center max-w-md">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-xs rounded-lg mb-8 border border-white/20">
-              <Wallet className="w-8 h-8 text-white" />
+              <BethaMark size={32} className="text-white" />
             </div>
             
             <h2 className="text-3xl font-semibold text-white mb-4">

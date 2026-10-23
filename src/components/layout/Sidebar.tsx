@@ -5,7 +5,8 @@ import * as Dialog from "@radix-ui/react-dialog"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { clearPrivateCaches } from "@/lib/pwa/cache-policy"
-import { Home, Calculator, BarChart3, Receipt, LogOut, Repeat, Plus, Wallet, Plug, Mail, PanelLeft, X, type LucideIcon } from "lucide-react"
+import { Home, Calculator, BarChart3, Receipt, LogOut, Repeat, Plus, Plug, Mail, PanelLeft, X, type LucideIcon } from "lucide-react"
+import { BethaMark } from "@/components/brand/BethaMark"
 import { cn } from "@/lib/utils"
 import { ModeToggle } from "@/components/layout/mode-toggle"
 import { CronStatus } from "@/components/layout/CronStatus"
@@ -62,7 +63,7 @@ export function Sidebar({ isOpen, onClose, isMobile, isCollapsed, onToggleCollap
 		<>
 			<div className={cn("flex h-14 items-center gap-2.5 border-b border-sidebar-border px-3", collapsed && "justify-center px-0")}>
 				<div className="grid size-8 shrink-0 place-items-center rounded-lg border border-sidebar-border bg-card">
-					<Wallet className="size-4 text-foreground" />
+					<BethaMark size={18} className="text-primary" />
 				</div>
 				{!collapsed && (
 					<div className="min-w-0 flex-1 leading-tight">

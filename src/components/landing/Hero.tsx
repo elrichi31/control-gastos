@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
-import { ArrowRight, ArrowUpRight, ChevronDown, Wallet, ShoppingBasket, Coffee, Bus, Home, Repeat, PiggyBank, Tags, Film, Zap, HeartPulse, GraduationCap, Shirt, type LucideIcon } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, ChevronDown, ShoppingBasket, Coffee, Bus, Home, Repeat, PiggyBank, Tags, Film, Zap, HeartPulse, GraduationCap, Shirt, type LucideIcon } from 'lucide-react'
+import { BethaMark } from '@/components/brand/BethaMark'
 import { useLandingMotion } from './LandingMotion'
 import styles from './landing.module.css'
 
@@ -131,7 +132,7 @@ export function Hero() {
               })}
               <div className={styles.heroEmblem} aria-hidden="true">
                 <svg className={styles.heroRing} viewBox="0 0 252 252" focusable="false"><circle className={styles.ringTrack} cx="126" cy="126" r="122" /><circle className={styles.ringFill} cx="126" cy="126" r="122" /></svg>
-                <Wallet size={84} strokeWidth={1.6} />
+                <BethaMark size={84} />
               </div>
               <div className={styles.heroTotal} aria-hidden="true"><span>Gastado este mes</span><strong>${total.toLocaleString('en-US')}</strong><span>de ${BUDGET.toFixed(2)} · {Math.round((total / BUDGET) * 100)}%</span></div>
               <div className={styles.heroCaption} aria-hidden="true">
