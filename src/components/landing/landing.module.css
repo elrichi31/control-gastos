@@ -198,7 +198,7 @@
   .heroAside p { font-size: 15px; }
   .heroChip { --rx: 200px; --ry: 250px; font-size: 12px; }
   .heroEmblem { width: 168px; height: 168px; border-radius: 48px; }
-  .heroEmblem svg:not(.heroRing) { width: 72px; height: 72px; }
+  .heroEmblem svg:not(.heroRing) { width: 114px; height: 114px; }
   .heroTotal { top: calc(50% + 128px); }
   .sceneCopy { padding-inline: 30px; }
 }
@@ -211,7 +211,7 @@
   .heroCenter { height: 560px; order: 2; }
   .heroBurst { width: 560px; }
   .heroEmblem { width: 140px; height: 140px; border-radius: 40px; }
-  .heroEmblem svg:not(.heroRing) { width: 60px; height: 60px; }
+  .heroEmblem svg:not(.heroRing) { width: 94px; height: 94px; }
   .heroChip { --ux: var(--mx); --uy: var(--my); --rx: 92px; --ry: 190px; font-size: 11px; padding: 7px 10px 7px 7px; gap: 8px; }
   .chipIcon { width: 24px; height: 24px; }
   .heroTotal { top: calc(50% + 150px); }
