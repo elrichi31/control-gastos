@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { clearPrivateCaches } from "@/lib/pwa/cache-policy"
 import { Home, Calculator, BarChart3, Receipt, LogOut, Repeat, Plus, Plug, Mail, PanelLeft, X, type LucideIcon } from "lucide-react"
+import { BethaLogo } from "@/components/brand/BethaLogo"
 import { BethaMark } from "@/components/brand/BethaMark"
 import { cn } from "@/lib/utils"
 import { ModeToggle } from "@/components/layout/mode-toggle"
@@ -62,13 +63,12 @@ export function Sidebar({ isOpen, onClose, isMobile, isCollapsed, onToggleCollap
 	const content = (
 		<>
 			<div className={cn("flex h-14 items-center gap-2.5 border-b border-sidebar-border px-3", collapsed && "justify-center px-0")}>
-				<div className="grid size-8 shrink-0 place-items-center rounded-lg border border-sidebar-border bg-card">
-					<BethaMark size={18} className="text-primary" />
-				</div>
-				{!collapsed && (
-					<div className="min-w-0 flex-1 leading-tight">
-						<p className="truncate text-[13px] font-semibold text-foreground">BethaSpend</p>
-						<p className="truncate text-[11px] text-sidebar-muted">Control de gastos</p>
+				{collapsed ? (
+					<BethaMark size={28} className="shrink-0 text-primary" />
+				) : (
+					<div className="min-w-0 flex-1 space-y-1">
+						<BethaLogo size={16} />
+						<p className="truncate text-[11px] leading-none text-sidebar-muted">Control de gastos</p>
 					</div>
 				)}
 				{isMobile && (

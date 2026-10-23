@@ -12,6 +12,7 @@ import { ModeToggle } from '@/components/layout/mode-toggle'
 import { safeLoginReturn } from '@/lib/mcp/login-return'
 import { Eye, EyeOff } from 'lucide-react'
 import { BethaMark } from '@/components/brand/BethaMark'
+import { BethaLogo } from '@/components/brand/BethaLogo'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -82,12 +83,7 @@ export default function LoginPage() {
         {/* Logo and Theme Toggle */}
         <div className="absolute top-6 left-6 sm:left-8 lg:left-16 xl:left-24 flex items-center gap-4">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="p-2 rounded-lg bg-primary text-primary-foreground group-hover:bg-primary/90 transition-colors">
-              <BethaMark size={20} />
-            </div>
-            <span className="text-lg font-semibold text-foreground">
-              BethaSpend
-            </span>
+            <BethaLogo size={22} />
           </Link>
         </div>
         
@@ -219,9 +215,7 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-center items-center p-12 w-full">
           {/* Main Message */}
           <div className="text-center max-w-md">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-xs rounded-lg mb-8 border border-white/20">
-              <BethaMark size={32} className="text-white" />
-            </div>
+            <BethaMark size={72} className="mx-auto mb-8 text-[#0b0d0c]" />
             
             <h2 className="text-3xl font-semibold text-white mb-4">
               Toma el control de tus finanzas

@@ -12,8 +12,8 @@
 .container { width: min(100% - 48px, 1440px); margin-inline: auto; }
 .header { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb,var(--landing-bg) 82%,transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--landing-line); }
 .nav { min-height: 76px; display: flex; flex-wrap: wrap; align-items: center; gap: 32px; }
-.brand { display: inline-flex; align-items: center; gap: 9px; font-size: 22px; font-weight: 700; letter-spacing: -.035em; text-decoration: none; }
-.brand svg { color: var(--landing-accent); }
+.brand { display: inline-flex; align-items: center; text-decoration: none; }
+.heroEmblem svg:not(.heroRing), .ctaMark svg { color: #0b0d0c; }
 .desktopLinks,.navActions,.desktopAuth { display: flex; align-items: center; gap: 24px; }
 .desktopLinks { gap: 4px; font-size: 14px; color: var(--landing-muted); }
 .desktopLinks a { display: inline-flex; align-items: center; min-height: 40px; padding-inline: 14px; border-radius: 999px; text-decoration: none; transition: background-color 160ms ease,color 160ms ease; }
@@ -231,8 +231,6 @@
 
   .container { width: calc(100% - 32px); }
   .nav { min-height: 72px; gap: 10px; }
-  .brand { font-size: 19px; gap: 6px; }
-  .brand svg { width: 21px; }
   .desktopLinks,.desktopAuth { display: none; }
   .navActions { gap: 4px; }
   .navActions .menuButton { display: flex; }
@@ -278,7 +276,6 @@
   .footerTop nav a { min-height: 44px; display: flex; align-items: center; }
 }
 @media (max-width:380px) {
-  .brand { font-size: 17px; }
   .heroCopy h1 { font-size: 40px; }
   .heroChip { --rx: 80px; }
   .budgetDemo { width: 255px; left: calc(50% - 128px); }
