@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Download, FileText, Table, BarChart3 } from 'lucide-react'
+import { formatMoney } from '@/lib/utils'
 import { Gasto } from '@/hooks/useGastosFiltrados'
 
 interface ExportarDatosProps {
@@ -17,14 +18,6 @@ export function ExportarDatos({ gastos, gastosOriginal }: ExportarDatosProps) {
   const [alcance, setAlcance] = useState<'filtrados' | 'todos'>('filtrados')
   const [isOpen, setIsOpen] = useState(false)
 
-  const formatMoney = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount)
-  }
 
   const exportarCSV = (datos: Gasto[]) => {
     const headers = ['Fecha', 'Descripción', 'Monto', 'Categoría', 'Método de Pago']

@@ -10,7 +10,6 @@ import type { GastoGroup } from '../../hooks/useGastosGrouping'
 
 interface GrupoGastosProps {
   group: GastoGroup
-  index: number
   isExpanded: boolean
   onToggle: (groupTitle: string) => void
   formatMoney: (amount: number) => string
@@ -20,7 +19,6 @@ interface GrupoGastosProps {
 
 export function GrupoGastos({ 
   group, 
-  index,
   isExpanded,
   onToggle,
   formatMoney, 
@@ -31,7 +29,7 @@ export function GrupoGastos({
     <div className="border border-border rounded-xl overflow-hidden">
       <div 
         className="flex items-center justify-between p-4 bg-muted cursor-pointer hover:bg-muted transition-colors rounded-t-lg"
-        onClick={() => onToggle(index.toString())}
+        onClick={() => onToggle(group.key)}
       >
         <div className="flex items-center gap-3">
           {isExpanded ? (

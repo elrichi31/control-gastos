@@ -1,12 +1,15 @@
 "use client"
 
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import { StatsFilterWidget } from "@/components/stats/stats-filter-widget"
 import { StatTile, StatTileRow } from "@/components/stats/stat-tile"
-import { EvolutionChart } from "@/components/stats/evolution-chart"
+const EvolutionChart = dynamic(() => import("@/components/stats/evolution-chart").then(m => m.EvolutionChart), { loading: () => <div role="status" aria-label="Cargando gráfico" className="h-80 rounded-xl border border-border bg-card motion-safe:animate-pulse" /> })
 import { CategoryRanking } from "@/components/stats/category-ranking"
-import { PaymentMethodChart, WeekdayChart, FixedVsVariable } from "@/components/stats/breakdown-charts"
-import { ProjectionPanel } from "@/components/stats/projection-panel"
+const PaymentMethodChart = dynamic(() => import("@/components/stats/breakdown-charts").then(m => m.PaymentMethodChart), { loading: () => <div role="status" aria-label="Cargando gráfico" className="h-80 rounded-xl border border-border bg-card motion-safe:animate-pulse" /> })
+const WeekdayChart = dynamic(() => import("@/components/stats/breakdown-charts").then(m => m.WeekdayChart), { loading: () => <div role="status" aria-label="Cargando gráfico" className="h-80 rounded-xl border border-border bg-card motion-safe:animate-pulse" /> })
+const FixedVsVariable = dynamic(() => import("@/components/stats/breakdown-charts").then(m => m.FixedVsVariable), { loading: () => <div role="status" aria-label="Cargando gráfico" className="h-80 rounded-xl border border-border bg-card motion-safe:animate-pulse" /> })
+const ProjectionPanel = dynamic(() => import("@/components/stats/projection-panel").then(m => m.ProjectionPanel), { loading: () => <div role="status" aria-label="Cargando gráfico" className="h-80 rounded-xl border border-border bg-card motion-safe:animate-pulse" /> })
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TopExpenses } from "@/components/stats/top-expenses"
 import { InsightsSummary, WeeklySpending, CategoryChanges, PurchaseSizes } from "@/components/stats/spending-insights"

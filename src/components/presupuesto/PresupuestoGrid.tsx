@@ -1,8 +1,10 @@
+"use client"
 
 import { MonthCard } from "./MonthCard"
 import { AddMonthCard } from "./AddMonthCard"
 import { YearSummary } from "./YearSummary"
-import { BudgetMonthlyChart } from "./BudgetMonthlyChart"
+import dynamic from "next/dynamic"
+const BudgetMonthlyChart = dynamic(() => import("./BudgetMonthlyChart").then(m => m.BudgetMonthlyChart), { loading: () => <div role="status" aria-label="Cargando gráfico" className="h-80 rounded-xl border border-border bg-card motion-safe:animate-pulse" /> })
 import React from "react"
 
 interface MonthData {

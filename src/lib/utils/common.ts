@@ -11,13 +11,15 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Formatea un monto como moneda USD
  */
-export function formatMoney(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
+const moneyFormatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  }).format(amount)
+  })
+
+export function formatMoney(amount: number): string {
+  return moneyFormatter.format(amount)
 }
 
 /**

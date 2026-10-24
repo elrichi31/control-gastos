@@ -6,7 +6,8 @@ import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { useSearchParams } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import ExpenseModal from "@/components/presupuesto/ExpenseModal"
+import dynamic from "next/dynamic"
+const ExpenseModal = dynamic(() => import("@/components/presupuesto/ExpenseModal"))
 import { BudgetDetailsContent } from "@/components/presupuesto/BudgetDetailsContent"
 import { BudgetSummary } from "@/components/presupuesto/BudgetSummary"
 import { useBudgetDetailsData } from "@/hooks/useBudgetDetailsData"
@@ -141,7 +142,7 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
         </DialogContent>
       </Dialog>
 
-      <ExpenseModal
+      {isExpenseDialogOpen && <ExpenseModal
         open={isExpenseDialogOpen}
         onOpenChange={setIsExpenseDialogOpen}
         formData={budgetData.formData}
@@ -151,7 +152,7 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
         handleAddExpense={handleSubmitExpense}
         handleUpdateExpense={handleSubmitExpense}
         onCancel={handleCancelExpense}
-      />
+      />}
     </PageShell>
   )
 }

@@ -99,13 +99,13 @@ export function MonthPlanning({ plan, loading, error }: PlanningProps) {
               <div className="flex items-center gap-3 px-5 py-2"><CircleCheck aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" /><p className="text-sm text-muted-foreground">{plan.available === null ? 'Configura límites para ver avisos.' : 'Sin avisos de presupuesto.'}</p></div>
             ) : (
               <>
-                <ul>{plan.alerts.slice(0, 3).map((alert, index) => <AlertRow key={index} alert={alert} />)}</ul>
+                <ul>{plan.alerts.slice(0, 3).map((alert) => <AlertRow key={`${alert.kind}:${alert.category ?? "month"}`} alert={alert} />)}</ul>
                 {plan.alerts.length > 3 && (
                   <details className="group">
                     <Button asChild variant="ghost" size="sm" className="w-full justify-between rounded-none px-5 text-muted-foreground">
                       <summary>Ver {plan.alerts.length - 3} avisos más<ChevronDown aria-hidden="true" className="h-4 w-4 group-open:rotate-180" /></summary>
                     </Button>
-                    <ul>{plan.alerts.slice(3).map((alert, index) => <AlertRow key={index} alert={alert} />)}</ul>
+                    <ul>{plan.alerts.slice(3).map((alert) => <AlertRow key={`${alert.kind}:${alert.category ?? "month"}`} alert={alert} />)}</ul>
                   </details>
                 )}
               </>

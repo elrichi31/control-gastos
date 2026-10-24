@@ -79,7 +79,7 @@ export function Sidebar({ isOpen, onClose, isMobile, isCollapsed, onToggleCollap
 
 			<nav aria-label="Navegación principal" className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
 				{navSections.map((section, i) => (
-					<div key={i} className={cn(i > 0 && "mt-3 border-t border-sidebar-border pt-3")}>
+					<div key={section.items[0].href} className={cn(i > 0 && "mt-3 border-t border-sidebar-border pt-3")}>
 						{section.title && !collapsed && (
 							<p className="px-2.5 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-sidebar-muted/80">{section.title}</p>
 						)}

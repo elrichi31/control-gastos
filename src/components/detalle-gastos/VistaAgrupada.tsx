@@ -51,12 +51,11 @@ export function VistaAgrupada({
           </div>
         ) : (
           <div className="space-y-4 p-4">
-            {groupedGastos.map((group, index) => (
+            {groupedGastos.map((group) => (
               <GrupoGastos
-                key={index}
+                key={group.key}
                 group={group}
-                index={index}
-                isExpanded={expandedGroups.has(index.toString())}
+                isExpanded={expandedGroups.has(group.key)}
                 onToggle={onToggleGroup}
                 formatMoney={formatMoney}
                 formatDate={formatDate}

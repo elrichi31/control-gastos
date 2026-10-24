@@ -5,6 +5,7 @@ import { toLocalDateFromString } from '@/lib/utils'
 import type { Expense } from '@/services/expenses'
 
 export interface GastoGroup {
+  key: string
   title: string
   gastos: Expense[]
   total: number
@@ -72,6 +73,7 @@ export function useGastosGrouping(gastos: Expense[], groupBy: "none" | "day" | "
 
       if (!groups[groupKey]) {
         groups[groupKey] = {
+          key: `${groupBy}:${groupKey}`,
           title: groupTitle,
           gastos: [],
           total: 0
