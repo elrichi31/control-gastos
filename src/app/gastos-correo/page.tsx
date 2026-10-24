@@ -12,7 +12,9 @@ import { getSessionEmailReviewQueue, type ReviewJob } from '@/lib/email-review-q
 import { REVIEW_PAGE_SIZE as PAGE_SIZE } from '@/lib/email-review-page'
 import { ForeignTaxInline } from '@/components/gastos/ForeignTaxField'
 import { computeForeignTax, emptyForeignTax, validateForeignTax, type ForeignTaxState } from '@/lib/foreign-tax'
-import { fetchCategories } from '@/services/categories'
+import { useExpenseCatalogs } from '@/hooks/useExpenseQueries'
+import { useRemoteQuery, useRemoteMutation } from '@/hooks/useRemoteData'
+import { queryKeys } from '@/lib/query/client'
 import { useQueryClient } from '@tanstack/react-query'
 import { invalidateExpenseData } from '@/lib/query/client'
 import { formatMoney } from '@/lib/utils'
@@ -22,7 +24,6 @@ import styles from './review.module.css'
 
 type Coincidencia = Candidate
 type Pendiente = { id: number; tipo: 'gasto' | 'ingreso'; origen: string; fecha: string; descripcion: string; descripcion_original?: string; destinatario?: string | null; alias?: string; monto: number; categoria_id: number | null; coincidencias: Coincidencia[] }
-type Categoria = { id: number; nombre: string }
 type Tab = 'nuevos' | 'duplicados' | 'recibidos'
 type PageMeta = { counts: Record<Tab, number>; total: number; page: number; pages: number }
 const tabOf = (p: Pendiente, otros: Set<number>): Tab => p.tipo === 'ingreso' ? 'recibidos' : p.coincidencias.length && !otros.has(p.id) ? 'duplicados' : 'nuevos'
@@ -32,81 +33,63 @@ const half = (n: number) => Math.round(n * 50) / 100
 export default function EmailExpensesPage() {
   const queryClient = useQueryClient()
   const refreshExpenses = useCallback(() => invalidateExpenseData(queryClient), [queryClient])
-  const [enabled, setEnabled] = useState<boolean | null>(null)
-  const [pendientes, setPendientes] = useState<Pendiente[]>([])
-  const [categorias, setCategorias] = useState<Categoria[]>([])
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [categoriaPor, setCategoriaPor] = useState<Record<number, number>>({})
   const [mitadPor, setMitadPor] = useState<Record<number, boolean>>({})
   const [elegidoPor, setElegidoPor] = useState<Record<number, number>>({})
   const [noEsDuplicado, setNoEsDuplicado] = useState<Set<number>>(new Set())
-  const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState('')
   const [jobs, setJobs] = useState<ReviewJob[]>([])
-  const [loadError, setLoadError] = useState('')
   const [tab, setTab] = useState<Tab>('nuevos')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [query, setQuery] = useState('')
-  const [meta, setMeta] = useState<PageMeta | null>(null)
-  const [loading, setLoading] = useState(false)
   const [aliasSaving, setAliasSaving] = useState<string | null>(null)
   const [descriptionDrafts, setDescriptionDrafts] = useState<Record<number, string>>({})
   const [exteriorPor, setExteriorPor] = useState<Record<number, ForeignTaxState>>({})
   const [updatePrice, setUpdatePrice] = useState<Record<string, boolean>>({})
   const mounted = useRef(true)
-  const loadVersion = useRef(0)
   const queue = useRef<ReturnType<typeof getSessionEmailReviewQueue> | null>(null)
-  // load() es estable (lo usa la cola); lee la página pedida de aquí.
-  const params = useRef({ tab, page, query, otros: noEsDuplicado })
-  params.current = { tab, page, query, otros: noEsDuplicado }
-
-  const load = useCallback(async () => {
-    const version = ++loadVersion.current
-    const { tab, page, query, otros } = params.current
-    setLoading(true)
-    try {
-      const body = await fetchEmailImportPage<Pendiente>({ tab, page, query, otros })
-      if (!mounted.current || version !== loadVersion.current) return
-      setEnabled(body.enabled === true)
-      setPendientes(body.pendientes)
-      setMeta(body.counts ? { counts: body.counts, total: body.total, page: body.page, pages: body.pages } : null)
-      if (body.page && body.page !== page) setPage(body.page)
-      const available = new Set<number>(body.pendientes.map(p => p.id))
-      setSelected(prev => new Set([...prev].filter(id => available.has(id))))
-      setLoadError('')
-    } catch (cause) {
-      if (mounted.current && version === loadVersion.current) setLoadError((cause as Error).message || 'No se pudo conectar. Intenta de nuevo.')
-    } finally {
-      if (mounted.current && version === loadVersion.current) setLoading(false)
-    }
-  }, [])
+  const review = useRemoteQuery([...queryKeys.email, 'page', tab, page, query, [...noEsDuplicado].sort((a,b) => a-b)], signal => fetchEmailImportPage<Pendiente>({ tab, page, query, otros: noEsDuplicado }, signal))
+  const catalogs = useExpenseCatalogs()
+  const pendientes = useMemo(() => review.data?.pendientes ?? [], [review.data])
+  const categorias = catalogs.data?.categories ?? []
+  const enabled = review.data ? review.data.enabled === true : null
+  const meta: PageMeta | null = review.data?.counts ? { counts: review.data.counts, total: review.data.total, page: review.data.page, pages: review.data.pages } : null
+  const loading = review.isFetching
+  const loadError = review.error?.message ?? catalogs.error?.message ?? ''
+  const load = useCallback(() => Promise.all([queryClient.invalidateQueries({ queryKey: queryKeys.email }), queryClient.invalidateQueries({ queryKey: queryKeys.catalogs })]), [queryClient])
+  const aliasMutation = useRemoteMutation(({ id, alias, destinatario }: { id: number; alias: string; destinatario: string }) => saveEmailAlias(id, alias, destinatario), [queryKeys.email])
+  // Serial queue reconciles once per drained batch, not after each write.
+  const reviewMutation = useRemoteMutation(({ payload, countKey, signal }: { payload: object; countKey: 'aceptados' | 'descartados' | 'vinculados'; signal: AbortSignal }) => updateEmailImport(payload, countKey, signal), [])
+  const syncMutation = useRemoteMutation(syncEmailImport, [queryKeys.email, queryKeys.expenses, queryKeys.recurring, queryKeys.monthPlan, queryKeys.forecast, queryKeys.budgets])
+  const syncing = syncMutation.isPending
 
   if (!queue.current) queue.current = getSessionEmailReviewQueue(job => {
       const id = `correo-${job.id}`
       if (job.status === 'queued' || job.status === 'saving') toast.loading(`${job.status === 'queued' ? 'En cola' : 'Guardando'} · ${job.label}`, { id })
       else if (job.status === 'success') toast.success(job.label, { id, duration: 3500 })
       else toast.error(`${job.label}: ${job.error}`, { id, duration: 7000 })
-  })
+  }, queryClient, () => { void refreshExpenses() }, () => { queue.current?.snapshot().forEach(job => toast.dismiss(`correo-${job.id}`)) })
   useEffect(() => {
     mounted.current = true
     return queue.current!.subscribe({
-      onChange: next => { if (mounted.current) { ++loadVersion.current; setJobs(next) } },
+      onChange: next => { if (mounted.current) setJobs(next) },
       // One reconciliation per drained batch, not a slow full read after every click.
       // Aceptar o vincular movimientos cambia los gastos: el store compartido se vuelve a descargar una vez por lote.
-      onIdle: () => { void refreshExpenses(); if (mounted.current) void load() },
     })
   }, [load, refreshExpenses])
 
   useEffect(() => {
     mounted.current = true
-    fetchCategories().then(data => {
-      if (mounted.current) setCategorias(Array.isArray(data) ? data : [])
-    }).catch(() => { if (mounted.current) setMessage('No se cargaron las categorías. Recarga antes de aceptar gastos.') })
     return () => { mounted.current = false }
-  }, [load])
-  // Cada cambio de pestaña, página, búsqueda o "es otro gasto" pide esa página al servidor.
-  useEffect(() => { void load() }, [tab, page, query, noEsDuplicado, load])
+  }, [])
+  useEffect(() => {
+    if (!review.data) return
+    if (review.data.page && review.data.page !== page) setPage(review.data.page)
+    const available = new Set(review.data.pendientes.map(p => p.id))
+    setSelected(previous => new Set([...previous].filter(id => available.has(id))))
+  }, [review.data, page])
   useEffect(() => {
     const timer = setTimeout(() => { setQuery(search.trim()); setPage(1) }, 300)
     return () => clearTimeout(timer)
@@ -148,24 +131,21 @@ export default function EmailExpensesPage() {
     if (!p.destinatario || syncing || inFlight || aliasSaving !== null) return
     setAliasSaving(p.destinatario)
     try {
-      await saveEmailAlias(p.id, alias, p.destinatario)
+      await aliasMutation.mutateAsync({ id: p.id, alias, destinatario: p.destinatario })
       if (!mounted.current) return
-      ++loadVersion.current
-      setPendientes(prev => prev.map(row => row.destinatario === p.destinatario ? { ...row, alias, descripcion: alias || row.descripcion_original || row.descripcion } : row))
       if (!alias) setDescriptionDrafts(prev => { const next = { ...prev }; delete next[p.id]; return next })
       toast.success(alias ? 'Nombre recordado para próximas transferencias' : 'Nombre olvidado')
-      await load()
     } catch (cause) { toast.error((cause as Error).message || 'No se pudo guardar el alias.') }
     finally { if (mounted.current) setAliasSaving(null) }
   }
 
   function enqueue(p: Pendiente, payload: object, countKey: 'aceptados' | 'descartados' | 'vinculados', label: string) {
     if (syncing) return
-    const added = queue.current!.enqueue({ id: p.id, label, execute: async () => {
+    const added = queue.current!.enqueue({ id: p.id, label, execute: async (sessionSignal) => {
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), 120000)
       try {
-        await updateEmailImport(payload, countKey, controller.signal)
+        await reviewMutation.mutateAsync({ payload, countKey, signal: sessionSignal ? AbortSignal.any([controller.signal, sessionSignal]) : controller.signal })
       } finally { clearTimeout(timeout) }
     } })
     if (added) {
@@ -178,15 +158,14 @@ export default function EmailExpensesPage() {
   const descartar = (p: Pendiente) => enqueue(p, { descartar: [p.id] }, 'descartados', `Descartado · ${p.descripcion}`)
   async function sync() {
     if (syncing || queue.current!.pendingCount() || aliasSaving !== null) return
-    setSyncing(true); setMessage('')
+    setMessage('')
     const id = toast.loading('Buscando movimientos nuevos…')
     try {
-      const body = await syncEmailImport()
+      const body = await syncMutation.mutateAsync(undefined)
       toast.success(body.nuevos ? `${body.nuevos} movimientos nuevos.` : 'No hay movimientos nuevos.', { id })
-      void refreshExpenses()
       await load()
     } catch (cause) { toast.error((cause as Error).message || 'No se pudo conectar.', { id }) }
-    finally { if (mounted.current) setSyncing(false) }
+
   }
   const toggle = (id: number) => setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
   const description = { nuevos: 'Elige la categoría y registra solo los gastos que correspondan.', duplicados: 'Confirma duplicados o cobros recurrentes sin crear otro gasto.', recibidos: 'Descuenta una devolución de un gasto existente o descártala.' }

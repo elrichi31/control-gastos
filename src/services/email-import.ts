@@ -30,9 +30,9 @@ export interface EmailImportQuery {
   otros: ReadonlySet<number>
 }
 
-export async function fetchEmailImportPage<T>({ tab, page, query, otros }: EmailImportQuery): Promise<EmailImportPage<T>> {
+export async function fetchEmailImportPage<T>({ tab, page, query, otros }: EmailImportQuery, signal?: AbortSignal): Promise<EmailImportPage<T>> {
   const params = new URLSearchParams({ tab, page: String(page), ...(query ? { q: query } : {}), ...(otros.size ? { otros: [...otros].join(',') } : {}) })
-  const response = await fetch(`${API}?${params}`, { cache: 'no-store' })
+  const response = await fetch(`${API}?${params}`, { cache: 'no-store', signal })
   const body = await response.json().catch(() => null)
   if (!response.ok || !body || !Array.isArray(body.pendientes)) throw new Error(body?.error || 'No se pudieron cargar los movimientos.')
   return body

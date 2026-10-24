@@ -1,3 +1,4 @@
+const { fixtures: remoteFixtures } = require('./helpers/remote-ui.cjs')
 require('./helpers/register-ts.cjs')
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
@@ -19,9 +20,11 @@ function elements(node) { if (!node || typeof node !== 'object') return []; retu
 async function harness(run) {
   const originals = Object.fromEntries(['useState', 'useEffect', 'useMemo', 'useRef', 'useCallback'].map(k => [k, React[k]]))
   let index = 0, refIndex = 0, effectIndex = 0, unsubscribe; const slots = [true, [row(1), row(2)], [{ id: 1, nombre: 'Comida' }]], refs = []
-  React.useState = initial => { const key = index++; if (!(key in slots)) slots[key] = typeof initial === 'function' ? initial() : initial; return [slots[key], value => { slots[key] = typeof value === 'function' ? value(slots[key]) : value }] }
+  React.useState = initial => { const key = [3,4,5,6,7,9,10,12,13,14,15,19,20,21,22][index++]; if (!(key in slots)) slots[key] = typeof initial === 'function' ? initial() : initial; return [slots[key], value => { slots[key] = typeof value === 'function' ? value(slots[key]) : value }] }
   React.useEffect = fn => { if (effectIndex++ === 0 && !unsubscribe) unsubscribe = fn() }; React.useMemo = fn => fn(); React.useCallback = fn => fn
   React.useRef = initial => { const key = refIndex++; return refs[key] ||= { current: initial } }
+  remoteFixtures.set('email-review:page', () => ({ enabled: slots[0], pendientes: slots[1], total: slots[1].length, page: 1, pages: 1 }))
+  remoteFixtures.set('catalogs', () => ({ categories: slots[2], paymentMethods: [] }))
   const render = () => { index = refIndex = effectIndex = 0; return elements(Page()) }
   const originalFetch = global.fetch; events.length = 0
   try { await run({ slots, render }) } finally { unsubscribe?.(); Object.assign(React, originals); global.fetch = originalFetch }

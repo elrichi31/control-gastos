@@ -69,3 +69,26 @@ test('closing warning survives unmount and is removed only when financial writes
     gate.resolve(); await session.whenIdle(); assert.equal(listeners.has('beforeunload'), false)
   } finally { if (originalWindow === undefined) delete global.window; else global.window = originalWindow }
 })
+
+test('session disposal aborts the active request and never starts queued financial writes', async () => {
+  const { createSessionEmailReviewQueue } = require('../src/lib/email-review-queue.ts')
+  let started = 0, signal
+  const queue = createSessionEmailReviewQueue()
+  queue.enqueue({ id: 51, label: 'Actual', execute: current => {
+    signal = current; started++
+    return new Promise((_, reject) => current.addEventListener('abort', () => reject(new Error('Sesión cerrada'))))
+  } })
+  queue.enqueue({ id: 52, label: 'En espera', execute: async () => { started++ } })
+  queue.dispose(); await queue.whenIdle()
+  assert.equal(signal.aborted,true); assert.equal(started,1)
+  assert.equal(queue.enqueue({id:53,label:'Tardío',execute:async()=>{started++}}),false)
+  assert.equal(queue.snapshot().find(job=>job.id===52).status,'error')
+})
+test('session reconciliation runs after all page subscribers have unmounted', async () => {
+  const { createSessionEmailReviewQueue } = require('../src/lib/email-review-queue.ts')
+  const gate = deferred(); let reconciled = 0
+  const queue = createSessionEmailReviewQueue(undefined, () => { reconciled++ })
+  const unsubscribe = queue.subscribe({onChange(){}})
+  queue.enqueue({id:54,label:'Guardando',execute:()=>gate.promise}); unsubscribe()
+  gate.resolve(); await queue.whenIdle(); assert.equal(reconciled,1)
+})

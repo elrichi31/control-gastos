@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { QueryClientProvider } from '@tanstack/react-query'
+import { disposeSessionEmailReviewQueue } from '@/lib/email-review-queue'
 import { createQueryClient } from '@/lib/query/client'
 
 function SessionQueryClient({ children }: { children: React.ReactNode }) {
   const [client] = useState(createQueryClient)
-  useEffect(() => () => { client.clear() }, [client])
+  useEffect(() => () => { disposeSessionEmailReviewQueue(client); client.clear() }, [client])
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>
 }
 
