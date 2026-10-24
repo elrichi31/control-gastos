@@ -5,12 +5,13 @@ import { Badge } from "@/components/ui/badge"
 import { formatDisplayDate } from "@/lib/utils"
 import { getCategoriaColor } from "@/lib/constants"
 import { useState } from "react"
-import { ConfirmModal } from "@/components/ui/confirm-modal"
+
 import { ExpenseTags } from "@/components/gastos/ExpenseTags"
 import dynamic from "next/dynamic"
 import { formatMoney } from "@/lib/utils"
 const EditExpenseDialog = dynamic(() => import("@/components/gastos/EditExpenseDialog").then(m => m.EditExpenseDialog))
-import { DeleteRecurringExpenseModal } from "@/components/gastos-recurrentes/DeleteRecurringExpenseModal"
+const ConfirmModal = dynamic(() => import("@/components/ui/confirm-modal").then(m => m.ConfirmModal))
+const DeleteRecurringExpenseModal = dynamic(() => import("@/components/gastos-recurrentes/DeleteRecurringExpenseModal").then(m => m.DeleteRecurringExpenseModal))
 import { getRecurringExpenseId, deactivateRecurringExpense } from "@/services/expenses"
 import { toast } from "sonner"
 
@@ -149,20 +150,20 @@ export function ExpenseItem({ expense, onDelete, onUpdated, showDeleteIcon = fal
       {onUpdated && showEdit && <EditExpenseDialog expense={expense} open={showEdit} onOpenChange={setShowEdit} onSaved={onUpdated} />}
 
       {/* Modal para gastos recurrentes */}
-      <DeleteRecurringExpenseModal
+      {showRecurringModal && <DeleteRecurringExpenseModal
         open={showRecurringModal}
         onCancel={() => setShowRecurringModal(false)}
         onDeleteSingle={handleDeleteSingle}
         onDeleteAll={handleDeleteAll}
         isDeleting={isDeleting}
-      />
+      />}
 
       {/* Modal simple para gastos normales */}
-      <ConfirmModal
+      {showSimpleModal && <ConfirmModal
         open={showSimpleModal}
         onCancel={() => setShowSimpleModal(false)}
         onConfirm={handleDeleteSingle}
-      />
+      />}
     </>
   )
 }

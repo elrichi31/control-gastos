@@ -9,8 +9,9 @@ import dynamic from "next/dynamic"
 import { MobileRedirect } from "@/components/layout/MobileRedirect"
 import { useSidebar } from "@/hooks/useSidebar"
 import { cn } from "@/lib/utils"
-import { Toaster } from "@/components/ui/sonner"
 
+
+const Toaster = dynamic(() => import("@/components/ui/sonner").then(m => m.Toaster), { ssr: false })
 const PWAInstallPrompt = dynamic(() => import("./PWAInstallPrompt").then(m => m.PWAInstallPrompt), { ssr: false })
 
 export function AppShell({ children }: { children: React.ReactNode }) {

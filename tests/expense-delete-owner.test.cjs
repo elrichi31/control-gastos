@@ -11,18 +11,21 @@ Module._load = function(name, ...args) {
   return originalLoad.call(this, name, ...args)
 }
 const { ExpenseItem } = require('../src/components/gastos/ExpenseItem.tsx')
-const { ConfirmModal } = require('../src/components/ui/confirm-modal.tsx')
 Module._load = originalLoad
 function elements(node) { return !node || typeof node !== 'object' ? [] : [node, ...React.Children.toArray(node.props?.children).flatMap(elements)] }
 
 test('confirming deletion awaits one parent mutation and does not issue a second DELETE', async () => {
   const originalState = React.useState
-  React.useState = initial => [initial, () => {}]
+  const slots = []; let index = 0
+  React.useState = initial => { const key = index++; if (!(key in slots)) slots[key] = initial; return [slots[key], value => { slots[key] = value }] }
   let parentCalls = 0, release
   try {
-    const tree = elements(ExpenseItem({ expense: { id: 17, descripcion: 'Compra', monto: 20, fecha: '2026-10-01' },
-      onDelete: id => { assert.equal(id, '17'); parentCalls++; return new Promise(resolve => { release = resolve }) } }))
-    const confirmation = tree.find(node => node.type === ConfirmModal)
+    const props = { showDeleteIcon: true, expense: { id: 17, descripcion: 'Compra', monto: 20, fecha: '2026-10-01' },
+      onDelete: id => { assert.equal(id, '17'); parentCalls++; return new Promise(resolve => { release = resolve }) } }
+    let tree = elements(ExpenseItem(props))
+    tree.find(node => node.props?.['aria-label'] === 'Eliminar Compra').props.onClick()
+    index = 0; tree = elements(ExpenseItem(props))
+    const confirmation = tree.find(node => typeof node.props?.onConfirm === 'function')
     const pending = confirmation.props.onConfirm()
     assert.equal(parentCalls, 1)
     assert.equal(directDeletes, 0)

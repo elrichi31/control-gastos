@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import * as Dialog from "@radix-ui/react-dialog"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { clearPrivateCaches } from "@/lib/pwa/cache-policy"
@@ -10,7 +9,9 @@ import { BethaLogo } from "@/components/brand/BethaLogo"
 import { BethaMark } from "@/components/brand/BethaMark"
 import { cn } from "@/lib/utils"
 import { ModeToggle } from "@/components/layout/mode-toggle"
-import { CronStatus } from "@/components/layout/CronStatus"
+import dynamic from "next/dynamic"
+const MobileDrawer = dynamic(() => import("./MobileDrawer").then(m => m.MobileDrawer), { ssr: false })
+const CronStatus = dynamic(() => import("@/components/layout/CronStatus").then(m => m.CronStatus), { ssr: false })
 
 type NavItem = { name: string; href: string; icon: LucideIcon }
 
@@ -148,29 +149,7 @@ export function Sidebar({ isOpen, onClose, isMobile, isCollapsed, onToggleCollap
 		</>
 	)
 
-	if (isMobile) {
-		return (
-			<Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-				<Dialog.Portal>
-					<Dialog.Overlay className="fixed inset-0 z-40 bg-black/60" />
-					<Dialog.Content
-						asChild
-						id="mobile-navigation"
-						onCloseAutoFocus={(event) => {
-							event.preventDefault()
-							document.getElementById("mobile-menu-trigger")?.focus()
-						}}
-					>
-						<aside className="fixed left-0 top-0 z-50 flex h-dvh w-72 max-w-[calc(100vw-3rem)] flex-col border-r border-sidebar-border bg-sidebar pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] shadow-xl outline-none">
-							<Dialog.Title className="sr-only">Menú de BethaSpend</Dialog.Title>
-							<Dialog.Description className="sr-only">Navega entre tus gastos, presupuestos y conexiones.</Dialog.Description>
-							{content}
-						</aside>
-					</Dialog.Content>
-				</Dialog.Portal>
-			</Dialog.Root>
-		)
-	}
+	if (isMobile) return isOpen ? <MobileDrawer isOpen={isOpen} onClose={onClose}>{content}</MobileDrawer> : null
 
 	return (
 		<aside

@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from "@/components/ui/card"
 import { PageShell, PageHeader } from "@/components/ui/page-layout"
 import { PageTitle } from "@/components/layout/PageTitle"
-import { ExportarDatos } from "@/components/detalle-gastos/ExportarDatos"
+import dynamic from "next/dynamic"
+const ExportarDatos = dynamic(() => import("@/components/detalle-gastos/ExportarDatos").then(m => m.ExportarDatos), { loading: () => <Button variant="outline" disabled>Exportar…</Button> })
 import { EstadisticasResumen } from "@/components/detalle-gastos/EstadisticasResumen"
 import { FiltrosGastos } from "@/components/detalle-gastos/FiltrosGastos"
 import { ListaGastosAgrupados } from "@/components/detalle-gastos/ListaGastosAgrupados"
