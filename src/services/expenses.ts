@@ -19,16 +19,35 @@ export type { Expense }
 /**
  * Obtiene todos los gastos
  */
-export async function fetchExpenses(signal?: AbortSignal): Promise<Expense[]> {
-  try {
-    const response = await fetch(API_ENDPOINTS.GASTOS, { signal, cache: 'no-store' })
-    if (!response.ok) {
-      throw new Error('Error al obtener gastos')
+export interface ExpensePage { items: Expense[]; total: number; page: number; limit: number }
+export async function fetchExpensesPage(options: { page?: number; limit?: number; from?: string; to?: string } = {}, signal?: AbortSignal): Promise<ExpensePage> {
+  const params = new URLSearchParams({ page: String(options.page ?? 1), limit: String(options.limit ?? 500) })
+  if (options.from) params.set('from', options.from)
+  if (options.to) params.set('to', options.to)
+  const response = await fetch(API_ENDPOINTS.GASTOS + '?' + params, { signal, cache: 'no-store' })
+  if (!response.ok) throw new Error('Error al obtener gastos')
+  const body: ExpensePage = await response.json()
+  if (!Array.isArray(body.items) || !Number.isSafeInteger(body.total) || body.total < 0 || !Number.isSafeInteger(body.limit) || body.limit < 1) throw new Error('Respuesta de gastos inválida')
+  return body
+}
+
+export async function fetchExpenses(signal?: AbortSignal, range: { from?: string; to?: string } = {}): Promise<Expense[]> {
+  const expenses: Expense[] = []
+  let page = 1
+  let expectedTotal: number | undefined
+  const seen = new Set<number>()
+  while (true) {
+    const result = await fetchExpensesPage({ ...range, page, limit: 500 }, signal)
+    if (expectedTotal !== undefined && expectedTotal !== result.total) throw new Error('El historial cambió durante la carga. Reintenta.')
+    expectedTotal = result.total
+    for (const expense of result.items) {
+      if (seen.has(expense.id)) throw new Error('El historial cambió durante la carga. Reintenta.')
+      seen.add(expense.id)
     }
-    return await response.json()
-  } catch (error) {
-    console.error('Error fetching expenses:', error)
-    throw error
+    expenses.push(...result.items)
+    if (expenses.length >= result.total) return expenses
+    if (result.items.length === 0) throw new Error('El historial cambió durante la carga. Reintenta.')
+    page++
   }
 }
 

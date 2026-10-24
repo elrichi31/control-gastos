@@ -1,3 +1,4 @@
+import { parseExpenseListQuery } from '@/lib/expense-list-query';
 import { NextResponse } from 'next/server';
 import { normalizeExpenseTags } from '@/lib/expense-tags';
 import { getAuthenticatedSupabaseClient } from '@/lib/auth';
@@ -30,16 +31,26 @@ export async function GET(request: Request) {
   const { error: authError, supabase, userId } = await getAuthenticatedSupabaseClient(request);
   if (authError) return authError;
 
-  const list = (withTax: boolean) => supabase.from('gasto').select(columns(withTax)).eq('user_id', userId).order('fecha', { ascending: false });
-  let { data, error } = await list(true);
-  if (isMissingColumnError(error)) ({ data, error } = await list(false));
+  let options: ReturnType<typeof parseExpenseListQuery>;
+  try { options = parseExpenseListQuery(new URL(request.url).searchParams); }
+  catch { return NextResponse.json({ error: 'Rango o paginación inválidos.' }, { status: 400 }); }
+  const list = (withTax: boolean) => {
+    let query = supabase.from('gasto').select(columns(withTax), options.paged ? { count: 'exact' } : undefined).eq('user_id', userId).order('fecha', { ascending: false });
+    if (options.from) query = query.gte('fecha', options.from);
+    if (options.to) query = query.lte('fecha', options.to);
+    if (options.paged) query = query.order('id', { ascending: false }).range(options.offset, options.offset + options.limit - 1);
+    return query;
+  };
+  let { data, error, count } = await list(true);
+  if (isMissingColumnError(error)) ({ data, error, count } = await list(false));
 
   if (error) {
     console.error('Error al obtener gastos:', error);
     return NextResponse.json({ error: 'Error al obtener los gastos' }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  if (options.paged && (count === null || !Number.isSafeInteger(count))) return NextResponse.json({ error: 'No se pudo contar el historial.' }, { status: 500 });
+  return NextResponse.json(options.paged ? { items: data, total: count ?? 0, page: options.page, limit: options.limit } : data);
 }
 
 export async function POST(request: Request) {
