@@ -2,7 +2,7 @@
   "name": "BethaSpend - Control de Gastos",
   "short_name": "BethaSpend",
   "description": "Aplicación para el control y gestión de gastos personales",
-  "start_url": "/",
+  "start_url": "/?pwa=1",
   "display": "standalone",
   "background_color": "#0b0d0c",
   "theme_color": "#0b0d0c",

@@ -1,5 +1,6 @@
 import { withAuth } from "next-auth/middleware"
 import { NextResponse } from "next/server"
+import { mobileEntryTarget } from "./lib/pwa/entry"
 import { sessionWithinPolicy } from "./lib/auth/session-policy"
 
 // Rutas públicas que no requieren autenticación
@@ -12,6 +13,9 @@ export default withAuth(
     // Verificar si el usuario está intentando acceder a rutas de auth cuando ya está autenticado
     // Misma regla que `authorized`: un token viejo/revocado no cuenta, si no /auth <-> /dashboard entran en bucle
     const token = req.nextauth.token
+    const authenticated = Boolean(token?.id && sessionWithinPolicy(token.sessionStartedAt))
+    const entry = mobileEntryTarget(pathname, req.headers.get('user-agent') ?? '', req.nextUrl.searchParams.get('pwa') === '1', authenticated)
+    if (entry) return NextResponse.redirect(new URL(entry, req.url))
     if (token?.id && sessionWithinPolicy(token.sessionStartedAt) && pathname.startsWith('/auth/')) {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
