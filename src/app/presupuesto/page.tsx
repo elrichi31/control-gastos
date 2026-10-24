@@ -20,7 +20,6 @@ export default function HomePage() {
   // Manejo de cambio de año
   const handleYearChange = (year: string) => {
     setSelectedYear(year)
-    budgetData.initializeYear(year)
   }
 
   // Manejo de agregar mes con validación

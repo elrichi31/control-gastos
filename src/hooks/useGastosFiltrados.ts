@@ -1,13 +1,15 @@
 import { useMemo } from "react"
 import { DEFAULT_METODO_PAGO } from "@/lib/constants"
 import type { Gasto } from "@/types"
-import { deleteExpense } from "@/services/expenses"
+import { useDeleteExpense } from "@/hooks/useExpenseQueries"
 import { useExpensesStore } from "@/hooks/useExpensesStore"
 
 export type { Gasto } from "@/types"
 
 export function useGastosFiltrados() {
   const { gastos: stored, loading, error, refresh } = useExpensesStore()
+
+  const remove = useDeleteExpense()
 
   // Formatear los datos para incluir metodo_pago si no existe
   const gastos = useMemo<Gasto[]>(() => stored.map(gasto => ({
@@ -18,8 +20,7 @@ export function useGastosFiltrados() {
 
   const deleteGasto = async (id: string) => {
     try {
-      await deleteExpense(id)
-      await refresh()
+      await remove.mutateAsync(id)
     } catch (error) {
       console.error("Error al eliminar gasto:", error)
       throw error

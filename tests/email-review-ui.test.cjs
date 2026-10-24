@@ -6,6 +6,7 @@ const Module = require('node:module')
 const events = [], originalLoad = Module._load
 const toast = { loading: (text, opts) => events.push(['loading', text, opts]), success: (text, opts) => events.push(['success', text, opts]), error: (text, opts) => events.push(['error', text, opts]) }
 Module._load = function(name, ...args) {
+  if (name === '@tanstack/react-query') return { useQueryClient: () => ({ invalidateQueries: async () => {} }) }
   if (name.endsWith('.module.css')) return {}
   if (name === '@/components/layout/PageTitle') return { PageTitle: () => null }
   if (name === 'sonner') return { toast }

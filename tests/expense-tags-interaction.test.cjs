@@ -7,6 +7,7 @@ let saved, failSave = false
 const services = { createExpense: async data => { if (failSave) throw new Error('fixture offline'); saved = data }, addBudgetExpense: async data => { saved = data }, updateBudgetExpense: async data => { saved = data }, fetchPresupuestoCategorias: async () => [], updatePresupuestoTotal: async () => {}, calculateBudgetTotal: () => 0, calculateTotalGastosRegistrados: () => 0 }
 const load = Module._load
 Module._load = function(name, ...args) {
+  if (name === '@tanstack/react-query') return { useQueryClient: () => ({ invalidateQueries: async () => {} }) }
   if (name.startsWith('@/services/')) return services
   if (name === 'sonner') return { toast: { success() {}, error() {} } }
   return load.call(this, name, ...args)

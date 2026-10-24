@@ -13,7 +13,9 @@ import { REVIEW_PAGE_SIZE as PAGE_SIZE } from '@/lib/email-review-page'
 import { ForeignTaxInline } from '@/components/gastos/ForeignTaxField'
 import { computeForeignTax, emptyForeignTax, validateForeignTax, type ForeignTaxState } from '@/lib/foreign-tax'
 import { fetchCategories } from '@/services/categories'
-import { refreshExpenses } from '@/hooks/useExpensesStore'
+import { useQueryClient } from '@tanstack/react-query'
+import { invalidateExpenseData } from '@/lib/query/client'
+import { formatMoney } from '@/lib/utils'
 import { fetchEmailImportPage, saveEmailAlias, syncEmailImport, updateEmailImport } from '@/services/email-import'
 import type { Candidate } from '@/lib/email-matches'
 import styles from './review.module.css'
@@ -24,11 +26,12 @@ type Categoria = { id: number; nombre: string }
 type Tab = 'nuevos' | 'duplicados' | 'recibidos'
 type PageMeta = { counts: Record<Tab, number>; total: number; page: number; pages: number }
 const tabOf = (p: Pendiente, otros: Set<number>): Tab => p.tipo === 'ingreso' ? 'recibidos' : p.coincidencias.length && !otros.has(p.id) ? 'duplicados' : 'nuevos'
-const money = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' })
 const selectClass = 'h-11 w-full min-w-0 rounded-lg border border-input bg-card px-2.5 text-base shadow-xs dark:[color-scheme:dark] focus-visible:outline-2 focus-visible:outline-ring sm:h-8 sm:text-[13px]'
 const half = (n: number) => Math.round(n * 50) / 100
 
 export default function EmailExpensesPage() {
+  const queryClient = useQueryClient()
+  const refreshExpenses = useCallback(() => invalidateExpenseData(queryClient), [queryClient])
   const [enabled, setEnabled] = useState<boolean | null>(null)
   const [pendientes, setPendientes] = useState<Pendiente[]>([])
   const [categorias, setCategorias] = useState<Categoria[]>([])
@@ -93,7 +96,7 @@ export default function EmailExpensesPage() {
       // Aceptar o vincular movimientos cambia los gastos: el store compartido se vuelve a descargar una vez por lote.
       onIdle: () => { void refreshExpenses(); if (mounted.current) void load() },
     })
-  }, [load])
+  }, [load, refreshExpenses])
 
   useEffect(() => {
     mounted.current = true
@@ -213,7 +216,7 @@ export default function EmailExpensesPage() {
         {(['nuevos', 'duplicados', 'recibidos'] as const).map(value => <TabsContent key={value} value={value} className="mt-0 lg:fill-y">
           {value === tab && <>
             {tab === 'nuevos' && rows.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border bg-card px-4 py-2">
-              <label className="mr-auto flex min-h-11 cursor-pointer items-center gap-2.5 text-[13px] sm:min-h-9"><input type="checkbox" className="h-4 w-4 accent-primary" aria-label="Seleccionar todos los nuevos visibles" checked={allSelected} disabled={syncing} onChange={() => setSelected(prev => { const next = new Set(prev); visibleNew.forEach(p => allSelected ? next.delete(p.id) : next.add(p.id)); return next })} />{chosen.length ? `${chosen.length} seleccionados · ${money.format(total)}` : 'Seleccionar visibles'}</label>
+              <label className="mr-auto flex min-h-11 cursor-pointer items-center gap-2.5 text-[13px] sm:min-h-9"><input type="checkbox" className="h-4 w-4 accent-primary" aria-label="Seleccionar todos los nuevos visibles" checked={allSelected} disabled={syncing} onChange={() => setSelected(prev => { const next = new Set(prev); visibleNew.forEach(p => allSelected ? next.delete(p.id) : next.add(p.id)); return next })} />{chosen.length ? `${chosen.length} seleccionados · ${formatMoney(total)}` : 'Seleccionar visibles'}</label>
               <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || !chosen.length || chosen.some(p => !canAccept(p))} onClick={() => aceptar(chosen)}>Aceptar selección</Button>
               <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" disabled={syncing || !chosen.length} onClick={() => chosen.forEach(descartar)}>Descartar selección</Button>
             </div>}
@@ -248,18 +251,18 @@ export default function EmailExpensesPage() {
                       <td data-label="Tu parte"><select className={selectClass} disabled={syncing} aria-label={`Parte de ${p.descripcion}`} value={mitadPor[p.id] ? 'mitad' : 'todo'} onChange={e => setMitadPor(prev => ({ ...prev, [p.id]: e.target.value === 'mitad' }))}><option value="todo">Total</option><option value="mitad">Mitad</option></select></td>
                     </> : <td data-label={tab === 'duplicados' ? 'Gasto existente' : 'Descontar de'} className={styles.match}>
                       {elegido ? <>
-                        <select className={selectClass} disabled={syncing} aria-label={`Gasto existente para ${p.descripcion}`} value={elegido.gasto.id} onChange={e => setElegidoPor(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}>{p.coincidencias.map(c => <option key={c.gasto.id} value={c.gasto.id}>{c.gasto.descripcion} · {money.format(c.gasto.monto)}</option>)}</select>
+                        <select className={selectClass} disabled={syncing} aria-label={`Gasto existente para ${p.descripcion}`} value={elegido.gasto.id} onChange={e => setElegidoPor(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}>{p.coincidencias.map(c => <option key={c.gasto.id} value={c.gasto.id}>{c.gasto.descripcion} · {formatMoney(c.gasto.monto)}</option>)}</select>
                         {recurring ? <div className="mt-2 space-y-1.5 text-xs">
                           <p className="font-medium">Posible cobro recurrente · {recurring.fecha}</p>
-                          <p className="text-muted-foreground">Esperado {money.format(recurring.esperado)} · Correo {money.format(recurring.cobrado)}{recurring.impuestos ? ' (sin impuestos configurados)' : ''}</p>
-                          <p className={recurring.diferencia ? 'font-medium' : 'text-muted-foreground'}>{recurring.diferencia > 0 ? `Subió ${money.format(recurring.diferencia)}` : recurring.diferencia < 0 ? `Bajó ${money.format(-recurring.diferencia)}` : 'Sin cambio de precio'}</p>
-                          {recurring.impuestos && <p className="text-muted-foreground">Total con tus impuestos: {money.format(recurring.total)}</p>}
+                          <p className="text-muted-foreground">Esperado {formatMoney(recurring.esperado)} · Correo {formatMoney(recurring.cobrado)}{recurring.impuestos ? ' (sin impuestos configurados)' : ''}</p>
+                          <p className={recurring.diferencia ? 'font-medium' : 'text-muted-foreground'}>{recurring.diferencia > 0 ? `Subió ${formatMoney(recurring.diferencia)}` : recurring.diferencia < 0 ? `Bajó ${formatMoney(-recurring.diferencia)}` : 'Sin cambio de precio'}</p>
+                          {recurring.impuestos && <p className="text-muted-foreground">Total con tus impuestos: {formatMoney(recurring.total)}</p>}
                           {recurring.diferencia !== 0 && <label className="flex min-h-11 cursor-pointer items-center gap-2 sm:min-h-8"><input type="checkbox" className="h-4 w-4 shrink-0 accent-primary" aria-label={`Actualizar próximos cobros de ${elegido.gasto.descripcion}`} disabled={syncing} checked={updatePrice[priceKey] ?? false} onChange={e => setUpdatePrice(prev => ({ ...prev, [priceKey]: e.target.checked }))} />Usar este precio en próximos cobros</label>}
-                        </div> : <p className="mt-1.5 text-xs text-muted-foreground">{elegido.gasto.fecha}{tab === 'recibidos' ? ` · Quedará en ${money.format(elegido.gasto.monto - p.monto)}` : ` · ${elegido.kind === 'mitad' ? 'Registraste la mitad' : 'Mismo monto'} · ${elegido.dias ? `${elegido.dias} día(s) de diferencia` : 'Mismo día'}`}</p>}
+                        </div> : <p className="mt-1.5 text-xs text-muted-foreground">{elegido.gasto.fecha}{tab === 'recibidos' ? ` · Quedará en ${formatMoney(elegido.gasto.monto - p.monto)}` : ` · ${elegido.kind === 'mitad' ? 'Registraste la mitad' : 'Mismo monto'} · ${elegido.dias ? `${elegido.dias} día(s) de diferencia` : 'Mismo día'}`}</p>}
                         {tab === 'duplicados' && !recurring && <details className="mt-1 text-xs text-muted-foreground"><summary className="cursor-pointer py-1 hover:text-foreground">Ver comparación</summary><p className="py-1 break-words">{elegido.gasto.descripcion}{elegido.gasto.categoria ? ` · ${elegido.gasto.categoria.nombre}` : ''}. {elegido.veredicto === 'encaja' ? 'El comercio encaja con tu descripción.' : elegido.veredicto === 'desconocido' ? 'El correo no especifica qué se compró.' : 'Coincidencia por fecha e importe; confirma antes de vincular.'}</p></details>}
                       </> : <p className="text-xs text-muted-foreground">No hay un gasto compatible de los últimos 20 días.</p>}
                     </td>}
-                    <td data-label={tab === 'recibidos' ? 'Recibido' : 'Importe'} className={styles.amount}><span className="font-semibold tabular-nums">{tab === 'recibidos' ? '+' : ''}{money.format(tab === 'nuevos' ? aGuardar(p).total : p.monto)}</span>{tab === 'nuevos' && mitadPor[p.id] && <span className="mt-0.5 block text-xs text-muted-foreground">de {money.format(p.monto)}</span>}{tab === 'nuevos' && aGuardar(p).taxTotal > 0 && <span className="mt-0.5 block text-xs text-muted-foreground">incl. {money.format(aGuardar(p).taxTotal)} imp.</span>}</td>
+                    <td data-label={tab === 'recibidos' ? 'Recibido' : 'Importe'} className={styles.amount}><span className="font-semibold tabular-nums">{tab === 'recibidos' ? '+' : ''}{formatMoney(tab === 'nuevos' ? aGuardar(p).total : p.monto)}</span>{tab === 'nuevos' && mitadPor[p.id] && <span className="mt-0.5 block text-xs text-muted-foreground">de {formatMoney(p.monto)}</span>}{tab === 'nuevos' && aGuardar(p).taxTotal > 0 && <span className="mt-0.5 block text-xs text-muted-foreground">incl. {formatMoney(aGuardar(p).taxTotal)} imp.</span>}</td>
                     <td data-label="Acciones" className={styles.actions}>
                       <div className={`flex items-center gap-1.5 ${tab === 'nuevos' ? '' : 'flex-wrap'}`}>
                         {tab === 'nuevos' ? <>

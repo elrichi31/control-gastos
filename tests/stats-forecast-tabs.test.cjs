@@ -22,5 +22,10 @@ test('estadísticas ofrece pestañas separadas sin la antigua extrapolación en 
   assert.match(html, /Qué cambió por categoría/)
   assert.match(html, /Gasto por semana/)
   assert.match(html, /Tamaño de tus compras/)
-  assert.match(html, /Recurrentes vs\. puntuales/)
+  assert.match(html, /aria-label="Cargando gráfico"/)
+  const { FixedVsVariable } = require('../src/components/stats/breakdown-charts.tsx')
+  const breakdown = renderToStaticMarkup(React.createElement(FixedVsVariable, { composicion: {
+    recurrente: 0, puntual: 0, porcentajeRecurrente: 0, recurrenteConteo: 0, puntualConteo: 0,
+  } }))
+  assert.match(breakdown, /Recurrentes vs\. puntuales/)
 })

@@ -1,5 +1,7 @@
 "use client"
 
+import { formatMoney } from "@/lib/utils"
+
 import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
@@ -54,7 +56,7 @@ export function RecurringExpenseList() {
   const [nextDates, setNextDates] = useState<Record<number, string | null>>({})
   const [prices, setPrices] = useState<PriceChange[]>([])
   const [skipTarget, setSkipTarget] = useState<GastoRecurrente | null>(null)
-  const { gastos: storedExpenses } = useExpensesStore()
+  const { gastos: storedExpenses, refresh } = useExpensesStore()
   const [dismissed, setDismissed] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem(DISMISSED_KEY) || "[]") } catch { return [] }
   })
@@ -113,6 +115,7 @@ export function RecurringExpenseList() {
     setSkipTarget(null)
     try {
       const body = await skipRecurringCharge(target.id)
+      await refresh()
       loadNextDates()
       toast.success(`Se omitió el cobro del ${format(parseISO(body.omitida), "d MMM", { locale: es })} de ${target.descripcion}`)
     } catch (error) {
@@ -135,6 +138,7 @@ export function RecurringExpenseList() {
         descripcion: s.descripcion, monto: s.monto, categoria_id: s.categoria_id, metodo_pago_id: metodo,
         frecuencia: "mensual", dia_mes: s.dia_mes, fecha_inicio: format(addDays(new Date(), 1), "yyyy-MM-dd"),
       })
+      await refresh()
       await loadData()
       loadNextDates()
       toast.success(`${s.descripcion} ahora es recurrente. Ya no hace falta registrarlo a mano.`)
@@ -146,6 +150,7 @@ export function RecurringExpenseList() {
   const handleToggleActive = async (id: number, currentActive: boolean) => {
     try {
       await updateRecurringExpense(id, { activo: !currentActive })
+      await refresh()
       setExpenses(prev =>
         prev.map(exp => (exp.id === id ? { ...exp, activo: !currentActive } : exp))
       )
@@ -162,6 +167,7 @@ export function RecurringExpenseList() {
 
     try {
       await deleteRecurringExpense(deleteId)
+      await refresh()
       setExpenses(prev => prev.filter(exp => exp.id !== deleteId))
       toast.success("Gasto recurrente eliminado correctamente")
       setDeleteId(null)
@@ -196,7 +202,7 @@ export function RecurringExpenseList() {
     const last = prices.find(p => p.gasto_recurrente_id === expense.id)
     if (!last) return null
     const arrow = last.monto_nuevo > last.monto_anterior ? "↑" : "↓"
-    return `${arrow} antes $${last.monto_anterior.toFixed(2)} · ${format(parseISO(last.cambiado_en), "MMM yyyy", { locale: es })}`
+    return `${arrow} antes ${formatMoney(last.monto_anterior)} · ${format(parseISO(last.cambiado_en), "MMM yyyy", { locale: es })}`
   }
 
   const canSkip = (expense: GastoRecurrente) => expense.activo && !!nextDates[expense.id]
@@ -204,6 +210,7 @@ export function RecurringExpenseList() {
   const handleEdit = async (id: number, data: Partial<GastoRecurrente>) => {
     try {
       await updateRecurringExpense(id, data)
+      await refresh()
       setExpenses(prev =>
         prev.map(exp => (exp.id === id ? { ...exp, ...data } : exp))
       )
@@ -244,7 +251,7 @@ export function RecurringExpenseList() {
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{s.descripcion}</p>
                 <p className="text-xs text-muted-foreground">
-                  <span className="tabular-nums">${s.monto.toFixed(2)}</span> · día {s.dia_mes} · {s.meses} meses seguidos · {getCategoryName(s.categoria_id)}
+                  <span className="tabular-nums">{formatMoney(s.monto)}</span> · día {s.dia_mes} · {s.meses} meses seguidos · {getCategoryName(s.categoria_id)}
                 </p>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
@@ -335,8 +342,8 @@ export function RecurringExpenseList() {
                     {getPaymentMethodName(expense.metodo_pago_id)}
                   </TableCell>
                   <TableCell className="py-2.5 text-right font-medium text-foreground tabular-nums whitespace-nowrap">
-                    ${expense.monto.toFixed(2)}
-                    <div className="text-[11px] font-normal text-muted-foreground">${costoAnual(expense).toFixed(2)}/año</div>
+                    {formatMoney(expense.monto)}
+                    <div className="text-[11px] font-normal text-muted-foreground">{formatMoney(costoAnual(expense))}/año</div>
                   </TableCell>
                   <TableCell className="py-2.5">
                     <div className="flex justify-center">
@@ -396,8 +403,8 @@ export function RecurringExpenseList() {
                   {emailStatuses?.[expense.id] && <RecurringEmailIndicator status={emailStatuses[expense.id]} />}
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="text-sm font-medium text-foreground tabular-nums">${expense.monto.toFixed(2)}</span>
-                  <p className="text-[11px] text-muted-foreground tabular-nums">${costoAnual(expense).toFixed(2)}/año</p>
+                  <span className="text-sm font-medium text-foreground tabular-nums">{formatMoney(expense.monto)}</span>
+                  <p className="text-[11px] text-muted-foreground tabular-nums">{formatMoney(costoAnual(expense))}/año</p>
                 </div>
               </div>
               <div className="flex items-center gap-1.5 mt-2 flex-wrap">
@@ -456,7 +463,7 @@ export function RecurringExpenseList() {
       <p className="text-xs text-muted-foreground mt-3">
         {expenses.length} {expenses.length === 1 ? "gasto recurrente" : "gastos recurrentes"}
         {totalMensual > 0 && (
-          <> · <span className="tabular-nums">${totalMensual.toFixed(2)}</span> al mes (aprox.) · <span className="tabular-nums">${totalAnual.toFixed(2)}</span> al año en los activos</>
+          <> · <span className="tabular-nums">{formatMoney(totalMensual)}</span> al mes (aprox.) · <span className="tabular-nums">{formatMoney(totalAnual)}</span> al año en los activos</>
         )}
       </p>
 

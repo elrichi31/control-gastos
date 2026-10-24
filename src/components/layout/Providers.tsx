@@ -2,7 +2,7 @@
 
 import { SessionProvider } from 'next-auth/react'
 import { ThemeProvider } from '@/components/layout/theme-provider'
-import { ExpensesSessionReset } from '@/components/layout/ExpensesSessionReset'
+import { SessionQueryProvider } from '@/components/layout/SessionQueryProvider'
 
 interface ProvidersProps {
   children: React.ReactNode
@@ -11,15 +11,16 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   return (
     <SessionProvider>
-      <ExpensesSessionReset />
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="dark"
-        enableSystem
-        disableTransitionOnChange
-      >
-        {children}
-      </ThemeProvider>
+      <SessionQueryProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </SessionQueryProvider>
     </SessionProvider>
   )
 }

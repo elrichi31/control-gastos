@@ -19,9 +19,9 @@ export type { Expense }
 /**
  * Obtiene todos los gastos
  */
-export async function fetchExpenses(): Promise<Expense[]> {
+export async function fetchExpenses(signal?: AbortSignal): Promise<Expense[]> {
   try {
-    const response = await fetch(API_ENDPOINTS.GASTOS)
+    const response = await fetch(API_ENDPOINTS.GASTOS, { signal, cache: 'no-store' })
     if (!response.ok) {
       throw new Error('Error al obtener gastos')
     }

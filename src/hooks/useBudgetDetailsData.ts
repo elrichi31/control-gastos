@@ -1,5 +1,7 @@
 // Hook para gestión de datos del detalle de presupuesto
 import { useState, useEffect } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { queryKeys } from "@/lib/query/client"
 import { parseExpenseTags } from "@/lib/expense-tags"
 import { toast } from "sonner"
 import {
@@ -31,6 +33,7 @@ import {
 import type { MovimientoPresupuesto } from "@/types"
 
 export const useBudgetDetailsData = (presupuestoId: string) => {
+  const queryClient = useQueryClient()
   // Estados principales
   const [presupuestoCategorias, setPresupuestoCategorias] = useState<PresupuestoCategoriaDetalle[]>([])
   const [presupuestoInfo, setPresupuestoInfo] = useState<PresupuestoInfo | null>(null)
@@ -110,6 +113,10 @@ export const useBudgetDetailsData = (presupuestoId: string) => {
       const gastosRegistrados = calculateTotalGastosRegistrados(categoriasToUse)
       
       await updatePresupuestoTotal(presupuestoId, totalPresupuestado, gastosRegistrados)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.budgets }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.monthPlan }),
+      ])
     } catch (error) {
       console.error('Error al actualizar total del presupuesto:', error)
     }

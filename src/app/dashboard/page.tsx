@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from "react"
 import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
-import { format, startOfMonth, endOfMonth, isToday, isYesterday, subMonths } from "date-fns"
+import { format, startOfMonth, endOfMonth, isSameDay, subDays, subMonths } from "date-fns"
 import { es } from "date-fns/locale"
 import { toDateWithTime } from "@/lib/utils"
 import { PageShell } from "@/components/ui/page-layout"
@@ -18,10 +18,7 @@ import { formatMoney } from "@/lib/utils"
 import { getDaysInMonth, differenceInCalendarDays } from "date-fns"
 import { MonthPlanning, MonthPlanningSummary } from "@/components/dashboard/MonthPlanning"
 import { buildMonthPlan, categoryUsage } from "@/lib/month-planning"
-import { fetchBudgetsForMonthPlan } from "@/services/budget-general"
-import { fetchBudgetCategoriesForMonthPlan } from "@/services/budget-details"
-import { fetchRecurringPlan } from "@/services/recurring-expenses"
-import type { PlanningRule } from "@/lib/month-planning"
+import { useMonthPlanQuery } from "@/hooks/useMonthPlanQuery"
 import { CategoryRanking } from "@/components/stats/category-ranking"
 import { EmailPendingBanner } from "@/components/dashboard/EmailPendingBanner"
 
@@ -41,52 +38,16 @@ export default function DashboardPage() {
             document.removeEventListener('visibilitychange', tick)
         }
     }, [])
-    const currentMonth = startOfMonth(currentDate)
-    const currentMonthEnd = endOfMonth(currentDate)
-    const lastMonth = startOfMonth(subMonths(currentDate, 1))
-    const lastMonthEnd = endOfMonth(subMonths(currentDate, 1))
+    const currentMonth = useMemo(() => startOfMonth(currentDate), [currentDate])
+    const currentMonthEnd = useMemo(() => endOfMonth(currentDate), [currentDate])
+    const lastMonth = useMemo(() => startOfMonth(subMonths(currentDate, 1)), [currentDate])
+    const lastMonthEnd = useMemo(() => endOfMonth(subMonths(currentDate, 1)), [currentDate])
     const today = format(currentDate, 'yyyy-MM-dd')
     const monthKey = today.slice(0, 7)
-    const [budgetTotal, setBudgetTotal] = useState<number | undefined>(undefined)
-    const [budgetCategories, setBudgetCategories] = useState<any[]>([])
-    const [rules, setRules] = useState<PlanningRule[]>([])
-    const [recurringLinks, setRecurringLinks] = useState<Record<number, number>>({})
-    const [planLoading, setPlanLoading] = useState(true)
-    const [planError, setPlanError] = useState<string | null>(null)
-    const [retry, setRetry] = useState(0)
-
-    useEffect(() => {
-        const controller = new AbortController()
-        async function loadPlan() {
-            setPlanLoading(true)
-            setPlanError(null)
-            setBudgetTotal(undefined)
-            setBudgetCategories([])
-            setRules([])
-            setRecurringLinks({})
-            try {
-                const [budgets, recurring] = await Promise.all([
-                    fetchBudgetsForMonthPlan(currentDate.getFullYear(), controller.signal),
-                    fetchRecurringPlan(monthKey, controller.signal),
-                ])
-                if (!Array.isArray(budgets) || !Array.isArray(recurring.rules) || !Array.isArray(recurring.links)) throw new Error('La respuesta del plan del mes no es válida.')
-                const budget = budgets.find((b: any) => Number(b.mes) === currentDate.getMonth() + 1 && Number(b.anio) === currentDate.getFullYear())
-                const categories = budget ? await fetchBudgetCategoriesForMonthPlan(budget.id, controller.signal) : []
-                if (!Array.isArray(categories) || (budget && !Number.isFinite(Number(budget.total)))) throw new Error('El presupuesto del mes no es válido.')
-                if (controller.signal.aborted) return
-                setBudgetTotal(budget ? Number(budget.total) : undefined)
-                setBudgetCategories(categories)
-                setRules(recurring.rules)
-                setRecurringLinks(Object.fromEntries(recurring.links.map((link: { id: number; gasto_recurrente_id: number }) => [link.id, link.gasto_recurrente_id])))
-            } catch (error) {
-                if (!controller.signal.aborted) setPlanError(error instanceof Error ? error.message : 'No se pudo cargar el plan del mes.')
-            } finally {
-                if (!controller.signal.aborted) setPlanLoading(false)
-            }
-        }
-        loadPlan()
-        return () => controller.abort()
-    }, [currentDate, monthKey, retry])
+    const planQuery = useMonthPlanQuery(monthKey)
+    const { budgetTotal, budgetCategories = [], rules = [], recurringLinks = {} } = planQuery.data ?? {}
+    const planLoading = planQuery.isPending
+    const planError = planQuery.error?.message ?? null
 
     // Gastos del mes actual
     const currentMonthExpenses = useMemo(() => {
@@ -95,7 +56,7 @@ export default function DashboardPage() {
             const fecha = toDateWithTime(g.fecha)
             return fecha >= currentMonth && fecha <= currentMonthEnd
         })
-    }, [gastos])
+    }, [gastos, currentMonth, currentMonthEnd])
 
     // Gastos del mes pasado
     const lastMonthExpenses = useMemo(() => {
@@ -103,27 +64,27 @@ export default function DashboardPage() {
             const fecha = toDateWithTime(g.fecha)
             return fecha >= lastMonth && fecha <= lastMonthEnd
         })
-    }, [gastos])
+    }, [gastos, lastMonth, lastMonthEnd])
 
     // Gastos de hoy
     const todayExpenses = useMemo(() => {
         return gastos.filter(g => {
             const fecha = toDateWithTime(g.fecha)
-            return isToday(fecha)
+            return isSameDay(fecha, currentDate)
         })
-    }, [gastos])
+    }, [gastos, currentDate])
 
     // Gastos de ayer
     const yesterdayExpenses = useMemo(() => {
         return gastos.filter(g => {
             const fecha = toDateWithTime(g.fecha)
-            return isYesterday(fecha)
+            return isSameDay(fecha, subDays(currentDate, 1))
         })
-    }, [gastos])
+    }, [gastos, currentDate])
 
     // Últimos 5 gastos
     const recentExpenses = useMemo(() => {
-        return gastos
+        return [...gastos]
             .sort((a, b) => {
                 const fechaA = toDateWithTime(a.fecha)
                 const fechaB = toDateWithTime(b.fecha)
@@ -252,7 +213,7 @@ export default function DashboardPage() {
                 </StatTileRow>
 
                 <MonthPlanningSummary plan={monthPlan} loading={planLoading} error={planError}
-                    onRetry={() => setRetry(value => value + 1)} />
+                    onRetry={() => void planQuery.refetch()} />
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
                     <ExpenseCalendar currentDate={currentDate} expenses={currentMonthExpenses} />
