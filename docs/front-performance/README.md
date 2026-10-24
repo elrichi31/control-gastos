@@ -1,52 +1,55 @@
-# Optimizaciones de front
+# Optimizaciones de front — cierre de las dos fases
 
-Rama: `perf/front-optimizations`, creada desde `d5e9fc4`. Revisión e implementación local del 24 de octubre de 2026. Sin push, PR, cambios en main, migraciones ni acceso a datos reales de Supabase.
+Rama `perf/front-optimizations`, desde `d5e9fc4`. Trabajo local del 24 de octubre de 2026. Sin push, PR, cambios en main, migraciones ni datos reales de Supabase.
 
-## Cambios
+## Implementación
 
-- **#1, layout servidor:** `src/app/layout.tsx` conserva HTML, fuente y metadatos; `src/components/layout/AppShell.tsx:16` contiene navegación y comportamiento interactivo.
-- **#4, estados de ruta:** `src/app/loading.tsx`, `error.tsx` y `not-found.tsx` añaden carga accesible, recuperación con `retry` de Next 16.3 y navegación de regreso. Se mantienen los estados de carga de las consultas cliente.
-- **#5, carga diferida:** `next/dynamic` separa gráficos de estadísticas y presupuesto, el panel de proyección, los editores de gasto normal/presupuestado y `PWAInstallPrompt`. Los editores se montan al abrirlos; los gráficos reservan espacio durante la descarga. El aviso PWA se descarga en cliente al montar el shell.
-- **#7, sidebar:** se elimina el efecto que abría el drawer durante la detección inicial del viewport; CSS controla la visibilidad de escritorio y el estado solo abre el drawer móvil.
-- **#11, moneda:** se reutiliza un único `Intl.NumberFormat` en `src/lib/utils/common.ts:14`; listas, resumen, exportación y correo usan `formatMoney`. Se conserva la presentación compacta de ejes y los ejemplos ilustrativos de la landing.
-- **#13, identidad de listas:** grupos, breadcrumbs, secciones y alertas usan claves de dominio. La expansión conserva la identidad del grupo al filtrar. La clave semanal usa la fecha del lunes para evitar la colisión entre la primera y última semana de ciertos años (`src/hooks/useGastosGrouping.ts:55`).
-- **#8 y parte de #2, TanStack Query:** cliente por sesión, consultas con 30 segundos de frescura, catálogos con cinco minutos, deduplicación y errores con datos previos. Un cambio de identidad remonta la caché antes de que los hijos puedan leerla; al desmontar se limpian consultas en vuelo (`SessionQueryProvider.tsx:15`). No hay caché remota global a nivel de módulo ni persistencia de consultas en disco.
-- **Cobertura de consultas:** gastos compartidos por dashboard, detalle, estadísticas, formulario y recurrentes; catálogos del detalle; plan del dashboard por mes; presupuestos por año. Los hooks usan la capa existente de `src/services`. Crear/editar gastos sigue usando los callbacks existentes para invalidar; borrar gastos y crear/borrar presupuestos usan mutations. Importación por correo y cambios de recurrentes invalidan también el plan y los presupuestos. Los cambios de distribución del presupuesto invalidan los totales y el plan.
-- **Correcciones adicionales:** el dashboard ordena una copia de los gastos y recalcula al cambiar de día/mes; una confirmación de borrado ejecuta una única mutación y espera su resultado, evitando el doble DELETE entre fila y padre (`ExpenseItem.tsx:45`).
+1. **Estado remoto.** TanStack Query sustituye las lecturas con estado local del detalle de presupuesto, lista y agenda de recurrentes, precios y confirmaciones por correo, proyecciones, estado MCP, permisos, seguridad de sesiones, catálogos de formularios, años de presupuesto, banner de correo y cron. Se conserva el estado local de los borradores y modales. `src/hooks/useRemoteData.ts` concentra consultas habilitadas solo con sesión autenticada y mutaciones sin reintentos automáticos. Los catálogos se comparten con el detalle de gastos durante cinco minutos. Los avisos de umbral presupuestario usan lecturas de la caché.
 
-## Comprobaciones
+   Crear, editar, eliminar, omitir y convertir recurrentes invalida sus vistas relacionadas. Las operaciones de presupuesto invalidan detalle, años y plan mensual; borrar un presupuesto invalida también detalles que quedaron inactivos. Las mutaciones de gastos invalidan historial, plan, presupuestos y proyección. Los errores de carga de presupuesto se distinguen de un presupuesto vacío. Un fallo al verificar MCP no mantiene una tarjeta de estado anterior como si estuviera recién verificada.
 
-Se instaló Node 22.21.1 en `/data/.local/node-runtime` porque el entorno no tenía Node/npm en PATH; se ejecutaron `npm ci` y `npm install @tanstack/react-query`. La dependencia instalada y fijada en lockfile es TanStack Query 5.104.5. Se leyeron las guías locales de Next sobre componentes servidor/cliente, lazy loading, loading, error y not-found antes de editar.
+2. **Correo.** La clave de consulta contiene pestaña, página, búsqueda y los IDs marcados como gastos distintos. La petición recibe AbortSignal para descartar páginas superadas. Alias y sincronización son mutations; las aceptaciones, vinculaciones y descartes usan mutations dentro de la cola serial existente. La conciliación ocurre una vez por lote y pertenece a la sesión, por lo que sigue funcionando al salir de la página.
 
-El baseline de tests tuvo **325 tests: 321 correctos y 4 fallos**. Los cuatro fallos previos son:
+   La cola se identifica por QueryClient, no por un singleton común del navegador. Al cerrar/cambiar sesión se aborta la petición activa, se impide enviar lo pendiente y se retiran sus avisos. Una petición ya procesada por el servidor no se puede deshacer abortando; no se reintenta automáticamente una escritura de resultado incierto.
 
-1. `tests/email-review-ui.test.cjs`: falta el input de alias en el harness.
-2. El mismo archivo: el escenario de alias fallido no encuentra el control esperado.
-3. `tests/favicon-transparency.test.cjs`: el SVG tiene fondo.
-4. `tests/navigation-ux.test.cjs`: la landing contiene tratamientos de color que la aserción rechaza.
+3. **API de gastos.** `GET /api/gastos` acepta `from` y `to` como fechas reales `YYYY-MM-DD`, inclusivas; rechaza rangos invertidos. `page`/`limit` activan una respuesta `{items,total,page,limit}` con conteo del rango, orden estable por fecha e ID y máximo de 500 filas por petición. El propietario autenticado se aplica a cada consulta, incluida la alternativa compatible sin la columna de impuestos. Sin paginación se conserva la respuesta array para clientes existentes. No se requieren cambios de esquema.
 
-Los tests de caché cubren deduplicación, invalidación activa/inactiva, error conservando datos y cancelación/aislamiento entre sesiones. Los nuevos tests cubren una sola solicitud de borrado, espera de la mutación e identidad/expansión de semanas a ambos extremos de un año. Se adaptaron los harnesses que simulan hooks sin montar contextos y la aserción de SSR de gráficos diferidos.
+   `src/services/expenses.ts` distingue `fetchExpensesPage` de `fetchExpenses`: esta última recorre páginas de 500 filas y devuelve el historial completo que consumen filtros, agregados de la UI y exportación. No se sustituye silenciosamente ese historial por una sola página ni por el límite de 1.000 filas de PostgREST. Si cambia el conteo, aparecen IDs duplicados o se interrumpe el recorrido, se devuelve error en lugar de publicar un total parcial.
 
-No se ha realizado una prueba de navegador autenticado con datos reales. El build inicial ya compilaba y pasaba TypeScript, pero fallaba al recopilar `/api/auth/[...nextauth]` con `supabaseUrl is required`. No se añadieron variables ficticias ni se cambió la inicialización de autenticación para ocultar ese requisito.
+   Esto pagina las peticiones; los consumidores que necesitan todo el historial siguen descargándolo completo. No se introduce un snapshot transaccional entre páginas: cambios simultáneos que no alteren el conteo pueden representar instantes distintos. Un endpoint de agregados/snapshot para historiales muy grandes queda propuesto para coordinar con BD, sin migraciones en esta entrega.
 
-Resultado final: **327 tests, 323 correctos y los mismos 4 fallos previos**; sin regresiones adicionales en la suite. Lint: **0 errores y 57 avisos**, frente a 64 avisos del baseline. El build final vuelve a compilar y pasar TypeScript; se detiene durante la recopilación de rutas de autenticación (en la última ejecución, `/api/auth/sessions`) por la misma ausencia de `supabaseUrl`.
+4. **Entrada móvil/PWA en servidor.** El proxy decide `/form` o `/auth/login` usando la misma política de sesión existente. Detecta UA móvil y la entrada explícita `/?pwa=1`; el manifiesto nuevo usa esta última. La landing de escritorio normal conserva su comportamiento. Las PWA ya instaladas con el manifiesto anterior conservan un adaptador mínimo: detecta standalone (incluido iOS) y navega a `/?pwa=1`; la decisión de autenticación se toma después en el servidor. No se deja una cookie persistente que redirija también el navegador de escritorio normal. El servidor no puede leer directamente la media query `display-mode`.
 
-## Medición
+5. **Chunks.** Se separan el drawer Radix móvil (solo al abrir), los diálogos de borrado (solo al abrir), el formulario recurrente de la pestaña normal, exportación y el estado de cron. El contenedor de notificaciones se descarga en un chunk cliente separado. Se conservan las optimizaciones de la primera fase: layout raíz servidor, AppShell, fallbacks de ruta, gráficos/editores/PWA diferidos, claves estables, formato monetario compartido, corrección de rollover y de doble DELETE.
 
-No hay un build completo para obtener una comparación de First Load JS por ruta. `before.json` y `after.json` registran una **estimación de los chunks de entrada emitidos**: runtime común más entradas de página, layout, providers y shell, sin contar dos veces chunks compartidos. También se guarda su suma comprimida con gzip por archivo.
+## Validación
 
-Se excluyen chunks asíncronos. Estas cifras no son medidas de red, FCP, LCP ni del total descargado tras resolver datos o abrir editores. El nuevo cliente de caché tiene coste de JavaScript compartido; se debe valorar junto con la reducción de los gráficos y la eliminación de solicitudes repetidas. No se comparan tiempos de build porque la caché y la carga de los tests difieren.
+- Baseline `d5e9fc4`: 325 tests, 321 correctos y cuatro fallos; lint sin errores y 64 avisos.
+- Primera fase: 327 tests, 323 correctos y los mismos cuatro fallos; lint sin errores y 57 avisos.
+- Segunda fase: **334 tests, 330 correctos y los mismos cuatro fallos**. Las comprobaciones dirigidas finales de API, PWA, cola, MCP y handlers de presupuesto pasan: **23/23**. Lint final: **0 errores y 53 avisos**, frente a 57 de la fase anterior.
+- Typecheck independiente pasa. El build emite webpack y pasa TypeScript, pero no puede completar la recopilación de rutas de autenticación sin las variables reales de Supabase. Se mantiene el error `supabaseUrl is required`; no se añadieron valores ficticios.
+- Los cuatro fallos previos son dos escenarios de alias en `email-review-ui.test.cjs`, transparencia de favicon en `favicon-transparency.test.cjs` y paleta de landing en `navigation-ux.test.cjs`. Se adaptaron los harnesses al nuevo origen del estado remoto; las aserciones funcionales se mantienen.
+- Las nuevas pruebas comprueban rangos/límites, propietario y orden en cada consulta, compatibilidad de impuestos, clientes legacy, recorrido de 1.201 gastos, detección de lecturas incompletas, entrada móvil/PWA y cierre de una cola con escrituras pendientes. Las pruebas de la fase anterior siguen cubriendo invalidación, deduplicación, aislamiento de sesión y borrado único.
+- No se ejecutó navegador autenticado, conforme al alcance. Los tests de BD usan fixtures locales/PGlite; no se conectaron a Supabase real.
 
-| Ruta | Antes, KiB gzip | Después, KiB gzip | Cambio |
-| --- | ---: | ---: | ---: |
-| /dashboard | 207.2 | 219.9 | 6.1% |
-| /detalle-gastos | 225.2 | 237.7 | 5.5% |
-| /estadisticas | 343.3 | 239.2 | -30.3% |
-| /form | 243.9 | 256.4 | 5.1% |
-| /presupuesto | 319.4 | 231.4 | -27.6% |
-| /presupuesto/[id] | 222.9 | 217.9 | -2.2% |
+Se usó Node 22.21.1 instalado en `/data/.local/node-runtime`; las dependencias permanecen fijadas por el lockfile. Se consultaron las guías incluidas de Next 16.3.8 antes de editar, incluida la convención proxy.
 
-Reproducción, desde la raíz y con Node/npm disponibles:
+## Medición de JavaScript
+
+`before.json` corresponde al baseline; `phase1.json` conserva la primera entrega; `after.json` recoge la segunda fase.
+
+Se estima la suma de chunks de entrada emitidos: runtime común más página, layout, providers y shell, sin duplicar archivos compartidos. Se comprime cada archivo con gzip. **No es First Load JS oficial, una medida de red, FCP o LCP.** Se excluyen los chunks asíncronos; algunos, como cron y notificaciones, se descargan al montar el cliente. Su separación reduce la entrada crítica, pero no equivale a eliminar su descarga total. Los gráficos, formularios alternativos y modales se descargan al necesitarlos.
+
+| Ruta | Baseline KiB gzip | Fase 1 | Fase 2 | Fase 2 vs. fase 1 | Fase 2 vs. baseline |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| /dashboard | 207.2 | 219.9 | 199.1 | -9.5% | -3.9% |
+| /detalle-gastos | 225.2 | 237.7 | 230.5 | -3.0% | 2.4% |
+| /estadisticas | 343.3 | 239.2 | 226.3 | -5.4% | -34.1% |
+| /form | 243.9 | 256.4 | 247.4 | -3.5% | 1.4% |
+| /presupuesto | 319.4 | 231.4 | 218.5 | -5.6% | -31.6% |
+| /presupuesto/[id] | 222.9 | 217.9 | 215.6 | -1.0% | -3.2% |
+
+Reproducción desde la raíz, con Node/npm en PATH:
 
 ```sh
 npm ci
@@ -57,12 +60,11 @@ npm run lint
 npm test
 ```
 
-El script de medición puede funcionar después de un build cuyo webpack haya emitido los chunks, aunque falle más tarde recopilando datos de página.
+El script puede leer los chunks de un build que haya compilado y falle más tarde recopilando datos de página. Los tiempos de build no se comparan como métrica de rendimiento porque la caché y la carga concurrente de tests difieren.
 
 ## Pendiente
 
-- Configurar las variables reales mediante el mecanismo seguro del entorno, completar el build y probar navegación autenticada, cambios de usuario, móvil, edición/borrado y PWA en navegador.
+- Variables reales mediante el mecanismo seguro del entorno, para completar build y prueba integrada. No se solicita ni se inventa ningún secreto en esta entrega.
+- Prueba autenticada en navegador, excluida por el usuario por ahora: móvil, instalación/actualización PWA, cambio de cuenta, permisos, cola al navegar y edición/borrado.
 - Resolver por separado los cuatro fallos previos de tests.
-- Migrar el fetch local restante de detalle de presupuesto, lista de recurrentes, proyecciones, conexiones, formularios y cola paginada de correo. Esta entrega evita reescribir de golpe sus estados de formulario y mecanismos de conciliación.
-- Diseñar filtro por rango/paginación en API junto con agregados de estadísticas y exportación: limitar solo la lista actual puede truncar totales del historial.
-- Evaluar MobileRedirect en servidor conservando la detección de instalación PWA, que hoy depende de `display-mode` en navegador.
+- Para volúmenes muy grandes, proponer agregados o snapshots desde servidor y paginación visual del detalle, conservando estadísticas y exportación completas; no se añadieron migraciones.
