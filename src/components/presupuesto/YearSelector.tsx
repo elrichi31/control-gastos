@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react"
+import { useRemoteQuery } from "@/hooks/useRemoteData"
+import { queryKeys } from "@/lib/query/client"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { fetchAvailableYears } from "@/services/budget-general"
 
@@ -8,27 +9,10 @@ interface YearSelectorProps {
 }
 
 export function YearSelector({ selectedYear, setSelectedYear }: YearSelectorProps) {
-  const [availableYears, setAvailableYears] = useState<number[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function loadYears() {
-      setLoading(true)
-      try {
-        const years = await fetchAvailableYears()
-        setAvailableYears(years)
-      } catch (error) {
-        console.error("Error al cargar años:", error)
-        // Fallback: año actual y siguiente
-        const currentYear = new Date().getFullYear()
-        setAvailableYears([currentYear, currentYear + 1])
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadYears()
-  }, [])
+  const query = useRemoteQuery([...queryKeys.budgets, 'years'], fetchAvailableYears)
+  const currentYear = new Date().getFullYear()
+  const availableYears = query.data ?? [currentYear, currentYear + 1]
+  const loading = query.isPending
 
   if (loading) {
     return (

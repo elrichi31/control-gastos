@@ -1,21 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useRemoteQuery } from "@/hooks/useRemoteData"
+import { queryKeys } from "@/lib/query/client"
 import Link from "next/link"
 import { ArrowRight, Inbox } from "lucide-react"
 import { fetchEmailImportPending } from "@/services/email-import"
 
 /** Avisa cuántos movimientos del correo esperan revisión. Solo aparece si hay alguno. */
 export function EmailPendingBanner() {
-  const [total, setTotal] = useState(0)
-
-  useEffect(() => {
-    let alive = true
-    fetchEmailImportPending()
-      .then(pending => { if (alive && pending !== null) setTotal(pending) })
-      .catch(() => {})
-    return () => { alive = false }
-  }, [])
+  const query = useRemoteQuery([...queryKeys.email, 'pending'], fetchEmailImportPending)
+  const total = query.data
 
   if (!total) return null
 

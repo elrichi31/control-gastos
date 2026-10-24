@@ -1,3 +1,4 @@
+require('./helpers/remote-ui.cjs')
 require('./helpers/register-ts.cjs')
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),React=require('react'),{renderToStaticMarkup}=require('react-dom/server')
 const optional=p=>fs.existsSync(path.join(__dirname,'..',p))?require('../'+p):{}

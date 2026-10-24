@@ -1,3 +1,4 @@
+const { fixtures: remoteFixtures } = require('./helpers/remote-ui.cjs')
 require('./helpers/register-ts.cjs')
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
@@ -35,7 +36,7 @@ test('real capture handler sends normalized tags, permits omission and clears ta
     const form = () => ExpenseForm({ fetchExpenses() {} })
     render(form)
     slots[0] = { description: 'Almuerzo', amount: '12', categoryId: '1', paymentMethodId: '1', date: '2026-10-01', tags: ' Viaje, VIAJE, familia ' }
-    slots[4] = [{ id: 1, nombre: 'Comida' }]; slots[5] = [{ id: 1, nombre: 'Efectivo' }]; slots[6] = false
+
     await render(form).props.onSubmit(event)
     assert.deepEqual(saved.tags, ['viaje', 'familia']); assert.equal(slots[0].tags, '')
     slots[0] = { ...slots[0], description: 'Otro', amount: '1', categoryId: '1', paymentMethodId: '1', tags: '' }
@@ -47,7 +48,7 @@ test('real capture handler blocks invalid tags and retains tags when saving fail
   await harness(async ({ slots, render }) => {
     const form = () => ExpenseForm({ fetchExpenses() {} }); render(form)
     slots[0] = { description: 'Almuerzo', amount: '12', categoryId: '1', paymentMethodId: '1', date: '2026-10-01', tags: 'x'.repeat(31) }
-    slots[4] = [{ id: 1 }]; slots[5] = [{ id: 1 }]; slots[6] = false; saved = undefined
+    saved = undefined
     await render(form).props.onSubmit(event)
     assert.equal(saved, undefined); assert.match(slots[2].tags, /30/)
     slots[0].tags = 'familia'; failSave = true
@@ -59,14 +60,14 @@ test('real budget handlers restore, edit, clear and persist optional tags', asyn
   await harness(async ({ slots, render }) => {
     const hook = () => useBudgetDetailsData('1')
     render(hook).prepareEditExpense({ id: 9, descripcion: 'Hotel', monto: 20, fecha: '2026-10-01', metodo_pago_id: 1, tags: ['viaje', 'familia'] }, 2)
-    assert.equal(slots[5].tags, 'viaje, familia')
-    slots[5].tags = ' Familia, trabajo '
+    assert.equal(slots[0].tags, 'viaje, familia')
+    slots[0].tags = ' Familia, trabajo '
     assert.equal(await render(hook).handleUpdateExpense(), true)
-    assert.deepEqual(saved.tags, ['familia', 'trabajo']); assert.equal(slots[5].tags, '')
+    assert.deepEqual(saved.tags, ['familia', 'trabajo']); assert.equal(slots[0].tags, '')
     render(hook).prepareEditExpense({ id: 9, descripcion: 'Hotel', monto: 20, fecha: '2026-10-01', metodo_pago_id: 1, tags: ['viaje'] }, 2)
-    slots[5].tags = ''
+    slots[0].tags = ''
     await render(hook).handleUpdateExpense(); assert.deepEqual(saved.tags, [])
-    slots[5] = { name: 'Nuevo', amount: '10', paymentDate: '2026-10-01', category: '2', metodoPago: '1', tags: 'familia' }
+    slots[0] = { name: 'Nuevo', amount: '10', paymentDate: '2026-10-01', category: '2', metodoPago: '1', tags: 'familia' }
     await render(hook).handleAddExpense(); assert.deepEqual(saved.tags, ['familia'])
   })
 })

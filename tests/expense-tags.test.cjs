@@ -1,3 +1,4 @@
+const { fixtures: remoteFixtures } = require('./helpers/remote-ui.cjs')
 require('./helpers/register-ts.cjs')
 const { test } = require('node:test')
 const assert = require('node:assert/strict')

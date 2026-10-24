@@ -14,6 +14,10 @@ export const queryKeys = {
   monthPlan: ['month-plan'] as const,
   forecast: ['expense-forecast'] as const,
   budgets: ['budgets'] as const,
+  budgetDetails: ['budget-details'] as const,
+  recurring: ['recurring'] as const,
+  email: ['email-review'] as const,
+  connections: ['connections'] as const,
 }
 
 export async function invalidateExpenseData(client: QueryClient) {
@@ -22,5 +26,7 @@ export async function invalidateExpenseData(client: QueryClient) {
     client.invalidateQueries({ queryKey: queryKeys.monthPlan }),
     client.invalidateQueries({ queryKey: queryKeys.forecast }),
     client.invalidateQueries({ queryKey: queryKeys.budgets }),
+    client.invalidateQueries({ queryKey: queryKeys.recurring }),
+    client.invalidateQueries({ queryKey: queryKeys.email }),
   ])
 }

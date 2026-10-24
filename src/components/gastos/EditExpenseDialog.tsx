@@ -13,8 +13,9 @@ import { ForeignTaxField } from "@/components/gastos/ForeignTaxField"
 import { FOREIGN_EXPENSE_TAG, computeForeignTax, foreignTaxFromStored, parseStoredForeignTax, storedForeignTax, validateForeignTax, withForeignTag } from "@/lib/foreign-tax"
 import { parseExpenseTags } from "@/lib/expense-tags"
 import { updateExpense } from "@/services/expenses"
-import { fetchCategories, type Category } from "@/services/categories"
-import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
+import { useExpenseCatalogs } from "@/hooks/useExpenseQueries"
+import { useRemoteMutation } from "@/hooks/useRemoteData"
+import { queryKeys } from "@/lib/query/client"
 import type { Gasto } from "@/hooks/useGastosFiltrados"
 
 type Props = { expense: Gasto; open: boolean; onOpenChange: (open: boolean) => void; onSaved: () => void | Promise<void> }
@@ -29,7 +30,7 @@ const fromExpense = (expense: Gasto) => ({
   tags: (expense.tags ?? []).join(", "),
 })
 
-export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Props) {
+export function EditExpenseDialog({ expense, open, onOpenChange }: Props) {
   const [formData, setFormData] = useState(() => fromExpense(expense))
   const [foreignTax, setForeignTax] = useState(() => foreignTaxFromStored(expense.impuesto_exterior))
   const hadStoredTax = parseStoredForeignTax(expense.impuesto_exterior) !== null
@@ -38,9 +39,11 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
-  const [optionsError, setOptionsError] = useState(false)
+  const catalogs = useExpenseCatalogs(open)
+  const categories = catalogs.data?.categories ?? []
+  const paymentMethods = catalogs.data?.paymentMethods ?? []
+  const optionsError = Boolean(catalogs.error)
+  const update = useRemoteMutation(({ id, data }: { id: number; data: Parameters<typeof updateExpense>[1] }) => updateExpense(id, data), [queryKeys.expenses, queryKeys.monthPlan, queryKeys.budgets, queryKeys.forecast])
   const formRef = useRef<HTMLFormElement>(null)
 
   // Reset the draft every time the dialog opens so a cancelled edit never leaks into the next one.
@@ -50,10 +53,6 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
     setForeignTax(foreignTaxFromStored(expense.impuesto_exterior))
     setErrors({})
     setSubmitError(null)
-    setOptionsError(false)
-    Promise.all([fetchCategories(), fetchPaymentMethods()])
-      .then(([cats, methods]) => { setCategories(cats); setPaymentMethods(methods) })
-      .catch(() => setOptionsError(true))
   }, [open, expense])
 
   const change = (key: keyof typeof formData, value: string) => {
@@ -85,7 +84,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
     }
     setSaving(true)
     try {
-      await updateExpense(expense.id, { descripcion: formData.description.trim(), monto: computeForeignTax(amount, foreignTax).total, fecha: formData.date, categoria_id: Number(formData.categoryId), metodo_pago_id: Number(formData.paymentMethodId), tags: foreignTax.enabled ? withForeignTag(tags, foreignTax) : hadStoredTax ? tags.filter(tag => tag !== FOREIGN_EXPENSE_TAG) : tags, impuesto_exterior: storedForeignTax(amount, foreignTax, hadStoredTax) })
+      await update.mutateAsync({ id: expense.id, data: { descripcion: formData.description.trim(), monto: computeForeignTax(amount, foreignTax).total, fecha: formData.date, categoria_id: Number(formData.categoryId), metodo_pago_id: Number(formData.paymentMethodId), tags: foreignTax.enabled ? withForeignTag(tags, foreignTax) : hadStoredTax ? tags.filter(tag => tag !== FOREIGN_EXPENSE_TAG) : tags, impuesto_exterior: storedForeignTax(amount, foreignTax, hadStoredTax) } })
     } catch (error) {
       console.error("Error al actualizar gasto:", error)
       setSubmitError("No se pudieron guardar los cambios. Tus datos siguen aquí; vuelve a intentar.")
@@ -95,7 +94,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSaved }: Prop
     setSaving(false)
     onOpenChange(false)
     toast.success("Gasto actualizado")
-    await onSaved()
+    // Cache invalidation is owned by the mutation; the parent remains mounted.
   }
 
   const optionsReady = categories.length > 0 && paymentMethods.length > 0

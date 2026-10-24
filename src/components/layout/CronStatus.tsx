@@ -1,27 +1,17 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useRemoteQuery } from "@/hooks/useRemoteData"
 import { formatDistanceToNowStrict } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
-import { fetchCronRuns, type CronRun } from "@/services/cron"
+import { fetchCronRuns } from "@/services/cron"
 
 const LABELS: Record<string, string> = { "sync-email": "Correo", "recurring-expenses": "Recurrentes" }
 
 /** Última corrida de cada cron, para saber si la sincronización automática está viva. */
 export function CronStatus() {
-  const [runs, setRuns] = useState<CronRun[] | null>(null)
-
-  useEffect(() => {
-    let alive = true
-    const load = () => fetchCronRuns()
-      .then(runs => { if (alive) setRuns(runs) })
-      .catch(() => {})
-    void load()
-    // El cron de correo corre cada 30 min; refrescar cada 5 basta.
-    const timer = setInterval(load, 5 * 60_000)
-    return () => { alive = false; clearInterval(timer) }
-  }, [])
+  const query = useRemoteQuery(['cron-status'], fetchCronRuns, { refetchInterval: 5 * 60_000 })
+  const runs = query.data
 
   if (!runs) return null
 

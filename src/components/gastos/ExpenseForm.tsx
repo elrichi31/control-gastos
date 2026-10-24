@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { LoaderCircle } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
@@ -16,19 +16,20 @@ import { createExpense } from "@/services/expenses"
 import { fetchBudgetsByYear } from "@/services/budget-general"
 import { fetchPresupuestoCategorias } from "@/services/budget"
 import { budgetCrossing, categoryUsage } from "@/lib/month-planning"
-import { fetchCategories, type Category } from "@/services/categories"
-import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
+import { useExpenseCatalogs } from "@/hooks/useExpenseQueries"
+import { useRemoteMutation, useCachedRead, type CachedRead } from "@/hooks/useRemoteData"
+import { queryKeys } from "@/lib/query/client"
 import { predictExpenseSelection, resolveExpenseSelection, type SuggestionHistory } from "@/lib/expense-suggestions"
 
 const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0]
 
 /** Avisa si el gasto recién guardado cruza el 80% o el 100% del presupuesto de su categoría. Es solo una ayuda: nunca falla visiblemente. */
-async function warnBudgetCrossing(saved: { categoryId: number; date: string; total: number }, expenses: readonly { categoria_id: number; monto: number; fecha: string }[]) {
+async function warnBudgetCrossing(read: CachedRead, saved: { categoryId: number; date: string; total: number }, expenses: readonly { categoria_id: number; monto: number; fecha: string }[]) {
   try {
     const year = Number(saved.date.slice(0, 4)), month = Number(saved.date.slice(5, 7))
-    const budget = (await fetchBudgetsByYear(String(year), false)).find(b => b.anio === year && b.mes === month)
+    const budget = (await read([...queryKeys.budgets, String(year), 'thresholds'], () => fetchBudgetsByYear(String(year), false))).find(b => b.anio === year && b.mes === month)
     if (!budget) return
-    const category = categoryUsage(await fetchPresupuestoCategorias(String(budget.id)), expenses, saved.date.slice(0, 7)).find(c => c.categoria_id === saved.categoryId)
+    const category = categoryUsage(await read([...queryKeys.budgetDetails, String(budget.id), 'thresholds'], () => fetchPresupuestoCategorias(String(budget.id))), expenses, saved.date.slice(0, 7)).find(c => c.categoria_id === saved.categoryId)
     if (!category) return
     // ponytail: `expenses` es la lista previa al guardado; dos guardados antes de que refresque pueden saltarse un aviso.
     const after = category.gastado + saved.total
@@ -38,7 +39,7 @@ async function warnBudgetCrossing(saved: { categoryId: number; date: string; tot
   } catch { /* el aviso es opcional */ }
 }
 
-export function ExpenseForm({ fetchExpenses, history = [], expenses = [] }: { fetchExpenses: () => void | Promise<void>; history?: readonly SuggestionHistory[]; expenses?: readonly { categoria_id: number; monto: number; fecha: string }[] }) {
+export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: () => void | Promise<void>; history?: readonly SuggestionHistory[]; expenses?: readonly { categoria_id: number; monto: number; fecha: string }[] }) {
   const [formData, setFormData] = useState({ description: "", amount: "", categoryId: "", date: today(), paymentMethodId: "", tags: "" })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const submitting = useRef(false)
@@ -46,10 +47,14 @@ export function ExpenseForm({ fetchExpenses, history = [], expenses = [] }: { fe
   const amountRef = useRef<HTMLInputElement>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
-  const [optionsLoading, setOptionsLoading] = useState(true)
-  const [optionsError, setOptionsError] = useState<string | null>(null)
+  const read = useCachedRead()
+  const catalogs = useExpenseCatalogs()
+  const categories = catalogs.data?.categories ?? []
+  const paymentMethods = catalogs.data?.paymentMethods ?? []
+  const optionsLoading = catalogs.isPending
+  const optionsError = catalogs.error?.message ?? null
+  const loadOptions = () => catalogs.refetch()
+  const create = useRemoteMutation(createExpense, [queryKeys.expenses, queryKeys.monthPlan, queryKeys.budgets, queryKeys.forecast])
   const [foreignTax, setForeignTax] = useState(emptyForeignTax)
 
   const suggestion = useMemo(() => predictExpenseSelection(formData.description, history, categories, paymentMethods), [formData.description, history, categories, paymentMethods])
@@ -63,20 +68,6 @@ export function ExpenseForm({ fetchExpenses, history = [], expenses = [] }: { fe
       return { ...previous, categoryId: selection.categoryId ? "" : previous.categoryId, paymentMethodId: selection.paymentMethodId ? "" : previous.paymentMethodId }
     })
   }, [selection.categoryId, selection.paymentMethodId])
-
-  const loadOptions = useCallback(async () => {
-    setOptionsLoading(true)
-    setOptionsError(null)
-    try {
-      const [cats, methods] = await Promise.all([fetchCategories(), fetchPaymentMethods()])
-      setCategories(cats)
-      setPaymentMethods(methods)
-    } catch (error) {
-      console.error("Error al cargar opciones de gasto:", error)
-      setOptionsError("No se pudieron cargar las categorías y métodos de pago.")
-    } finally { setOptionsLoading(false) }
-  }, [])
-  useEffect(() => { void loadOptions() }, [loadOptions])
 
   const change = (key: keyof typeof formData, value: string) => {
     setFormData(previous => ({ ...previous, [key]: value }))
@@ -121,7 +112,7 @@ export function ExpenseForm({ fetchExpenses, history = [], expenses = [] }: { fe
     const saved = { categoryId: parseInt(selection.categoryId), date: formData.date, total: computeForeignTax(amount, foreignTax).total }
     try {
       // Con "Compra en el exterior" se guarda el total que cobró el banco, impuestos incluidos.
-      await createExpense({ descripcion: formData.description.trim(), monto: saved.total, categoria_id: parseInt(selection.categoryId), fecha: formData.date, metodo_pago_id: parseInt(selection.paymentMethodId), is_recurrent: false, tags: withForeignTag(tags, foreignTax), impuesto_exterior: storedForeignTax(amount, foreignTax) })
+      await create.mutateAsync({ descripcion: formData.description.trim(), monto: saved.total, categoria_id: parseInt(selection.categoryId), fecha: formData.date, metodo_pago_id: parseInt(selection.paymentMethodId), is_recurrent: false, tags: withForeignTag(tags, foreignTax), impuesto_exterior: storedForeignTax(amount, foreignTax) })
     } catch (error) {
       console.error("Error al agregar gasto:", error)
       setSubmitError("No se pudo guardar el gasto. Tus datos siguen aquí; vuelve a intentar.")
@@ -134,12 +125,8 @@ export function ExpenseForm({ fetchExpenses, history = [], expenses = [] }: { fe
     if (!another) setForeignTax(emptyForeignTax())
     setErrors({})
     toast.success("Gasto guardado")
-    void warnBudgetCrossing(saved, expenses)
+    void warnBudgetCrossing(read, saved, expenses)
     if (another) requestAnimationFrame(() => amountRef.current?.focus())
-    try { await fetchExpenses() } catch (error) {
-      console.error("Error al actualizar gastos:", error)
-      toast.error("El gasto se guardó, pero no se pudo actualizar la lista. No lo registres de nuevo.")
-    }
   }
 
   return (

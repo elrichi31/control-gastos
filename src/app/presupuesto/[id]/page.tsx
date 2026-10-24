@@ -79,6 +79,8 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
     }
   }
 
+  if (budgetData.error) return <PageShell><div role="alert" className="space-y-3"><p>No se pudo cargar el presupuesto.</p><Button onClick={() => void budgetData.retry()}>Reintentar</Button></div></PageShell>
+
   return (
     <PageShell>
       <Breadcrumb items={[{ label: "Presupuesto", href: "/presupuesto" }, { label: monthName }]} />

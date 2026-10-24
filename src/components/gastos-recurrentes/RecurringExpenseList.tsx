@@ -2,7 +2,7 @@
 
 import { formatMoney } from "@/lib/utils"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -19,16 +19,15 @@ import {
 import { Trash2, Repeat, Edit, Plus, SkipForward, Sparkles } from "lucide-react"
 import { GastoRecurrente, MESES, costoAnual } from "@/types/recurring-expense"
 import { fetchRecurringExpenses, deleteRecurringExpense, updateRecurringExpense, createRecurringExpense, fetchRecurringPrices, fetchRecurringPlan, skipRecurringCharge } from "@/services/recurring-expenses"
+import { useRemoteQuery, useRemoteMutation } from "@/hooks/useRemoteData"
+import { useExpenseCatalogs } from "@/hooks/useExpenseQueries"
+import { queryKeys } from "@/lib/query/client"
 import { useExpensesStore } from "@/hooks/useExpensesStore"
 import { detectSubscriptions, type DetectorExpense, type SubscriptionSuggestion } from "@/lib/subscription-detector"
-import type { PriceChange } from "@/lib/recurring-actions"
-import { fetchCategories, type Category } from "@/services/categories"
-import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
 import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { EditRecurringExpenseModal } from "@/components/gastos-recurrentes/EditRecurringExpenseModal"
 import { getCategoriaColor } from "@/lib/constants"
 import { fetchRecurringEmailStatus } from '@/services/email-import'
-import type { RecurringEmailStatus } from '@/lib/email-matches'
 import { RecurringEmailIndicator } from './RecurringEmailIndicator'
 import { toast } from "sonner"
 import { format, parseISO, addDays } from "date-fns"
@@ -47,76 +46,44 @@ const DIAS_SEMANA: Record<number, string> = {
 }
 
 export function RecurringExpenseList() {
-  const [expenses, setExpenses] = useState<GastoRecurrente[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
-  const [loading, setLoading] = useState(true)
+  const list = useRemoteQuery([...queryKeys.recurring, 'list'], fetchRecurringExpenses)
+  const catalogs = useExpenseCatalogs()
+  const expenses = list.data ?? []
+  const categories = catalogs.data?.categories ?? []
+  const paymentMethods = catalogs.data?.paymentMethods ?? []
+  const loading = list.isPending || catalogs.isPending
+  const month = format(new Date(), 'yyyy-MM')
+  const dates = useRemoteQuery([...queryKeys.recurring, 'schedule', month], () => fetchRecurringPlan(month))
+  const nextDates = Object.fromEntries((dates.data?.rules ?? []).map(rule => [rule.id, rule.proxima_fecha ?? null]))
+  const priceQuery = useRemoteQuery([...queryKeys.recurring, 'prices'], fetchRecurringPrices)
+  const prices = priceQuery.data ?? []
+  const emails = useRemoteQuery([...queryKeys.recurring, 'email'], fetchRecurringEmailStatus)
+  const emailStatuses = emails.data ?? null
+  const emailError = emails.error?.message ?? ''
+  const loadEmailStatuses = () => emails.refetch()
+  const changed = [queryKeys.recurring, queryKeys.monthPlan, queryKeys.forecast, queryKeys.expenses, queryKeys.budgets]
+  const create = useRemoteMutation(createRecurringExpense, changed)
+  const remove = useRemoteMutation(deleteRecurringExpense, changed)
+  const update = useRemoteMutation(({ id, data }: { id: number; data: Partial<GastoRecurrente> }) => updateRecurringExpense(id, data), changed)
+  const skip = useRemoteMutation(skipRecurringCharge, changed)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [editExpense, setEditExpense] = useState<GastoRecurrente | null>(null)
-  const [nextDates, setNextDates] = useState<Record<number, string | null>>({})
-  const [prices, setPrices] = useState<PriceChange[]>([])
   const [skipTarget, setSkipTarget] = useState<GastoRecurrente | null>(null)
-  const { gastos: storedExpenses, refresh } = useExpensesStore()
+  const { gastos: storedExpenses } = useExpensesStore()
   const [dismissed, setDismissed] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem(DISMISSED_KEY) || "[]") } catch { return [] }
   })
-  const [emailStatuses, setEmailStatuses] = useState<Record<number, RecurringEmailStatus> | null>(null)
-  const [emailError, setEmailError] = useState('')
-  const loadEmailStatuses = async () => {
-    try { setEmailStatuses(await fetchRecurringEmailStatus()); setEmailError('') }
-    catch (error) { setEmailStatuses(null); setEmailError((error as Error).message) }
-  }
-
-  // Optional extras: the list still works if they fail or their migration is missing.
-  const loadPrices = () =>
-    fetchRecurringPrices()
-      .then(d => { if (Array.isArray(d)) setPrices(d) })
-      .catch(() => {})
   const manualExpenses = useMemo<DetectorExpense[]>(() => storedExpenses.map(e => ({
     descripcion: e.descripcion, monto: Number(e.monto), fecha: e.fecha, categoria_id: e.categoria_id,
     metodo_pago_id: e.metodo_pago_id ?? e.metodo_pago?.id ?? null, is_recurrent: e.is_recurrent,
   })), [storedExpenses])
-
-  // The public recurring API hides scheduling state (mobile contract); the web-only plan endpoint exposes it.
-  const loadNextDates = () =>
-    fetchRecurringPlan(format(new Date(), "yyyy-MM"))
-      .then(d => { if (d && Array.isArray(d.rules)) setNextDates(Object.fromEntries(d.rules.map(r => [r.id, r.proxima_fecha ?? null]))) })
-      .catch(() => {})
-
-  const loadData = async () => {
-    try {
-      setLoading(true)
-      const [expensesData, categoriesData, paymentMethodsData] = await Promise.all([
-        fetchRecurringExpenses(),
-        fetchCategories(),
-        fetchPaymentMethods(),
-      ])
-      setExpenses(expensesData)
-      setCategories(categoriesData)
-      setPaymentMethods(paymentMethodsData)
-      void loadEmailStatuses()
-    } catch (error) {
-      console.error("Error al cargar datos:", error)
-      toast.error("Error al cargar los gastos recurrentes")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadData()
-    loadNextDates()
-    loadPrices()
-  }, [])
 
   const handleSkip = async () => {
     if (!skipTarget) return
     const target = skipTarget
     setSkipTarget(null)
     try {
-      const body = await skipRecurringCharge(target.id)
-      await refresh()
-      loadNextDates()
+      const body = await skip.mutateAsync(target.id)
       toast.success(`Se omitió el cobro del ${format(parseISO(body.omitida), "d MMM", { locale: es })} de ${target.descripcion}`)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "No se pudo saltar el cobro")
@@ -134,13 +101,10 @@ export function RecurringExpenseList() {
     if (!metodo) return toast.error("Primero crea un método de pago")
     try {
       // Starts tomorrow so the charges already logged by hand are not duplicated.
-      await createRecurringExpense({
+      await create.mutateAsync({
         descripcion: s.descripcion, monto: s.monto, categoria_id: s.categoria_id, metodo_pago_id: metodo,
         frecuencia: "mensual", dia_mes: s.dia_mes, fecha_inicio: format(addDays(new Date(), 1), "yyyy-MM-dd"),
       })
-      await refresh()
-      await loadData()
-      loadNextDates()
       toast.success(`${s.descripcion} ahora es recurrente. Ya no hace falta registrarlo a mano.`)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "No se pudo crear el gasto recurrente")
@@ -149,12 +113,7 @@ export function RecurringExpenseList() {
 
   const handleToggleActive = async (id: number, currentActive: boolean) => {
     try {
-      await updateRecurringExpense(id, { activo: !currentActive })
-      await refresh()
-      setExpenses(prev =>
-        prev.map(exp => (exp.id === id ? { ...exp, activo: !currentActive } : exp))
-      )
-      loadNextDates()
+      await update.mutateAsync({ id, data: { activo: !currentActive } })
       toast.success(`Gasto ${!currentActive ? 'activado' : 'desactivado'} correctamente`)
     } catch (error) {
       console.error("Error al cambiar estado:", error)
@@ -166,9 +125,7 @@ export function RecurringExpenseList() {
     if (!deleteId) return
 
     try {
-      await deleteRecurringExpense(deleteId)
-      await refresh()
-      setExpenses(prev => prev.filter(exp => exp.id !== deleteId))
+      await remove.mutateAsync(deleteId)
       toast.success("Gasto recurrente eliminado correctamente")
       setDeleteId(null)
     } catch (error) {
@@ -209,13 +166,7 @@ export function RecurringExpenseList() {
 
   const handleEdit = async (id: number, data: Partial<GastoRecurrente>) => {
     try {
-      await updateRecurringExpense(id, data)
-      await refresh()
-      setExpenses(prev =>
-        prev.map(exp => (exp.id === id ? { ...exp, ...data } : exp))
-      )
-      loadNextDates()
-      loadPrices()
+      await update.mutateAsync({ id, data })
       toast.success("Gasto recurrente actualizado correctamente")
     } catch (error) {
       console.error("Error al editar:", error)
@@ -223,6 +174,8 @@ export function RecurringExpenseList() {
       throw error
     }
   }
+
+  if (list.error || catalogs.error) return <div role="alert" className="space-y-3"><p>No se pudieron cargar los recurrentes.</p><Button onClick={() => { void list.refetch(); void catalogs.refetch() }}>Reintentar</Button></div>
 
   if (loading) {
     return (

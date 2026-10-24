@@ -23,6 +23,7 @@ export function useBudgetData(selectedYear: string) {
   const invalidate = async () => { await Promise.all([
     client.invalidateQueries({ queryKey: queryKeys.budgets }),
     client.invalidateQueries({ queryKey: queryKeys.monthPlan }),
+    client.invalidateQueries({ queryKey: queryKeys.budgetDetails }),
   ]) }
   const create = useMutation({ mutationFn: createBudget, onSuccess: invalidate })
   const remove = useMutation({ mutationFn: (month: number) => deleteBudget(selectedYear, month), onSuccess: invalidate })

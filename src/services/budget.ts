@@ -12,7 +12,7 @@ export async function fetchPresupuestoCategorias(id: string): Promise<Presupuest
 
 export async function fetchPresupuestoMensual(id: string): Promise<{ mes: number, anio: number } | null> {
   const res = await fetch(`/api/presupuestos/${id}`)
-  if (!res.ok) return null
+  if (!res.ok) throw new Error("Error al cargar el presupuesto")
   const data = await res.json()
   return { mes: data.mes, anio: data.anio }
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -14,8 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { createRecurringExpense } from "@/services/recurring-expenses"
-import { fetchCategories, type Category } from "@/services/categories"
-import { fetchPaymentMethods, type PaymentMethod } from "@/services/paymentMethods"
+import { useExpenseCatalogs } from "@/hooks/useExpenseQueries"
+import { useRemoteMutation } from "@/hooks/useRemoteData"
+import { queryKeys } from "@/lib/query/client"
 import { Frecuencia, MESES } from "@/types/recurring-expense"
 import { toast } from "sonner"
 import { ForeignTaxField } from "@/components/gastos/ForeignTaxField"
@@ -45,8 +46,10 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
     activo: true,
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
+  const catalogs = useExpenseCatalogs()
+  const categories = catalogs.data?.categories ?? []
+  const paymentMethods = catalogs.data?.paymentMethods ?? []
+  const create = useRemoteMutation(createRecurringExpense, [queryKeys.recurring, queryKeys.monthPlan, queryKeys.forecast])
   const [mostrarFechaFin, setMostrarFechaFin] = useState(false)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const [foreignTax, setForeignTax] = useState(emptyForeignTax)
@@ -68,22 +71,6 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
     setMostrarFechaFin(false)
     setForeignTax(emptyForeignTax())
   }
-
-  useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        const [categories, paymentMethods] = await Promise.all([
-          fetchCategories(),
-          fetchPaymentMethods(),
-        ])
-        setCategories(categories)
-        setPaymentMethods(paymentMethods)
-      } catch (err) {
-        console.error("Error al cargar categorías o métodos de pago", err)
-      }
-    }
-    fetchOptions()
-  }, [])
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {}
@@ -130,7 +117,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
     setIsSubmitting(true)
 
     try {
-      await createRecurringExpense({
+      await create.mutateAsync({
         descripcion: formData.description,
         // Con "Compra en el exterior" cada cobro se registra con los impuestos incluidos.
         monto: computeForeignTax(parseFloat(formData.amount), foreignTax).total,
@@ -170,6 +157,8 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {catalogs.isPending && <p role="status">Cargando categorías y métodos de pago…</p>}
+      {catalogs.error && <div role="alert"><p>No se pudieron cargar las opciones.</p><Button type="button" variant="outline" onClick={() => void catalogs.refetch()}>Reintentar</Button></div>}
       {/* Descripción */}
       <div className="space-y-2">
         <Label htmlFor="rec-description">

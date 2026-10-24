@@ -1,3 +1,4 @@
+const { fixtures: remoteFixtures } = require('./helpers/remote-ui.cjs')
 require('./helpers/register-ts.cjs')
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
@@ -18,8 +19,11 @@ test('lista recurrente muestra confirmación en desktop y móvil sin reemplazar 
   let index = 0
   const slots = [[rule], [{ id: 1, nombre: 'Entretenimiento' }], [{ id: 2, nombre: 'Crédito' }], false]
   slots[10] = { 7: { estado: 'confirmado', fecha: '2026-10-15', monto: 12 } }
-  React.useState = initial => { const key = index++; if (!(key in slots)) slots[key] = typeof initial === 'function' ? initial() : initial; return [slots[key], () => {}] }
+  React.useState = initial => [typeof initial === 'function' ? initial() : initial, () => {}]
   React.useEffect = () => {}; React.useMemo = fn => fn()
+  remoteFixtures.set('recurring:list', () => slots[0])
+  remoteFixtures.set('recurring:email', () => slots[10])
+  remoteFixtures.set('catalogs', () => ({ categories: slots[1], paymentMethods: slots[2] }))
   let tree
   try { tree = RecurringExpenseList() } finally { Object.assign(React, original) }
   const html = renderToStaticMarkup(tree)

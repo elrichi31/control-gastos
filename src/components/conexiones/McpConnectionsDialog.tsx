@@ -4,30 +4,26 @@ import { useState } from 'react'
 import { Bot, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { fetchMcpConnections, revokeMcpConnection, type McpConnection as Connection } from '@/services/mcp-status'
+import { useRemoteQuery, useRemoteMutation } from '@/hooks/useRemoteData'
+import { queryKeys } from '@/lib/query/client'
+import { fetchMcpConnections, revokeMcpConnection } from '@/services/mcp-status'
 
 const formatDate = (value: string) => new Date(value).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
 
 export function McpConnectionsDialog({ onChanged }: { onChanged: () => void }) {
   const [open, setOpen] = useState(false)
-  const [connections, setConnections] = useState<Connection[] | null>(null)
+  const query = useRemoteQuery([...queryKeys.connections, 'grants'], fetchMcpConnections, { enabled: open, staleTime: 0 })
+  const connections = query.isPending ? null : query.data ?? null
+  const mutation = useRemoteMutation(revokeMcpConnection, [queryKeys.connections])
   const [error, setError] = useState('')
   const [confirming, setConfirming] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [changed, setChanged] = useState(false)
 
-  async function load() {
-    setConnections(null); setError(''); setConfirming(null)
-    try {
-      setConnections(await fetchMcpConnections())
-    } catch { setError('No se pudieron cargar las conexiones. Intenta nuevamente.') }
-  }
-
   async function revoke(id: string) {
     setBusy(id); setError('')
     try {
-      await revokeMcpConnection(id)
-      setConnections(list => list?.filter(c => c.id !== id) ?? null)
+      await mutation.mutateAsync(id)
       setChanged(true)
     } catch { setError('No se pudo revocar el acceso. Intenta nuevamente.') }
     finally { setBusy(null); setConfirming(null) }
@@ -35,7 +31,7 @@ export function McpConnectionsDialog({ onChanged }: { onChanged: () => void }) {
 
   function onOpenChange(next: boolean) {
     setOpen(next)
-    if (next) load()
+    if (next) { setError(''); setConfirming(null); void query.refetch() }
     // Refrescar el contador de la tarjeta al cerrar, no durante: refrescar desmonta la tarjeta y el modal
     else if (changed) { setChanged(false); onChanged() }
   }
@@ -77,7 +73,7 @@ export function McpConnectionsDialog({ onChanged }: { onChanged: () => void }) {
             ))}
           </ul>
         )}
-        {error && <p className="text-xs text-destructive" role="alert">{error}</p>}
+        {(error || query.error) && <p className="text-xs text-destructive" role="alert">{error || 'No se pudieron cargar las conexiones. Intenta nuevamente.'}</p>}
       </DialogContent>
     </Dialog>
   )
