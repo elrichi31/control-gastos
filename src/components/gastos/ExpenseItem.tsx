@@ -7,14 +7,16 @@ import { getCategoriaColor } from "@/lib/constants"
 import { useState } from "react"
 import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { ExpenseTags } from "@/components/gastos/ExpenseTags"
-import { EditExpenseDialog } from "@/components/gastos/EditExpenseDialog"
+import dynamic from "next/dynamic"
+import { formatMoney } from "@/lib/utils"
+const EditExpenseDialog = dynamic(() => import("@/components/gastos/EditExpenseDialog").then(m => m.EditExpenseDialog))
 import { DeleteRecurringExpenseModal } from "@/components/gastos-recurrentes/DeleteRecurringExpenseModal"
-import { getRecurringExpenseId, deleteExpense, deactivateRecurringExpense } from "@/services/expenses"
+import { getRecurringExpenseId, deactivateRecurringExpense } from "@/services/expenses"
 import { toast } from "sonner"
 
 type Props = {
   expense: Gasto
-  onDelete: (id: string) => void
+  onDelete: (id: string) => void | Promise<void>
   onUpdated?: () => void | Promise<void>
   showDeleteIcon?: boolean // Opcional, por defecto será false
 }
@@ -40,10 +42,9 @@ export function ExpenseItem({ expense, onDelete, onUpdated, showDeleteIcon = fal
     try {
       setIsDeleting(true)
       setIsDeleted(true)
-      await deleteExpense(expense.id.toString())
+      await onDelete(expense.id.toString())
       setShowRecurringModal(false)
       setShowSimpleModal(false)
-      onDelete(expense.id.toString())
       toast.success("Gasto eliminado correctamente")
     } catch (error) {
       console.error("Error al eliminar gasto:", error)
@@ -66,17 +67,16 @@ export function ExpenseItem({ expense, onDelete, onUpdated, showDeleteIcon = fal
       
       if (!recurringExpenseId) {
         toast.error("No se pudo encontrar el gasto recurrente")
+        setIsDeleted(false)
         return
       }
 
       // Desactivar el gasto recurrente
       await deactivateRecurringExpense(recurringExpenseId)
       
-      // Eliminar el gasto actual
-      await deleteExpense(expense.id.toString())
-      
+      // El padre ejecuta la mutación y actualiza la caché compartida.
+      await onDelete(expense.id.toString())
       setShowRecurringModal(false)
-      onDelete(expense.id.toString())
       toast.success("Gasto recurrente desactivado y gasto eliminado")
     } catch (error) {
       console.error("Error al eliminar gasto recurrente:", error)
@@ -99,7 +99,7 @@ export function ExpenseItem({ expense, onDelete, onUpdated, showDeleteIcon = fal
         {/* En móvil monto y acciones comparten la primera línea; en md cada uno toma su columna. */}
         <div className="flex items-center justify-end gap-1 md:contents">
         <span className="font-semibold text-sm text-foreground tabular-nums text-right md:order-5">
-          ${expense.monto.toFixed(2)}
+          {formatMoney(expense.monto)}
         </span>
         <div className="flex items-center justify-end gap-1 md:order-6 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100 transition-opacity">
             {onUpdated && (
@@ -146,7 +146,7 @@ export function ExpenseItem({ expense, onDelete, onUpdated, showDeleteIcon = fal
         </span>
       </div>
 
-      {onUpdated && <EditExpenseDialog expense={expense} open={showEdit} onOpenChange={setShowEdit} onSaved={onUpdated} />}
+      {onUpdated && showEdit && <EditExpenseDialog expense={expense} open={showEdit} onOpenChange={setShowEdit} onSaved={onUpdated} />}
 
       {/* Modal para gastos recurrentes */}
       <DeleteRecurringExpenseModal

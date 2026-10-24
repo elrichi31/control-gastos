@@ -1,5 +1,7 @@
 "use client"
 
+import { formatMoney } from "@/lib/utils"
+
 import { useState, useEffect, useId } from "react"
 import { ChevronDown } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -67,7 +69,7 @@ export function ExpenseSummary({
                     <div>
                         <p className="text-sm text-muted-foreground">Total de gastos</p>
                         <p className="text-2xl font-semibold tracking-tight text-foreground tabular-nums mt-0.5">
-                            ${total.toFixed(2)}
+                            {formatMoney(total)}
                         </p>
                         <p aria-label="Período del resumen" className="text-xs text-muted-foreground mt-1">{periodLabel}</p>
                         <p className="text-xs text-muted-foreground mt-1">{expenses.length} gastos filtrados</p>

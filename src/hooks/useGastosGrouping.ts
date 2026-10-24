@@ -52,7 +52,7 @@ export function useGastosGrouping(gastos: Expense[], groupBy: "none" | "day" | "
       case "week":
         const localDate = toLocalDateFromString(dateString)
         const weekStart = startOfWeek(localDate, { weekStartsOn: 1 })
-        return format(weekStart, "yyyy-'W'ww")
+        return format(weekStart, "yyyy-MM-dd")
       case "month":
         return dateString.slice(0, 7) // Tomar solo "yyyy-MM"
       default:
@@ -95,7 +95,7 @@ export function useGastosGrouping(gastos: Expense[], groupBy: "none" | "day" | "
   // Expandir todos los grupos por defecto al cargar
   React.useEffect(() => {
     if (groupBy !== "none" && groupedGastos && expandedGroups.size === 0) {
-      setExpandedGroups(new Set(groupedGastos.map((_, index) => index.toString())))
+      setExpandedGroups(new Set(groupedGastos.map(group => group.key)))
     }
   }, [groupedGastos, expandedGroups.size, groupBy])
 

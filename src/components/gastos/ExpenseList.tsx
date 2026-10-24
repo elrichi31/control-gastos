@@ -1,3 +1,4 @@
+import { formatMoney } from "@/lib/utils"
 import { ExpenseItem } from "@/components/gastos/ExpenseItem"
 import { Gasto } from "@/hooks/useGastosFiltrados"
 import { format, parse, parseISO } from "date-fns"
@@ -5,7 +6,7 @@ import { es } from "date-fns/locale"
 type Props = {
   groupedExpenses: Record<string, Gasto[]>
   isLoading: boolean
-  onDelete: (id: string) => void
+  onDelete: (id: string) => void | Promise<void>
   onUpdated?: () => void | Promise<void>
   groupBy: "dia" | "semana" | "mes"
 }
@@ -78,7 +79,7 @@ export function ExpenseList({ groupedExpenses, isLoading, onDelete, onUpdated, g
           <h3 className="sticky top-0 md:top-[33px] z-10 flex items-baseline justify-between gap-3 bg-muted/60 backdrop-blur px-5 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             <span className="truncate">{formatGroupTitle(groupTitle, groupBy)}</span>
             <span className="shrink-0 normal-case tracking-normal tabular-nums">
-              {groupedExpenses[groupTitle].length} · ${groupedExpenses[groupTitle].reduce((sum, expense) => sum + expense.monto, 0).toFixed(2)}
+              {groupedExpenses[groupTitle].length} · {formatMoney(groupedExpenses[groupTitle].reduce((sum, expense) => sum + expense.monto, 0))}
             </span>
           </h3>
           <div>

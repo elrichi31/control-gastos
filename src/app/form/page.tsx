@@ -72,7 +72,7 @@ function ExpenseTracker() {
       await deleteGasto(id)
     } catch (error) {
       console.error("Error al eliminar gasto:", error)
-      alert("Ocurrió un error al eliminar el gasto")
+      throw error
     }
   }
 
