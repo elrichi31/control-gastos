@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useMobile } from "./useMobile"
 
 export function useSidebar() {
@@ -8,15 +8,11 @@ export function useSidebar() {
   const [isOpen, setIsOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
 
-  // Auto-close sidebar on mobile, auto-open on desktop
-  useEffect(() => {
-    setIsOpen(!isMobile)
-  }, [isMobile])
-
-  const toggle = () => setIsOpen(!isOpen)
+  // Desktop visibility is controlled by CSS; state only tracks the mobile drawer.
+  const toggle = () => setIsOpen(previous => !previous)
   const close = () => setIsOpen(false)
   const open = () => setIsOpen(true)
-  const toggleCollapse = () => setIsCollapsed(!isCollapsed)
+  const toggleCollapse = () => setIsCollapsed(previous => !previous)
 
   return {
     isOpen,
