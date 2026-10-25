@@ -59,16 +59,16 @@ export function ExpenseSummary({
         : dateRange.to ? `Hasta ${displayDate(dateRange.to)}` : "Todas las fechas"
 
     return (
-        <section aria-label="Resumen de actividad" className="border-b border-border bg-muted/20 px-4 py-4 sm:px-5">
-            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-                <div className="flex items-baseline gap-3">
-                    <p className="text-xs font-medium text-muted-foreground">Total de gastos</p>
-                    <p className="text-xl font-semibold tracking-tight text-foreground tabular-nums">{formatMoney(total)}</p>
+        <section aria-label="Resumen de actividad" className="rounded-xl border border-border bg-card px-5 py-4 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total de gastos</p>
+                    <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground tabular-nums">{formatMoney(total)}</p>
                 </div>
-                <p className="text-xs text-muted-foreground">{expenses.length} gastos filtrados</p>
+                <p className="rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">{expenses.length} gastos filtrados</p>
             </div>
             <p aria-label="Período del resumen" className="mt-1 text-xs text-muted-foreground">{periodLabel}</p>
-            <details className="group mt-2">
+            <details className="group mt-3 border-t border-border pt-1">
                 <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-md text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
                     Filtrar y agrupar
                     <ChevronDown aria-hidden="true" className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none" />

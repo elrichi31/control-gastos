@@ -121,13 +121,15 @@ function ExpenseTracker() {
           <h2 id="recent-expenses-heading" className="text-base font-semibold tracking-tight">Tu actividad</h2>
           <span className="text-xs text-muted-foreground">Gastos recientes</span>
         </div>
-        <Card className="overflow-hidden">
+        <div className="mb-4">
           <ExpenseSummary
             expenses={filteredExpensesAsExpense}
             onDateRangeChange={handleFilterChange}
             groupBy={groupBy}
             setGroupBy={setGroupBy}
           />
+        </div>
+        <Card className="overflow-hidden">
           <CardContent className="p-0 pb-2">
             {error && <div role="alert" className="px-5 py-3 space-y-2"><p className="text-sm text-destructive">No se pudo actualizar la lista de gastos.</p><Button variant="outline" size="sm" onClick={() => void refreshExpenses()}>Reintentar</Button></div>}
             <ExpenseList
