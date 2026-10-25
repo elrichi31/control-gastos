@@ -28,7 +28,7 @@ async function harness(run) {
   React.useCallback = fn => fn
   React.useRef = initial => { const key = refIndex++; return refs[key] ||= { current: initial } }
   const render = fn => { index = 0; refIndex = 0; return fn() }
-  try { await run({ slots, render }) } finally { Object.assign(React, original) }
+  try { await run({ slots, refs, render }) } finally { Object.assign(React, original) }
 }
 const event = { preventDefault() {}, nativeEvent: {} }
 test('real capture handler sends normalized tags, permits omission and clears tags after success', async () => {
@@ -79,4 +79,19 @@ test('real tags field handles typing and removes a chip without submitting the f
   assert.equal(value, 'trabajo')
   const button = tree.find(x => x.props?.['aria-label'] === 'Quitar etiqueta viaje')
   assert.equal(button.props.type, 'button'); button.props.onClick(); assert.equal(value, 'familia')
+})
+
+test('invalid optional tags expand their details and receive focus before saving', async () => {
+  await harness(async ({ slots, refs, render }) => {
+    const form = () => ExpenseForm({ fetchExpenses() {} })
+    render(form)
+    slots[0] = { description: 'Almuerzo', amount: '12', categoryId: '1', paymentMethodId: '1', date: '2026-10-25', tags: 'x'.repeat(31) }
+    const details = { open: false }; let focused = false
+    refs[1].current = { querySelector: selector => selector === '#expense-extra-details' ? details : selector === '#expense-tags' ? { focus() { focused = true } } : null }
+    saved = undefined
+    await render(form).props.onSubmit(event)
+    assert.equal(details.open, true)
+    assert.equal(focused, true)
+    assert.equal(saved, undefined)
+  })
 })
