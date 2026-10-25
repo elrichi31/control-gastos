@@ -57,7 +57,7 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
   const loadOptions = () => catalogs.refetch()
   const create = useRemoteMutation(createExpense, [queryKeys.expenses, queryKeys.monthPlan, queryKeys.budgets, queryKeys.forecast])
   const [foreignTax, setForeignTax] = useState(emptyForeignTax)
-  useEffect(() => { amountRef.current?.focus({ preventScroll: true }) }, [])
+  useEffect(() => { if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) amountRef.current?.focus({ preventScroll: true }) }, [])
 
   const suggestion = useMemo(() => predictExpenseSelection(formData.description, history, categories, paymentMethods), [formData.description, history, categories, paymentMethods])
   const selection = resolveExpenseSelection(formData, suggestion)
@@ -142,12 +142,12 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
       {!optionsLoading && !optionsError && !ready && <p role="alert" className="text-sm text-muted-foreground">Necesitas al menos una categoría y un método de pago para registrar gastos.</p>}
       {submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}
       <fieldset disabled={isSubmitting} className="min-w-0 space-y-6 sm:space-y-7">
-        <div className="min-w-0 space-y-1.5 rounded-xl border bg-muted/30 px-4 py-3 transition-colors focus-within:border-primary/50 focus-within:bg-muted/50">
+        <div className="min-w-0 space-y-1.5 rounded-xl border bg-muted/30 px-4 py-3 transition-colors focus-within:border-primary/50 focus-within:bg-muted/50 focus-within:ring-2 focus-within:ring-ring/30">
           <Label htmlFor="amount" className="text-xs uppercase tracking-wide text-muted-foreground">{foreignTax.enabled ? 'Precio sin impuestos' : 'Monto (USD)'} <span className="text-destructive">*</span></Label>
           <div className="flex items-baseline gap-1.5">
             <span aria-hidden="true" className="text-3xl font-semibold text-muted-foreground">$</span>
-            <input ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : 'amount-hint'} aria-required="true"
-              className="w-full min-w-0 bg-transparent text-4xl font-bold tabular-nums outline-none placeholder:text-muted-foreground/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+            <input ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : 'amount-hint'} aria-required="true" onWheel={e => e.currentTarget.blur()}
+              className="w-full min-w-0 bg-transparent text-4xl font-bold tabular-nums outline-none placeholder:text-muted-foreground/60 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
           </div>
           {errors.amount ? fieldError('amount') : <p id="amount-hint" className="text-xs text-muted-foreground">{foreignTax.enabled ? 'Los impuestos se suman al importe que registres.' : 'El importe total de tu compra.'}</p>}
         </div>
@@ -165,7 +165,7 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
                 const value = daysAgo(days)
                 const active = formData.date === value
                 return <button key={label} type="button" aria-pressed={active} onClick={() => change('date', value)}
-                  className={`h-9 shrink-0 rounded-lg border px-3 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-ring ${active ? 'border-primary/40 bg-primary/15 font-medium text-primary' : 'border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground'}`}>{label}</button>
+                  className={`h-11 shrink-0 rounded-lg border px-3.5 text-[13px] transition-[color,background-color,border-color,scale] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-ring ${active ? 'border-primary/40 bg-primary/15 font-medium text-primary' : 'border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground'}`}>{label}</button>
               })}
               <Input controlSize="form" id="date" type="date" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className="min-w-0 dark:[color-scheme:dark]" />
             </div>
@@ -210,8 +210,8 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
             {paymentName && <> con <span className="font-medium text-foreground">{paymentName}</span></>}.
           </p>
           <div className="grid gap-2 sm:flex sm:justify-end sm:gap-3">
-            <Button size="form" type="submit" value="another" variant="ghost" className="order-2 text-muted-foreground sm:order-none" disabled={!ready || isSubmitting} title="Guarda y deja la misma categoría, pago y fecha para registrar otro rápido">Guardar y agregar otro</Button>
             <Button size="form" type="submit" value="save" disabled={!ready || isSubmitting}>{isSubmitting ? <><LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />Guardando…</> : <>Guardar gasto<ArrowRight aria-hidden="true" className="size-4" /></>}</Button>
+            <Button size="form" type="submit" value="another" variant="ghost" className="order-2 text-muted-foreground sm:order-first" disabled={!ready || isSubmitting} title="Guarda y deja la misma categoría, pago y fecha para registrar otro rápido">Guardar y agregar otro</Button>
           </div>
         </div>
       </fieldset>
@@ -257,7 +257,7 @@ function ChipGroup({ id, labelledBy, value, onChange, options, invalid, describe
         const active = option.value === value
         return (
           <button key={option.value} type="button" role="radio" aria-checked={active} tabIndex={active || (!value && option === options[0]) ? 0 : -1} onClick={() => onChange(option.value)}
-            className={`inline-flex min-h-11 items-center rounded-lg border px-3.5 py-2 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-ring ${active
+            className={`inline-flex min-h-11 items-center rounded-lg border px-3.5 py-2 text-[13px] transition-[color,background-color,border-color,scale] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-ring ${active
               ? option.color ?? 'border-primary/40 bg-primary/15 text-primary'
               : 'border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground'} ${active ? 'font-medium' : ''}`}>
             {option.label}
