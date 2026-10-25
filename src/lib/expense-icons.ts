@@ -24,6 +24,11 @@ export const paymentIcon = (name: string) => pick(name, [
 
 const TONES = ["text-chart-1", "text-chart-2", "text-chart-3", "text-chart-4", "text-chart-5"]
 
+const TILES: Record<string, string> = { "text-chart-1": "bg-chart-1/10", "text-chart-2": "bg-chart-2/10", "text-chart-3": "bg-chart-3/10", "text-chart-4": "bg-chart-4/10", "text-chart-5": "bg-chart-5/10" }
+
+/** Fondo suave del recuadro que enmarca el ícono de una categoría. */
+export const categoryTile = (name?: string | null) => TILES[categoryTone(name)] ?? "bg-muted"
+
 /** Color del ícono de una categoría: el de la paleta de categorías y, si no tiene, uno estable derivado del nombre. */
 export function categoryTone(name?: string | null) {
   const known = getCategoriaColor(name).split(" ").find(token => token.startsWith("text-chart"))

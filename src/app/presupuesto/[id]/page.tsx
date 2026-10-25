@@ -9,7 +9,14 @@ import { Button } from "@/components/ui/button"
 import dynamic from "next/dynamic"
 const ExpenseModal = dynamic(() => import("@/components/presupuesto/ExpenseModal"))
 import { BudgetDetailsContent } from "@/components/presupuesto/BudgetDetailsContent"
-import { BudgetSummary } from "@/components/presupuesto/BudgetSummary"
+import { MonthOverview, monthProgress } from "@/components/presupuesto/MonthOverview"
+import Link from "next/link"
+import { ChevronLeft, ChevronRight, Pencil } from "lucide-react"
+import { useRemoteQuery } from "@/hooks/useRemoteData"
+import { useExpensesStore } from "@/hooks/useExpensesStore"
+import { fetchBudgetsByYear } from "@/services/budget-general"
+import { queryKeys } from "@/lib/query/client"
+import { allMonths } from "@/lib/constants"
 import { useBudgetDetailsData } from "@/hooks/useBudgetDetailsData"
 import { useBudgetCalculations } from "@/hooks/useBudgetCalculations"
 import { useGastosPorCategoriaDelMes } from "@/hooks/useGastosPorCategoriaDelMes"
@@ -32,6 +39,14 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
   const mesPresupuesto = budgetData.presupuestoInfo?.mes || new Date().getMonth() + 1
   const anioPresupuesto = budgetData.presupuestoInfo?.anio || new Date().getFullYear()
   const { gastosPorCategoria } = useGastosPorCategoriaDelMes(mesPresupuesto, anioPresupuesto)
+
+  const { gastos } = useExpensesStore()
+  const budgetsOfYear = useRemoteQuery([...queryKeys.budgets, String(anioPresupuesto)], () => fetchBudgetsByYear(String(anioPresupuesto), true)).data
+  const monthLink = (offset: number) => {
+    const target = budgetsOfYear?.find(b => b.anio === anioPresupuesto && b.mes === mesPresupuesto + offset)
+    return target ? `/presupuesto/${target.id}?mes=${allMonths[target.mes - 1]?.value}` : null
+  }
+  const progress = monthProgress(mesPresupuesto, anioPresupuesto)
 
   // Hook de cálculos
   const calculations = useBudgetCalculations(
@@ -85,16 +100,30 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
     <PageShell>
       <Breadcrumb items={[{ label: "Presupuesto", href: "/presupuesto" }, { label: monthName }]} />
 
-      <PageHeader className="mt-4" title={`${monthName} ${anioPresupuesto}`} />
+      <PageHeader className="mt-4" title={`${monthName} ${anioPresupuesto}`}
+        description={progress.current ? (progress.left > 0 ? `Quedan ${progress.left} ${progress.left === 1 ? "día" : "días"} para que cierre el mes.` : "Hoy cierra el mes.") : progress.left === 0 ? "Este mes ya cerró." : "Este mes aún no empieza."}
+        actions={<>
+          {([[-1, ChevronLeft, "Mes anterior"], [1, ChevronRight, "Mes siguiente"]] as const).map(([offset, Icon, label]) => {
+            const href = monthLink(offset)
+            return href
+              ? <Button key={label} asChild variant="outline" size="icon" aria-label={label}><Link href={href}><Icon aria-hidden="true" className="size-4" /></Link></Button>
+              : <Button key={label} variant="outline" size="icon" aria-label={label} disabled><Icon aria-hidden="true" className="size-4" /></Button>
+          })}
+          <Button asChild><a href="#categorias"><Pencil aria-hidden="true" className="size-4" />Editar presupuesto</a></Button>
+        </>} />
 
       <div className="mb-6">
-        <BudgetSummary
+        <MonthOverview
           presupuestado={calculations.getBudgetTotal()}
           gastado={calculations.getSpentTotal()}
+          mes={mesPresupuesto}
+          anio={anioPresupuesto}
+          gastos={gastos}
         />
       </div>
 
-      <BudgetDetailsContent
+      <div id="categorias" className="scroll-mt-4"><BudgetDetailsContent
+        metodosPago={budgetData.metodosPago}
         presupuestoCategorias={budgetData.presupuestoCategorias}
         availableCategories={calculations.getAvailableCategoriesForAdd()}
         loading={budgetData.loading}
@@ -110,7 +139,7 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
         getBudgetByCategory={calculations.getBudgetByCategory}
         mes={mesPresupuesto}
         anio={anioPresupuesto}
-      />
+      /></div>
 
       {/* Modal de confirmación de eliminación de gasto */}
       <Dialog open={!!budgetData.expenseToDelete} onOpenChange={(open) => !open && budgetData.setExpenseToDelete(null)}>

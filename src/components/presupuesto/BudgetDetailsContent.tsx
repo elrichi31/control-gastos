@@ -1,9 +1,12 @@
 // Componente para manejo del contenido principal del detalle de presupuesto
-import React from "react"
+import React, { useState } from "react"
 import { CopyPlus, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import CategoriaRow from "@/components/presupuesto/CategoriaRow"
+import { CategoryDetail } from "@/components/presupuesto/CategoryDetail"
+import { getBudgetIndicator } from "@/components/presupuesto/BudgetIndicator"
+import { categoryIcon, categoryTile, categoryTone } from "@/lib/expense-icons"
+import { formatMoney } from "@/lib/utils"
 import { PresupuestoCategoriaDetalle, CategoriaDB } from "@/lib/constants"
 import type { MovimientoPresupuesto } from "@/types"
 
@@ -11,6 +14,7 @@ interface BudgetDetailsContentProps {
   // Datos
   presupuestoCategorias: PresupuestoCategoriaDetalle[]
   availableCategories: CategoriaDB[]
+  metodosPago: readonly { id: number; nombre: string }[]
   loading: boolean
 
   // Estado de modales
@@ -36,9 +40,12 @@ interface BudgetDetailsContentProps {
   anio: number
 }
 
+const TEXT: Record<string, string> = { "bg-chart-2": "text-chart-2", "bg-chart-3": "text-chart-3", "bg-chart-5": "text-chart-5", "bg-muted-foreground": "text-muted-foreground" }
+
 export const BudgetDetailsContent: React.FC<BudgetDetailsContentProps> = ({
   presupuestoCategorias,
   availableCategories,
+  metodosPago,
   loading,
   isCategoryDialogOpen,
   setIsCategoryDialogOpen,
@@ -51,11 +58,13 @@ export const BudgetDetailsContent: React.FC<BudgetDetailsContentProps> = ({
   getCategoryTotal,
   getBudgetByCategory,
 }) => {
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+
   if (loading) {
     return (
-      <div className="space-y-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[0, 1, 2].map(i => (
-          <div key={i} className="h-16 rounded-xl border border-border bg-card animate-pulse" />
+          <div key={i} className="h-36 rounded-xl border border-border bg-card animate-pulse" />
         ))}
       </div>
     )
@@ -92,36 +101,75 @@ export const BudgetDetailsContent: React.FC<BudgetDetailsContentProps> = ({
     )
   }
 
-  return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
-      {presupuestoCategorias.map(cat => (
-        <CategoriaRow
-          key={cat.id}
-          categoria={cat}
-          presupuestado={getBudgetByCategory(cat.categoria_id)}
-          gastado={getCategoryTotal(cat.categoria_id)}
-          onDeleteCategory={onDeleteCategory}
-          onEditExpense={onEditExpense}
-          onDeleteExpense={onDeleteExpense}
-          onAddExpenseClick={() => onAddExpenseClick(cat.id)}
-        />
-      ))}
+  const selected = presupuestoCategorias.find(cat => cat.id === selectedId) ?? presupuestoCategorias[0]
 
-      {availableCategories.length > 0 ? (
-        <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
-          <DialogTrigger asChild>
-            <button className="w-full flex items-center gap-2 px-4 sm:px-5 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-t border-border">
-              <Plus className="w-4 h-4" />
-              Agregar categoría
+  return (
+    <div className="space-y-5">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-base font-semibold tracking-tight">Por categoría</h2>
+        <span className="text-xs text-muted-foreground">Toca una para ver sus gastos</span>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {presupuestoCategorias.map(cat => {
+          const name = cat.categoria.nombre
+          const Icon = categoryIcon(name)
+          const budget = getBudgetByCategory(cat.categoria_id)
+          const spent = getCategoryTotal(cat.categoria_id)
+          const state = getBudgetIndicator(budget, spent)
+          const left = budget - spent
+          const active = cat.id === selected.id
+          return (
+            <button key={cat.id} type="button" aria-pressed={active} onClick={() => setSelectedId(cat.id)}
+              className={`min-w-0 rounded-xl border bg-card p-4 text-left transition-[border-color,box-shadow,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-ring ${active ? "border-foreground shadow-sm" : "border-border hover:border-foreground/30"}`}>
+              <div className="flex items-center gap-3">
+                <span aria-hidden="true" className={`grid size-10 shrink-0 place-items-center rounded-xl ${categoryTile(name)}`}><Icon className={`size-5 ${categoryTone(name)}`} /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{name}</p>
+                  <p className="text-xs text-muted-foreground">{cat.movimientos.length} {cat.movimientos.length === 1 ? "gasto" : "gastos"}</p>
+                </div>
+                {budget > 0 && <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums ${state.tone}`}>{Math.round(state.percentage)}%</span>}
+              </div>
+              <p className="mt-4 text-2xl font-bold tabular-nums">{formatMoney(spent)}{budget > 0 && <span className="ml-1.5 text-xs font-normal text-muted-foreground">de {formatMoney(budget)}</span>}</p>
+              {budget > 0 ? (
+                <>
+                  <div role="progressbar" aria-label={`Consumo de ${name}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(100, Math.round(state.percentage))} className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div className={`h-full rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none ${state.bar}`} style={{ width: `${Math.min(100, state.percentage)}%` }} />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-2 text-xs">
+                    <span className={TEXT[state.bar]}>{state.label}</span>
+                    <span className="tabular-nums text-muted-foreground"><span className={`font-semibold ${left < 0 ? "text-chart-5" : "text-chart-2"}`}>{formatMoney(Math.abs(left))}</span> {left < 0 ? "de más" : "disponible"}</span>
+                  </div>
+                </>
+              ) : <p className="mt-3 text-xs text-muted-foreground">Sin monto presupuestado</p>}
             </button>
-          </DialogTrigger>
-          <SelectorCategorias categories={availableCategories} onAdd={onAddCategory} />
-        </Dialog>
-      ) : (
-        <p className="px-5 py-3 text-xs text-muted-foreground border-t border-border">
-          Todas las categorías están en uso en este mes.
-        </p>
-      )}
+          )
+        })}
+
+        {availableCategories.length > 0 && (
+          <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+            <DialogTrigger asChild>
+              <button type="button" className="flex min-h-36 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border text-sm text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring">
+                <Plus aria-hidden="true" className="size-4" />
+                Nueva categoría
+              </button>
+            </DialogTrigger>
+            <SelectorCategorias categories={availableCategories} onAdd={onAddCategory} />
+          </Dialog>
+        )}
+      </div>
+
+      <CategoryDetail
+        key={selected.id}
+        categoria={selected}
+        presupuestado={getBudgetByCategory(selected.categoria_id)}
+        gastado={getCategoryTotal(selected.categoria_id)}
+        metodosPago={metodosPago}
+        onAddExpenseClick={() => onAddExpenseClick(selected.id)}
+        onEditExpense={onEditExpense}
+        onDeleteExpense={onDeleteExpense}
+        onDeleteCategory={onDeleteCategory}
+      />
     </div>
   )
 }
