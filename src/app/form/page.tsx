@@ -9,6 +9,7 @@ import { ExpenseForm } from "@/components/gastos/ExpenseForm"
 import dynamic from "next/dynamic"
 const RecurringExpenseForm = dynamic(() => import("@/components/gastos-recurrentes/RecurringExpenseForm").then(m => m.RecurringExpenseForm), { loading: () => <p role="status">Cargando formulario…</p> })
 import { ExpenseSummary } from "@/components/gastos/ExpenseSummary"
+import { ExpenseDraftSummary, type ExpenseDraft } from "@/components/gastos/ExpenseDraftSummary"
 import { ExpenseList } from "@/components/gastos/ExpenseList"
 import { groupExpenses } from "@/lib/utils"
 import { Expense } from "@/types"
@@ -41,6 +42,8 @@ function ExpenseTracker() {
   const searchParams = useSearchParams()
   const tabInicial = searchParams.get("tipo") === "recurrente" ? "recurrente" : "normal"
 
+  const [tab, setTab] = useState(tabInicial)
+  const [draft, setDraft] = useState<ExpenseDraft | null>(null)
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: "", to: "" })
   const [groupBy, setGroupBy] = useState<"dia" | "semana" | "mes">("dia")
 
@@ -81,13 +84,14 @@ function ExpenseTracker() {
   const fetchExpenses = refreshExpenses
 
   return (
-    <PageShell className="max-w-5xl">
+    <PageShell className="max-w-6xl">
       <PageTitle customTitle="Nuevo Gasto - BethaSpend" />
 
-      <PageHeader title="Nuevo gasto" description="Registra lo de hoy. Ten claro en qué se va tu dinero." />
+      <PageHeader title="Nuevo gasto" description="Registra un gasto para que cuente en tu presupuesto del mes." />
 
-      <Card className="overflow-hidden shadow-sm">
-        <Tabs defaultValue={tabInicial} className="w-full">
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <Card className="min-w-0 overflow-hidden shadow-sm">
+        <Tabs value={tab} onValueChange={setTab} className="w-full">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-4 sm:px-7">
             <TabsList aria-label="Tipo de gasto" className="h-auto gap-1 p-1">
               <TabsTrigger value="normal" className="min-h-10 gap-2 px-4"><Receipt aria-hidden="true" className="size-4" />Una vez</TabsTrigger>
@@ -97,7 +101,7 @@ function ExpenseTracker() {
           </div>
           <CardContent className="px-4 py-5 sm:px-7 sm:py-6">
             <TabsContent value="normal" className="mt-0">
-              <ExpenseForm fetchExpenses={fetchExpenses} history={gastos} expenses={gastos} />
+              <ExpenseForm fetchExpenses={fetchExpenses} history={gastos} expenses={gastos} onDraftChange={setDraft} />
             </TabsContent>
             <TabsContent value="recurrente" className="mt-0">
               <RecurringExpenseForm onSuccess={fetchExpenses} />
@@ -105,6 +109,12 @@ function ExpenseTracker() {
           </CardContent>
         </Tabs>
       </Card>
+      {tab === "normal" && (
+        <aside aria-label="Resumen del gasto" className="min-w-0 xl:sticky xl:top-4">
+          <ExpenseDraftSummary draft={draft} expenses={gastos} />
+        </aside>
+      )}
+      </div>
 
       <section aria-labelledby="recent-expenses-heading" className="mt-8">
         <div className="mb-3 flex items-baseline justify-between gap-3">

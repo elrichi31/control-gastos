@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react"
-import { ArrowRight, ChevronDown, LoaderCircle } from "lucide-react"
+import { ArrowRight, CalendarDays, ChevronDown, DollarSign, LayoutGrid, LoaderCircle, Pencil, ReceiptText, CreditCard, type LucideIcon } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,7 +11,8 @@ import { ForeignTaxField } from '@/components/gastos/ForeignTaxField'
 import { computeForeignTax, emptyForeignTax, storedForeignTax, validateForeignTax, withForeignTag } from '@/lib/foreign-tax'
 import { formatMoney } from '@/lib/utils'
 import { parseExpenseTags } from '@/lib/expense-tags'
-import { getCategoriaColor } from '@/lib/constants'
+import { categoryIcon, paymentIcon } from '@/lib/expense-icons'
+import type { ExpenseDraft } from '@/components/gastos/ExpenseDraftSummary'
 import { createExpense } from "@/services/expenses"
 import { fetchBudgetsByYear } from "@/services/budget-general"
 import { fetchPresupuestoCategorias } from "@/services/budget"
@@ -23,6 +24,9 @@ import { predictExpenseSelection, resolveExpenseSelection, type SuggestionHistor
 
 const daysAgo = (days: number) => new Date(Date.now() - new Date().getTimezoneOffset() * 60000 - days * 86400000).toISOString().split("T")[0]
 const today = () => daysAgo(0)
+const shortDate = (iso: string) => { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("es", { day: "numeric", month: "short" }).replace(/\./g, "") }
+const QUICK_AMOUNTS = [5, 10, 20, 50]
+const pill = (active: boolean) => `inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3.5 text-[13px] transition-[color,background-color,border-color,scale] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-ring ${active ? 'border-foreground bg-card font-medium text-foreground' : 'border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground'}`
 
 /** Avisa si el gasto recién guardado cruza el 80% o el 100% del presupuesto de su categoría. Es solo una ayuda: nunca falla visiblemente. */
 async function warnBudgetCrossing(read: CachedRead, saved: { categoryId: number; date: string; total: number }, expenses: readonly { categoria_id: number; monto: number; fecha: string }[]) {
@@ -40,7 +44,7 @@ async function warnBudgetCrossing(read: CachedRead, saved: { categoryId: number;
   } catch { /* el aviso es opcional */ }
 }
 
-export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: () => void | Promise<void>; history?: readonly SuggestionHistory[]; expenses?: readonly { categoria_id: number; monto: number; fecha: string }[] }) {
+export function ExpenseForm({ history = [], expenses = [], onDraftChange }: { fetchExpenses: () => void | Promise<void>; history?: readonly SuggestionHistory[]; expenses?: readonly { categoria_id: number; monto: number; fecha: string }[]; onDraftChange?: (draft: ExpenseDraft) => void }) {
   const [formData, setFormData] = useState({ description: "", amount: "", categoryId: "", date: today(), paymentMethodId: "", tags: "" })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const submitting = useRef(false)
@@ -57,6 +61,7 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
   const loadOptions = () => catalogs.refetch()
   const create = useRemoteMutation(createExpense, [queryKeys.expenses, queryKeys.monthPlan, queryKeys.budgets, queryKeys.forecast])
   const [foreignTax, setForeignTax] = useState(emptyForeignTax)
+  const [pickDate, setPickDate] = useState(false)
   useEffect(() => { if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) amountRef.current?.focus({ preventScroll: true }) }, [])
 
   const suggestion = useMemo(() => predictExpenseSelection(formData.description, history, categories, paymentMethods), [formData.description, history, categories, paymentMethods])
@@ -84,6 +89,10 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
   const breakdown = computeForeignTax(amountValue, foreignTax)
   const categoryName = categories.find(cat => String(cat.id) === selection.categoryId)?.nombre
   const paymentName = paymentMethods.find(method => String(method.id) === selection.paymentMethodId)?.nombre
+  const customDate = pickDate || (formData.date !== today() && formData.date !== daysAgo(1))
+  useEffect(() => {
+    onDraftChange?.({ total: breakdown.total, categoryId: selection.categoryId ? Number(selection.categoryId) : null, categoryName, paymentName, date: formData.date, tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) })
+  }, [onDraftChange, breakdown.total, selection.categoryId, categoryName, paymentName, formData.date, formData.tags])
   const ready = !optionsLoading && !optionsError && categories.length > 0 && paymentMethods.length > 0
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -141,69 +150,77 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
       {optionsError && <div role="alert" className="space-y-2"><p className="text-sm text-destructive">{optionsError}</p><Button type="button" variant="outline" size="sm" disabled={isSubmitting} onClick={() => void loadOptions()}>Reintentar</Button></div>}
       {!optionsLoading && !optionsError && !ready && <p role="alert" className="text-sm text-muted-foreground">Necesitas al menos una categoría y un método de pago para registrar gastos.</p>}
       {submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}
-      <fieldset disabled={isSubmitting} className="min-w-0 space-y-6 sm:space-y-7">
-        <div className="min-w-0 space-y-1.5 rounded-xl border bg-muted/30 px-4 py-3 transition-colors focus-within:border-primary/50 focus-within:bg-muted/50 focus-within:ring-2 focus-within:ring-ring/30">
-          <Label htmlFor="amount" className="text-xs uppercase tracking-wide text-muted-foreground">{foreignTax.enabled ? 'Precio sin impuestos' : 'Monto (USD)'} <span className="text-destructive">*</span></Label>
-          <div className="flex items-baseline gap-1.5">
-            <span aria-hidden="true" className="text-3xl font-semibold text-muted-foreground">$</span>
-            <input ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : 'amount-hint'} aria-required="true" onWheel={e => e.currentTarget.blur()}
-              className="w-full min-w-0 bg-transparent text-4xl font-bold tabular-nums outline-none placeholder:text-muted-foreground/60 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+      <fieldset disabled={isSubmitting} className="min-w-0 space-y-6">
+        <div className="flex items-center gap-3">
+          <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-xl bg-foreground text-background"><ReceiptText className="size-5" /></span>
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold leading-tight">Detalles del gasto</h2>
+            <p className="text-sm text-muted-foreground">Monto, categoría y cómo lo pagaste.</p>
+          </div>
+        </div>
+
+        <div className="space-y-2 min-w-0">
+          <FieldLabel icon={DollarSign} htmlFor="amount">{foreignTax.enabled ? 'Precio sin impuestos' : 'Monto'} <span className="text-destructive">*</span></FieldLabel>
+          <div className="relative">
+            <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+            <Input controlSize="form" ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} onWheel={e => e.currentTarget.blur()} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : 'amount-hint'} className="pl-7 pr-14 font-semibold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+            <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">USD</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {QUICK_AMOUNTS.map(step => <button key={step} type="button" className={pill(false)} onClick={() => change('amount', String(Math.round(((Number.isFinite(amountValue) ? amountValue : 0) + step) * 100) / 100))}>+ {step}</button>)}
+            {formData.amount && <button type="button" className="min-h-11 rounded-full px-3 text-[13px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring" onClick={() => change('amount', '')}>Borrar</button>}
           </div>
           {errors.amount ? fieldError('amount') : <p id="amount-hint" className="text-xs text-muted-foreground">{foreignTax.enabled ? 'Los impuestos se suman al importe que registres.' : 'El importe total de tu compra.'}</p>}
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
-          <div className="min-w-0 space-y-2">
-            <Label htmlFor="description">¿En qué lo gastaste? <span className="text-destructive">*</span></Label>
-            <Input controlSize="form" id="description" placeholder="Ej. Almuerzo, supermercado, gasolina" value={formData.description} onChange={e => change('description', e.target.value)} aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? 'description-error' : 'description-hint'} />
-            {errors.description ? fieldError('description') : <p id="description-hint" className="text-xs leading-relaxed text-muted-foreground">Sugerimos categoría y pago según tu historial.</p>}
+        <div role="group" aria-labelledby="date-label" className="space-y-2 min-w-0">
+          <FieldLabel icon={CalendarDays} id="date-label">Fecha <span className="text-destructive">*</span></FieldLabel>
+          <div className="flex flex-wrap items-center gap-2">
+            {([['Hoy', 0], ['Ayer', 1]] as const).map(([label, days]) => {
+              const value = daysAgo(days)
+              return <button key={label} type="button" aria-pressed={!pickDate && formData.date === value} className={pill(!pickDate && formData.date === value)} onClick={() => { setPickDate(false); change('date', value) }}>{label} <span className="font-normal text-muted-foreground">{shortDate(value)}</span></button>
+            })}
+            <button type="button" aria-pressed={customDate} className={pill(customDate)} onClick={() => setPickDate(true)}>Otra fecha</button>
+            {customDate && <Input controlSize="form" id="date" type="date" aria-label="Fecha del gasto" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className="w-auto min-w-0 rounded-full dark:[color-scheme:dark]" />}
           </div>
-          <div className="min-w-0 space-y-2">
-            <Label htmlFor="date">Fecha <span className="text-destructive">*</span></Label>
-            <div className="flex items-center gap-1.5">
-              {([['Hoy', 0], ['Ayer', 1]] as const).map(([label, days]) => {
-                const value = daysAgo(days)
-                const active = formData.date === value
-                return <button key={label} type="button" aria-pressed={active} onClick={() => change('date', value)}
-                  className={`h-11 shrink-0 rounded-lg border px-3.5 text-[13px] transition-[color,background-color,border-color,scale] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-ring ${active ? 'border-primary/40 bg-primary/15 font-medium text-primary' : 'border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground'}`}>{label}</button>
-              })}
-              <Input controlSize="form" id="date" type="date" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className="min-w-0 dark:[color-scheme:dark]" />
-            </div>
-            {fieldError('date')}
-          </div>
+          {fieldError('date')}
         </div>
 
-        <Section title="Categoría y pago">
-          <div className="space-y-1.5 min-w-0">
-            <p id="category-label" className="text-sm font-medium">Categoría <span className="text-destructive">*</span></p>
-            <ChipGroup id="category" labelledBy="category-label" value={selection.categoryId} onChange={value => change('categoryId', value)} invalid={Boolean(errors.categoryId)} describedBy={errors.categoryId ? 'categoryId-error' : suggestedCategory ? 'category-suggestion' : undefined}
-              options={categories.map(cat => ({ value: String(cat.id), label: cat.nombre, color: getCategoriaColor(cat.nombre) }))} />
-            {suggestedCategory && <p id="category-suggestion" className="text-muted-foreground text-xs" role="status">Sugerida por tu historial. Puedes cambiarla.</p>}
-            {fieldError('categoryId')}
-          </div>
+        <div className="space-y-2 min-w-0">
+          <FieldLabel icon={Pencil} htmlFor="description">Descripción <span className="text-destructive">*</span></FieldLabel>
+          <Input controlSize="form" id="description" placeholder="Ej. Almuerzo, supermercado, gasolina" value={formData.description} onChange={e => change('description', e.target.value)} aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? 'description-error' : 'description-hint'} />
+          {errors.description ? fieldError('description') : <p id="description-hint" className="text-xs leading-relaxed text-muted-foreground">Sugerimos categoría y pago según tu historial.</p>}
+        </div>
 
-          <div className="space-y-1.5 min-w-0">
-            <p id="paymentMethod-label" className="text-sm font-medium">Método de pago <span className="text-destructive">*</span></p>
-            <ChipGroup id="paymentMethod" labelledBy="paymentMethod-label" value={selection.paymentMethodId} onChange={value => change('paymentMethodId', value)} invalid={Boolean(errors.paymentMethodId)} describedBy={errors.paymentMethodId ? 'paymentMethodId-error' : suggestedPayment ? 'payment-suggestion' : undefined}
-              options={paymentMethods.map(method => ({ value: String(method.id), label: method.nombre }))} />
-            {suggestedPayment && <p id="payment-suggestion" className="text-muted-foreground text-xs" role="status">Sugerido por tu historial. Puedes cambiarlo.</p>}
-            {fieldError('paymentMethodId')}
-          </div>
-        </Section>
+        <div className="space-y-2 min-w-0">
+          <FieldLabel icon={LayoutGrid} id="category-label">Categoría <span className="text-destructive">*</span></FieldLabel>
+          <ChipGroup id="category" labelledBy="category-label" value={selection.categoryId} onChange={value => change('categoryId', value)} invalid={Boolean(errors.categoryId)} describedBy={errors.categoryId ? 'categoryId-error' : suggestedCategory ? 'category-suggestion' : undefined}
+            options={categories.map(cat => ({ value: String(cat.id), label: cat.nombre, icon: categoryIcon(cat.nombre) }))} />
+          {suggestedCategory && <p id="category-suggestion" className="text-muted-foreground text-xs" role="status">Sugerida por tu historial. Puedes cambiarla.</p>}
+          {fieldError('categoryId')}
+        </div>
 
-        <details id="expense-extra-details" className="group rounded-xl border border-border px-4 sm:px-5">
-          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-            <span>Detalles extra <span className="ml-1 font-normal text-muted-foreground">· opcional</span></span>
+        <div className="space-y-2 min-w-0">
+          <FieldLabel icon={CreditCard} id="paymentMethod-label">Método de pago <span className="text-destructive">*</span></FieldLabel>
+          <ChipGroup id="paymentMethod" labelledBy="paymentMethod-label" value={selection.paymentMethodId} onChange={value => change('paymentMethodId', value)} invalid={Boolean(errors.paymentMethodId)} describedBy={errors.paymentMethodId ? 'paymentMethodId-error' : suggestedPayment ? 'payment-suggestion' : undefined}
+            options={paymentMethods.map(method => ({ value: String(method.id), label: method.nombre, icon: paymentIcon(method.nombre) }))} />
+          {suggestedPayment && <p id="payment-suggestion" className="text-muted-foreground text-xs" role="status">Sugerido por tu historial. Puedes cambiarlo.</p>}
+          {fieldError('paymentMethodId')}
+        </div>
+
+        <details id="expense-extra-details" open className="group space-y-4">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+            <span>Etiquetas y compra en el exterior <span className="ml-1 font-normal text-muted-foreground">· opcional</span></span>
             <ChevronDown aria-hidden="true" className="size-4 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none" />
           </summary>
-          <div className="space-y-4 pb-5 pt-2">
-            <ForeignTaxField base={amountValue} value={foreignTax} onChange={changeForeignTax} error={errors.foreignTax} />
+          <div className="space-y-4 pt-2">
             <ExpenseTagsField value={formData.tags} onChange={value => change("tags", value)} error={errors.tags} />
+            <ForeignTaxField base={amountValue} value={foreignTax} onChange={changeForeignTax} error={errors.foreignTax} />
           </div>
         </details>
 
         <div className="space-y-4 border-t border-border pt-5">
-          <p aria-live="polite" className="text-sm text-muted-foreground">
+          <p aria-live="polite" className="text-sm text-muted-foreground xl:hidden">
             Vas a guardar <span className="font-semibold text-foreground tabular-nums">{formatMoney(breakdown.total)}</span>
             {breakdown.taxTotal > 0 && <> (incluye {formatMoney(breakdown.taxTotal)} de impuestos)</>}
             {categoryName && <> en <span className="font-medium text-foreground">{categoryName}</span></>}
@@ -219,16 +236,11 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
   )
 }
 
-/** Agrupa las elecciones sin competir con el importe principal. */
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section aria-label={title} className="space-y-3 min-w-0">
-      <h2 className="flex items-center gap-2 text-sm font-semibold">
-        {title}
-      </h2>
-      {children}
-    </section>
-  )
+/** Etiqueta de campo con ícono; sirve como <label> o como título de un grupo. */
+function FieldLabel({ icon: Icon, htmlFor, id, children }: { icon: LucideIcon; htmlFor?: string; id?: string; children: React.ReactNode }) {
+  const className = "flex items-center gap-2 text-sm font-medium text-muted-foreground"
+  const content = <><Icon aria-hidden="true" className="size-3.5" />{children}</>
+  return htmlFor ? <Label htmlFor={htmlFor} className={className}>{content}</Label> : <p id={id} className={className}>{content}</p>
 }
 
 /** Selección única como chips: todas las opciones a la vista, un clic en vez de abrir un menú. */
@@ -237,7 +249,7 @@ function ChipGroup({ id, labelledBy, value, onChange, options, invalid, describe
   labelledBy: string
   value: string
   onChange: (value: string) => void
-  options: { value: string; label: string; color?: string }[]
+  options: { value: string; label: string; icon?: LucideIcon }[]
   invalid: boolean
   describedBy?: string
 }) {
@@ -252,14 +264,12 @@ function ChipGroup({ id, labelledBy, value, onChange, options, invalid, describe
         onChange(options[next].value)
         event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]')[next]?.focus()
       }}
-      className={`flex flex-wrap gap-1.5 rounded-lg outline-none ${invalid ? 'ring-1 ring-destructive ring-offset-4 ring-offset-card' : ''}`}>
+      className={`flex flex-wrap gap-2 rounded-lg outline-none ${invalid ? 'ring-1 ring-destructive ring-offset-4 ring-offset-card' : ''}`}>
       {options.map(option => {
         const active = option.value === value
         return (
-          <button key={option.value} type="button" role="radio" aria-checked={active} tabIndex={active || (!value && option === options[0]) ? 0 : -1} onClick={() => onChange(option.value)}
-            className={`inline-flex min-h-11 items-center rounded-lg border px-3.5 py-2 text-[13px] transition-[color,background-color,border-color,scale] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-ring ${active
-              ? option.color ?? 'border-primary/40 bg-primary/15 text-primary'
-              : 'border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground'} ${active ? 'font-medium' : ''}`}>
+          <button key={option.value} type="button" role="radio" aria-checked={active} tabIndex={active || (!value && option === options[0]) ? 0 : -1} onClick={() => onChange(option.value)} className={pill(active)}>
+            {option.icon && <option.icon aria-hidden="true" className="size-3.5" />}
             {option.label}
           </button>
         )
