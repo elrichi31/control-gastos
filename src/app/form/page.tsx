@@ -1,7 +1,8 @@
 "use client"
+import { Receipt, Repeat2 } from "lucide-react"
 import { Suspense, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useGastosFiltrados, Gasto } from "@/hooks/useGastosFiltrados"
 import { ExpenseForm } from "@/components/gastos/ExpenseForm"
@@ -80,49 +81,43 @@ function ExpenseTracker() {
   const fetchExpenses = refreshExpenses
 
   return (
-    <PageShell>
+    <PageShell className="max-w-5xl">
       <PageTitle customTitle="Nuevo Gasto - BethaSpend" />
 
-      <PageHeader title="Nuevo gasto" description="Registra tu gasto de forma rápida y sencilla." />
+      <PageHeader title="Nuevo gasto" description="Registra lo de hoy. Ten claro en qué se va tu dinero." />
 
-      {/* Arriba: formulario + resumen al lado. Abajo: gastos recientes a todo el ancho. */}
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_20rem] gap-6 items-start">
-        <div className="min-w-0">
-          <Card>
-            <CardContent className="pt-5">
-              <Tabs defaultValue={tabInicial} className="w-full">
-                <TabsList className="mb-5">
-                  <TabsTrigger value="normal">Normal</TabsTrigger>
-                  <TabsTrigger value="recurrente">Recurrente</TabsTrigger>
-                </TabsList>
+      <Card className="overflow-hidden shadow-sm">
+        <Tabs defaultValue={tabInicial} className="w-full">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-4 sm:px-7">
+            <TabsList aria-label="Tipo de gasto" className="h-auto gap-1 p-1">
+              <TabsTrigger value="normal" className="min-h-10 gap-2 px-4"><Receipt aria-hidden="true" className="size-4" />Una vez</TabsTrigger>
+              <TabsTrigger value="recurrente" className="min-h-10 gap-2 px-4"><Repeat2 aria-hidden="true" className="size-4" />Recurrente</TabsTrigger>
+            </TabsList>
+            <span className="hidden text-xs text-muted-foreground sm:block">Los campos con * son obligatorios</span>
+          </div>
+          <CardContent className="px-4 py-5 sm:px-7 sm:py-6">
+            <TabsContent value="normal" className="mt-0">
+              <ExpenseForm fetchExpenses={fetchExpenses} history={gastos} expenses={gastos} />
+            </TabsContent>
+            <TabsContent value="recurrente" className="mt-0">
+              <RecurringExpenseForm onSuccess={fetchExpenses} />
+            </TabsContent>
+          </CardContent>
+        </Tabs>
+      </Card>
 
-                <TabsContent value="normal">
-                  <ExpenseForm fetchExpenses={fetchExpenses} history={gastos} expenses={gastos} />
-                </TabsContent>
-
-                <TabsContent value="recurrente">
-                  <RecurringExpenseForm onSuccess={fetchExpenses} />
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+      <section aria-labelledby="recent-expenses-heading" className="mt-8">
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 id="recent-expenses-heading" className="text-base font-semibold tracking-tight">Tu actividad</h2>
+          <span className="text-xs text-muted-foreground">Gastos recientes</span>
         </div>
-
-        <aside aria-label="Resumen" className="min-w-0 xl:sticky xl:top-4">
+        <Card className="overflow-hidden">
           <ExpenseSummary
             expenses={filteredExpensesAsExpense}
             onDateRangeChange={handleFilterChange}
             groupBy={groupBy}
             setGroupBy={setGroupBy}
           />
-        </aside>
-      </div>
-
-      <section aria-label="Gastos recientes" className="mt-6">
-        <Card>
-          <CardHeader className="px-5 pt-5 pb-3">
-            <CardTitle className="text-base font-semibold">Gastos recientes</CardTitle>
-          </CardHeader>
           <CardContent className="p-0 pb-2">
             {error && <div role="alert" className="px-5 py-3 space-y-2"><p className="text-sm text-destructive">No se pudo actualizar la lista de gastos.</p><Button variant="outline" size="sm" onClick={() => void refreshExpenses()}>Reintentar</Button></div>}
             <ExpenseList

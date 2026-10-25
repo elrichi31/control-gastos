@@ -4,7 +4,6 @@ import { formatMoney } from "@/lib/utils"
 
 import { useState, useEffect, useId } from "react"
 import { ChevronDown } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -60,70 +59,39 @@ export function ExpenseSummary({
         : dateRange.to ? `Hasta ${displayDate(dateRange.to)}` : "Todas las fechas"
 
     return (
-        <Card className="bg-card border-border">
-            <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold">Resumen</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                    <div>
-                        <p className="text-sm text-muted-foreground">Total de gastos</p>
-                        <p className="text-2xl font-semibold tracking-tight text-foreground tabular-nums mt-0.5">
-                            {formatMoney(total)}
-                        </p>
-                        <p aria-label="Período del resumen" className="text-xs text-muted-foreground mt-1">{periodLabel}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{expenses.length} gastos filtrados</p>
-                    </div>
-                    <details className="group border-t border-border pt-1">
-                        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-md text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-                            Filtrar y agrupar
-                            <ChevronDown aria-hidden="true" className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none" />
-                        </summary>
-                        <div className="space-y-3 pt-2">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3">
-                                <div className="min-w-0 space-y-1">
-                                    <Label htmlFor={`${filterId}-from`} className="text-xs text-muted-foreground">Desde</Label>
-                                    <Input
-                                        id={`${filterId}-from`}
-                                        type="date"
-                                        value={dateRange.from}
-                                        onChange={(e) => handleRangeChange({ ...dateRange, from: e.target.value })}
-                                        className="min-w-0 bg-muted border-border dark:[color-scheme:dark]"
-                                    />
-                                </div>
-                                <div className="min-w-0 space-y-1">
-                                    <Label htmlFor={`${filterId}-to`} className="text-xs text-muted-foreground">Hasta</Label>
-                                    <Input
-                                        id={`${filterId}-to`}
-                                        type="date"
-                                        value={dateRange.to}
-                                        onChange={(e) => handleRangeChange({ ...dateRange, to: e.target.value })}
-                                        className="min-w-0 bg-muted border-border dark:[color-scheme:dark]"
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Label htmlFor={`${filterId}-group`} className="text-xs text-muted-foreground">Agrupar por</Label>
-                                <Select value={groupBy} onValueChange={(val) => handleGroupByChange(val as "dia" | "semana" | "mes")}>
-                                    <SelectTrigger id={`${filterId}-group`} className="w-[120px] h-8 text-sm bg-muted border-border">
-                                        <SelectValue placeholder="Agrupar por" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="dia">Día</SelectItem>
-                                        <SelectItem value="semana">Semana</SelectItem>
-                                        <SelectItem value="mes">Mes</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            {(dateRange.from || dateRange.to) && (
-                                <Button onClick={clearFilters} variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground">
-                                    Limpiar filtros
-                                </Button>
-                            )}
-                        </div>
-                    </details>
+        <section aria-label="Resumen de actividad" className="border-b border-border bg-muted/20 px-4 py-4 sm:px-5">
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                <div className="flex items-baseline gap-3">
+                    <p className="text-xs font-medium text-muted-foreground">Total de gastos</p>
+                    <p className="text-xl font-semibold tracking-tight text-foreground tabular-nums">{formatMoney(total)}</p>
                 </div>
-            </CardContent>
-        </Card>
+                <p className="text-xs text-muted-foreground">{expenses.length} gastos filtrados</p>
+            </div>
+            <p aria-label="Período del resumen" className="mt-1 text-xs text-muted-foreground">{periodLabel}</p>
+            <details className="group mt-2">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-md text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                    Filtrar y agrupar
+                    <ChevronDown aria-hidden="true" className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none" />
+                </summary>
+                <div className="grid items-end gap-3 pb-2 pt-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_8rem_auto]">
+                    <div className="min-w-0 space-y-1.5">
+                        <Label htmlFor={`${filterId}-from`} className="text-xs text-muted-foreground">Desde</Label>
+                        <Input controlSize="form" id={`${filterId}-from`} type="date" value={dateRange.from} onChange={e => handleRangeChange({ ...dateRange, from: e.target.value })} className="min-w-0 dark:[color-scheme:dark]" />
+                    </div>
+                    <div className="min-w-0 space-y-1.5">
+                        <Label htmlFor={`${filterId}-to`} className="text-xs text-muted-foreground">Hasta</Label>
+                        <Input controlSize="form" id={`${filterId}-to`} type="date" value={dateRange.to} onChange={e => handleRangeChange({ ...dateRange, to: e.target.value })} className="min-w-0 dark:[color-scheme:dark]" />
+                    </div>
+                    <div className="min-w-0 space-y-1.5">
+                        <Label htmlFor={`${filterId}-group`} className="text-xs text-muted-foreground">Agrupar por</Label>
+                        <Select value={groupBy} onValueChange={val => handleGroupByChange(val as "dia" | "semana" | "mes")}>
+                            <SelectTrigger id={`${filterId}-group`} className="h-11"><SelectValue /></SelectTrigger>
+                            <SelectContent><SelectItem value="dia">Día</SelectItem><SelectItem value="semana">Semana</SelectItem><SelectItem value="mes">Mes</SelectItem></SelectContent>
+                        </Select>
+                    </div>
+                    {(dateRange.from || dateRange.to) && <Button type="button" onClick={clearFilters} variant="ghost" size="form" className="text-xs text-muted-foreground">Limpiar filtros</Button>}
+                </div>
+            </details>
+        </section>
     )
 }

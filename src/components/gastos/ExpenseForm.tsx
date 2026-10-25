@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react"
-import { LoaderCircle } from "lucide-react"
+import { ArrowRight, ChevronDown, LoaderCircle } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -102,6 +102,10 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
     setSubmitError(null)
     if (Object.keys(newErrors).length) {
       const first = Object.keys(newErrors)[0]
+      if (first === 'tags' || first === 'foreignTax') {
+        const details = formRef.current?.querySelector<HTMLDetailsElement>('#expense-extra-details')
+        if (details) details.open = true
+      }
       const id = first === 'tags' ? 'expense-tags' : first === 'categoryId' ? 'category' : first === 'paymentMethodId' ? 'paymentMethod' : first === 'foreignTax' ? 'foreign-enabled' : first
       formRef.current?.querySelector<HTMLElement>(`#${id}`)?.focus()
       return
@@ -135,31 +139,31 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
       {optionsError && <div role="alert" className="space-y-2"><p className="text-sm text-destructive">{optionsError}</p><Button type="button" variant="outline" size="sm" disabled={isSubmitting} onClick={() => void loadOptions()}>Reintentar</Button></div>}
       {!optionsLoading && !optionsError && !ready && <p role="alert" className="text-sm text-muted-foreground">Necesitas al menos una categoría y un método de pago para registrar gastos.</p>}
       {submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}
-      <fieldset disabled={isSubmitting} className="space-y-6 min-w-0">
-        <Section step={1} title="¿Cuánto gastaste y en qué?">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-[11rem_minmax(0,1fr)_10rem]">
-            <div className="min-w-0 space-y-1.5">
-              <Label htmlFor="amount">{foreignTax.enabled ? 'Precio sin impuestos' : 'Monto (USD)'} <span className="text-destructive">*</span></Label>
-              <div className="relative">
-                <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                <Input controlSize="form" ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : undefined} className="pl-7 font-semibold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-              </div>
-              {fieldError('amount')}
-            </div>
-            <div className="space-y-1.5 min-w-0">
-              <Label htmlFor="description">Descripción <span className="text-destructive">*</span></Label>
-              <Input controlSize="form" id="description" placeholder="Ej. Almuerzo, gasolina, Netflix" value={formData.description} onChange={e => change('description', e.target.value)} aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? 'description-error' : 'description-hint'} />
-              {errors.description ? fieldError('description') : <p id="description-hint" className="text-xs text-muted-foreground">Al escribir, sugerimos categoría y pago según tus gastos anteriores.</p>}
-            </div>
-            <div className="space-y-1.5 min-w-0">
-              <Label htmlFor="date">Fecha <span className="text-destructive">*</span></Label>
-              <Input controlSize="form" id="date" type="date" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className="min-w-0 dark:[color-scheme:dark]" />
-              {fieldError('date')}
-            </div>
+      <fieldset disabled={isSubmitting} className="min-w-0 space-y-6 sm:space-y-7">
+        <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-5 sm:px-6 sm:py-6">
+          <Label htmlFor="amount" className="text-sm font-medium text-muted-foreground">{foreignTax.enabled ? 'Precio sin impuestos' : '¿Cuánto gastaste?'} <span className="text-destructive">*</span></Label>
+          <div className="mt-2 flex min-w-0 items-center gap-2">
+            <span aria-hidden="true" className="text-3xl font-normal text-primary sm:text-4xl">$</span>
+            <Input controlSize="form" ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : 'amount-hint'} className="h-16 min-w-0 max-w-full border-0 bg-transparent px-2 text-5xl font-semibold tracking-tight shadow-none tabular-nums placeholder:text-muted-foreground/40 focus-visible:ring-2 sm:h-20 sm:text-6xl md:text-6xl [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+            <span className="shrink-0 self-end pb-4 text-xs font-medium text-muted-foreground sm:pb-5">USD</span>
           </div>
-        </Section>
+          {errors.amount ? fieldError('amount') : <p id="amount-hint" className="mt-1 text-xs text-muted-foreground">{foreignTax.enabled ? 'Los impuestos se suman al importe que registres.' : 'El importe total de tu compra.'}</p>}
+        </div>
 
-        <Section step={2} title="Clasifícalo">
+        <div className="grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1fr)_11rem] sm:gap-5">
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="description">¿En qué lo gastaste? <span className="text-destructive">*</span></Label>
+            <Input controlSize="form" id="description" placeholder="Ej. Almuerzo, supermercado, gasolina" value={formData.description} onChange={e => change('description', e.target.value)} aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? 'description-error' : 'description-hint'} />
+            {errors.description ? fieldError('description') : <p id="description-hint" className="text-xs leading-relaxed text-muted-foreground">Sugerimos categoría y pago según tu historial.</p>}
+          </div>
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="date">Fecha <span className="text-destructive">*</span></Label>
+            <Input controlSize="form" id="date" type="date" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className="min-w-0 dark:[color-scheme:dark]" />
+            {fieldError('date')}
+          </div>
+        </div>
+
+        <Section title="Categoría y pago">
           <div className="space-y-1.5 min-w-0">
             <p id="category-label" className="text-sm font-medium">Categoría <span className="text-destructive">*</span></p>
             <ChipGroup id="category" labelledBy="category-label" value={selection.categoryId} onChange={value => change('categoryId', value)} invalid={Boolean(errors.categoryId)} describedBy={errors.categoryId ? 'categoryId-error' : suggestedCategory ? 'category-suggestion' : undefined}
@@ -177,21 +181,27 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
           </div>
         </Section>
 
-        <Section step={3} title="Detalles extra" optional>
-          <ForeignTaxField base={amountValue} value={foreignTax} onChange={changeForeignTax} error={errors.foreignTax} />
-          <ExpenseTagsField value={formData.tags} onChange={value => change("tags", value)} error={errors.tags} />
-        </Section>
+        <details id="expense-extra-details" className="group rounded-xl border border-border px-4 sm:px-5">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+            <span>Detalles extra <span className="ml-1 font-normal text-muted-foreground">· opcional</span></span>
+            <ChevronDown aria-hidden="true" className="size-4 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none" />
+          </summary>
+          <div className="space-y-4 pb-5 pt-2">
+            <ForeignTaxField base={amountValue} value={foreignTax} onChange={changeForeignTax} error={errors.foreignTax} />
+            <ExpenseTagsField value={formData.tags} onChange={value => change("tags", value)} error={errors.tags} />
+          </div>
+        </details>
 
-        <div className="space-y-3 border-t pt-4">
+        <div className="space-y-4 border-t border-border pt-5">
           <p aria-live="polite" className="text-sm text-muted-foreground">
             Vas a guardar <span className="font-semibold text-foreground tabular-nums">{formatMoney(breakdown.total)}</span>
             {breakdown.taxTotal > 0 && <> (incluye {formatMoney(breakdown.taxTotal)} de impuestos)</>}
             {categoryName && <> en <span className="font-medium text-foreground">{categoryName}</span></>}
             {paymentName && <> con <span className="font-medium text-foreground">{paymentName}</span></>}.
           </p>
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-            <Button size="form" type="submit" value="another" variant="outline" disabled={!ready || isSubmitting} title="Guarda y deja la misma categoría, pago y fecha para registrar otro rápido">Guardar y agregar otro</Button>
-            <Button size="form" type="submit" value="save" disabled={!ready || isSubmitting}>{isSubmitting ? <><LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />Guardando…</> : 'Guardar gasto'}</Button>
+          <div className="grid gap-2 sm:flex sm:justify-end sm:gap-3">
+            <Button size="form" type="submit" value="another" variant="ghost" className="order-2 text-muted-foreground sm:order-none" disabled={!ready || isSubmitting} title="Guarda y deja la misma categoría, pago y fecha para registrar otro rápido">Guardar y agregar otro</Button>
+            <Button size="form" type="submit" value="save" disabled={!ready || isSubmitting}>{isSubmitting ? <><LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />Guardando…</> : <>Guardar gasto<ArrowRight aria-hidden="true" className="size-4" /></>}</Button>
           </div>
         </div>
       </fieldset>
@@ -199,15 +209,13 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
   )
 }
 
-/** Bloque numerado: deja claro qué es obligatorio y en qué orden llenarlo. */
-function Section({ step, title, optional, children }: { step: number; title: string; optional?: boolean; children: React.ReactNode }) {
+/** Agrupa las elecciones sin competir con el importe principal. */
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section aria-label={title} className="space-y-3 min-w-0">
-      <h3 className="flex items-center gap-2 text-sm font-semibold">
-        <span aria-hidden="true" className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">{step}</span>
+      <h2 className="flex items-center gap-2 text-sm font-semibold">
         {title}
-        {optional && <span className="font-normal text-muted-foreground">(opcional)</span>}
-      </h3>
+      </h2>
       {children}
     </section>
   )
@@ -225,12 +233,21 @@ function ChipGroup({ id, labelledBy, value, onChange, options, invalid, describe
 }) {
   return (
     <div id={id} role="radiogroup" tabIndex={-1} aria-labelledby={labelledBy} aria-invalid={invalid} aria-describedby={describedBy}
+      onKeyDown={event => {
+        if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End'].includes(event.key) || options.length === 0) return
+        event.preventDefault()
+        const current = options.findIndex(option => option.value === value)
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1
+          : (Math.max(0, current) + (event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 1) + options.length) % options.length
+        onChange(options[next].value)
+        event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]')[next]?.focus()
+      }}
       className={`flex flex-wrap gap-1.5 rounded-lg outline-none ${invalid ? 'ring-1 ring-destructive ring-offset-4 ring-offset-card' : ''}`}>
       {options.map(option => {
         const active = option.value === value
         return (
-          <button key={option.value} type="button" role="radio" aria-checked={active} onClick={() => onChange(option.value)}
-            className={`inline-flex h-8 items-center rounded-lg border px-3 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-ring ${active
+          <button key={option.value} type="button" role="radio" aria-checked={active} tabIndex={active || (!value && option === options[0]) ? 0 : -1} onClick={() => onChange(option.value)}
+            className={`inline-flex min-h-11 items-center rounded-lg border px-3.5 py-2 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-ring ${active
               ? option.color ?? 'border-primary/40 bg-primary/15 text-primary'
               : 'border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground'} ${active ? 'font-medium' : ''}`}>
             {option.label}
