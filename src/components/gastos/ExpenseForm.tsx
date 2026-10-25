@@ -21,7 +21,8 @@ import { useRemoteMutation, useCachedRead, type CachedRead } from "@/hooks/useRe
 import { queryKeys } from "@/lib/query/client"
 import { predictExpenseSelection, resolveExpenseSelection, type SuggestionHistory } from "@/lib/expense-suggestions"
 
-const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0]
+const daysAgo = (days: number) => new Date(Date.now() - new Date().getTimezoneOffset() * 60000 - days * 86400000).toISOString().split("T")[0]
+const today = () => daysAgo(0)
 
 /** Avisa si el gasto recién guardado cruza el 80% o el 100% del presupuesto de su categoría. Es solo una ayuda: nunca falla visiblemente. */
 async function warnBudgetCrossing(read: CachedRead, saved: { categoryId: number; date: string; total: number }, expenses: readonly { categoria_id: number; monto: number; fecha: string }[]) {
@@ -56,6 +57,7 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
   const loadOptions = () => catalogs.refetch()
   const create = useRemoteMutation(createExpense, [queryKeys.expenses, queryKeys.monthPlan, queryKeys.budgets, queryKeys.forecast])
   const [foreignTax, setForeignTax] = useState(emptyForeignTax)
+  useEffect(() => { amountRef.current?.focus({ preventScroll: true }) }, [])
 
   const suggestion = useMemo(() => predictExpenseSelection(formData.description, history, categories, paymentMethods), [formData.description, history, categories, paymentMethods])
   const selection = resolveExpenseSelection(formData, suggestion)
@@ -140,17 +142,17 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
       {!optionsLoading && !optionsError && !ready && <p role="alert" className="text-sm text-muted-foreground">Necesitas al menos una categoría y un método de pago para registrar gastos.</p>}
       {submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}
       <fieldset disabled={isSubmitting} className="min-w-0 space-y-6 sm:space-y-7">
-        <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-5 sm:px-6 sm:py-6">
-          <Label htmlFor="amount" className="text-sm font-medium text-muted-foreground">{foreignTax.enabled ? 'Precio sin impuestos' : '¿Cuánto gastaste?'} <span className="text-destructive">*</span></Label>
-          <div className="mt-2 flex min-w-0 items-center gap-2">
-            <span aria-hidden="true" className="text-3xl font-normal text-primary sm:text-4xl">$</span>
-            <Input controlSize="form" ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : 'amount-hint'} className="h-16 min-w-0 max-w-full border-0 bg-transparent px-2 text-5xl font-semibold tracking-tight shadow-none tabular-nums placeholder:text-muted-foreground/40 focus-visible:ring-2 sm:h-20 sm:text-6xl md:text-6xl [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-            <span className="shrink-0 self-end pb-4 text-xs font-medium text-muted-foreground sm:pb-5">USD</span>
+        <div className="min-w-0 space-y-1.5 rounded-xl border bg-muted/30 px-4 py-3 transition-colors focus-within:border-primary/50 focus-within:bg-muted/50">
+          <Label htmlFor="amount" className="text-xs uppercase tracking-wide text-muted-foreground">{foreignTax.enabled ? 'Precio sin impuestos' : 'Monto (USD)'} <span className="text-destructive">*</span></Label>
+          <div className="flex items-baseline gap-1.5">
+            <span aria-hidden="true" className="text-3xl font-semibold text-muted-foreground">$</span>
+            <input ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : 'amount-hint'} aria-required="true"
+              className="w-full min-w-0 bg-transparent text-4xl font-bold tabular-nums outline-none placeholder:text-muted-foreground/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
           </div>
-          {errors.amount ? fieldError('amount') : <p id="amount-hint" className="mt-1 text-xs text-muted-foreground">{foreignTax.enabled ? 'Los impuestos se suman al importe que registres.' : 'El importe total de tu compra.'}</p>}
+          {errors.amount ? fieldError('amount') : <p id="amount-hint" className="text-xs text-muted-foreground">{foreignTax.enabled ? 'Los impuestos se suman al importe que registres.' : 'El importe total de tu compra.'}</p>}
         </div>
 
-        <div className="grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1fr)_11rem] sm:gap-5">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
           <div className="min-w-0 space-y-2">
             <Label htmlFor="description">¿En qué lo gastaste? <span className="text-destructive">*</span></Label>
             <Input controlSize="form" id="description" placeholder="Ej. Almuerzo, supermercado, gasolina" value={formData.description} onChange={e => change('description', e.target.value)} aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? 'description-error' : 'description-hint'} />
@@ -158,7 +160,15 @@ export function ExpenseForm({ history = [], expenses = [] }: { fetchExpenses: ()
           </div>
           <div className="min-w-0 space-y-2">
             <Label htmlFor="date">Fecha <span className="text-destructive">*</span></Label>
-            <Input controlSize="form" id="date" type="date" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className="min-w-0 dark:[color-scheme:dark]" />
+            <div className="flex items-center gap-1.5">
+              {([['Hoy', 0], ['Ayer', 1]] as const).map(([label, days]) => {
+                const value = daysAgo(days)
+                const active = formData.date === value
+                return <button key={label} type="button" aria-pressed={active} onClick={() => change('date', value)}
+                  className={`h-9 shrink-0 rounded-lg border px-3 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-ring ${active ? 'border-primary/40 bg-primary/15 font-medium text-primary' : 'border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground'}`}>{label}</button>
+              })}
+              <Input controlSize="form" id="date" type="date" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className="min-w-0 dark:[color-scheme:dark]" />
+            </div>
             {fieldError('date')}
           </div>
         </div>
