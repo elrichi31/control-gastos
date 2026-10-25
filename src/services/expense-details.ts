@@ -27,22 +27,3 @@ export async function fetchExpenseDetailsData(): Promise<ExpenseDetailsCatalogs>
     throw new Error('Error al cargar los datos de gastos')
   }
 }
-
-/**
- * Elimina un gasto específico
- */
-export async function deleteExpense(id: number): Promise<void> {
-  try {
-    const response = await fetch(`/api/gastos/${id}`, {
-      method: 'DELETE',
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || 'Error al eliminar el gasto')
-    }
-  } catch (error) {
-    console.error('Error deleting expense:', error)
-    throw error
-  }
-}

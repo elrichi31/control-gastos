@@ -3,14 +3,11 @@ import { MONTH_PLAN_ERROR } from "@/services/recurring-expenses"
 import { 
   PresupuestoCategoriaDetalle, 
   CategoriaDB, 
-  MetodoPagoDB, 
   MovimientoPresupuesto,
   PresupuestoInfo 
 } from "@/lib/constants"
 import { 
   fetchPresupuestoCategorias as fetchPresupuestoCategoriasBase,
-  fetchCategoriasDB as fetchCategoriasDBBase,
-  fetchMetodosPago as fetchMetodosPagoBase,
   addCategory as addCategoryBase,
   deleteBudgetCategory as deleteBudgetCategoryBase,
   addBudgetExpense as addBudgetExpenseBase,
@@ -24,14 +21,6 @@ import {
 // Re-exportar funciones del servicio budget base con tipos específicos
 export const fetchPresupuestoCategorias = async (id: string): Promise<PresupuestoCategoriaDetalle[]> => {
   return await fetchPresupuestoCategoriasBase(id)
-}
-
-export const fetchCategoriasDB = async (): Promise<CategoriaDB[]> => {
-  return await fetchCategoriasDBBase()
-}
-
-export const fetchMetodosPago = async (): Promise<MetodoPagoDB[]> => {
-  return await fetchMetodosPagoBase()
 }
 
 export const fetchPresupuestoMensual = async (id: string): Promise<PresupuestoInfo | null> => {

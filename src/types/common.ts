@@ -17,21 +17,3 @@ export interface Gasto {
 
 // Alias temporal; el nombre se unifica en HU-8
 export type Expense = Gasto
-
-export interface CategoriaGasto {
-  categoria: string
-  total: number
-  gastos: Gasto[]
-}
-
-export interface FiltroFechas {
-  from: string
-  to: string
-}
-
-export type TipoAgrupacion = "dia" | "semana" | "mes"
-
-export interface EstadoCarga {
-  loading: boolean
-  error: string | null
-}
