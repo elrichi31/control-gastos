@@ -11,7 +11,7 @@ import { ForeignTaxField } from '@/components/gastos/ForeignTaxField'
 import { computeForeignTax, emptyForeignTax, storedForeignTax, validateForeignTax, withForeignTag } from '@/lib/foreign-tax'
 import { formatMoney } from '@/lib/utils'
 import { parseExpenseTags } from '@/lib/expense-tags'
-import { categoryIcon, paymentIcon } from '@/lib/expense-icons'
+import { categoryIcon, categoryTone, paymentIcon } from '@/lib/expense-icons'
 import type { ExpenseDraft } from '@/components/gastos/ExpenseDraftSummary'
 import { createExpense } from "@/services/expenses"
 import { fetchBudgetsByYear } from "@/services/budget-general"
@@ -26,7 +26,7 @@ const daysAgo = (days: number) => new Date(Date.now() - new Date().getTimezoneOf
 const today = () => daysAgo(0)
 const shortDate = (iso: string) => { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("es", { day: "numeric", month: "short" }).replace(/\./g, "") }
 const QUICK_AMOUNTS = [5, 10, 20, 50]
-const pill = (active: boolean) => `inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3.5 text-[13px] transition-[color,background-color,border-color,scale] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-ring ${active ? 'border-foreground bg-card font-medium text-foreground' : 'border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground'}`
+const pill = (active: boolean) => `inline-flex shrink-0 whitespace-nowrap min-h-11 items-center gap-1.5 rounded-full border px-3.5 text-[13px] transition-[color,background-color,border-color,scale] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-ring ${active ? 'border-foreground bg-card font-medium text-foreground' : 'border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground'}`
 
 /** Avisa si el gasto recién guardado cruza el 80% o el 100% del presupuesto de su categoría. Es solo una ayuda: nunca falla visiblemente. */
 async function warnBudgetCrossing(read: CachedRead, saved: { categoryId: number; date: string; total: number }, expenses: readonly { categoria_id: number; monto: number; fecha: string }[]) {
@@ -166,9 +166,9 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange }: { fe
             <Input controlSize="form" ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} onWheel={e => e.currentTarget.blur()} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : 'amount-hint'} className="pl-7 pr-14 font-semibold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
             <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">USD</span>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="scrollbar-hidden -mx-1 flex flex-nowrap items-center gap-2 overflow-x-auto px-1 py-1">
             {QUICK_AMOUNTS.map(step => <button key={step} type="button" className={pill(false)} onClick={() => change('amount', String(Math.round(((Number.isFinite(amountValue) ? amountValue : 0) + step) * 100) / 100))}>+ {step}</button>)}
-            {formData.amount && <button type="button" className="min-h-11 rounded-full px-3 text-[13px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring" onClick={() => change('amount', '')}>Borrar</button>}
+            {formData.amount && <button type="button" className="min-h-11 shrink-0 rounded-full px-3 text-[13px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring" onClick={() => change('amount', '')}>Borrar</button>}
           </div>
           {errors.amount ? fieldError('amount') : <p id="amount-hint" className="text-xs text-muted-foreground">{foreignTax.enabled ? 'Los impuestos se suman al importe que registres.' : 'El importe total de tu compra.'}</p>}
         </div>
@@ -195,7 +195,7 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange }: { fe
         <div className="space-y-2 min-w-0">
           <FieldLabel icon={LayoutGrid} id="category-label">Categoría <span className="text-destructive">*</span></FieldLabel>
           <ChipGroup id="category" labelledBy="category-label" value={selection.categoryId} onChange={value => change('categoryId', value)} invalid={Boolean(errors.categoryId)} describedBy={errors.categoryId ? 'categoryId-error' : suggestedCategory ? 'category-suggestion' : undefined}
-            options={categories.map(cat => ({ value: String(cat.id), label: cat.nombre, icon: categoryIcon(cat.nombre) }))} />
+            options={categories.map(cat => ({ value: String(cat.id), label: cat.nombre, icon: categoryIcon(cat.nombre), tone: categoryTone(cat.nombre) }))} />
           {suggestedCategory && <p id="category-suggestion" className="text-muted-foreground text-xs" role="status">Sugerida por tu historial. Puedes cambiarla.</p>}
           {fieldError('categoryId')}
         </div>
@@ -249,7 +249,7 @@ function ChipGroup({ id, labelledBy, value, onChange, options, invalid, describe
   labelledBy: string
   value: string
   onChange: (value: string) => void
-  options: { value: string; label: string; icon?: LucideIcon }[]
+  options: { value: string; label: string; icon?: LucideIcon; tone?: string }[]
   invalid: boolean
   describedBy?: string
 }) {
@@ -264,12 +264,12 @@ function ChipGroup({ id, labelledBy, value, onChange, options, invalid, describe
         onChange(options[next].value)
         event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]')[next]?.focus()
       }}
-      className={`flex flex-wrap gap-2 rounded-lg outline-none ${invalid ? 'ring-1 ring-destructive ring-offset-4 ring-offset-card' : ''}`}>
+      className={`scrollbar-hidden -mx-1 flex flex-nowrap gap-2 overflow-x-auto rounded-lg px-1 py-1 outline-none ${invalid ? 'ring-1 ring-destructive ring-offset-4 ring-offset-card' : ''}`}>
       {options.map(option => {
         const active = option.value === value
         return (
           <button key={option.value} type="button" role="radio" aria-checked={active} tabIndex={active || (!value && option === options[0]) ? 0 : -1} onClick={() => onChange(option.value)} className={pill(active)}>
-            {option.icon && <option.icon aria-hidden="true" className="size-3.5" />}
+            {option.icon && <option.icon aria-hidden="true" className={`size-3.5 ${option.tone ?? ''}`} />}
             {option.label}
           </button>
         )

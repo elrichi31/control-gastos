@@ -1,9 +1,9 @@
-import { Tag, Calendar, CreditCard, Trash2, Repeat, Pencil } from "lucide-react"
+import { Calendar, CreditCard, Trash2, Repeat, Pencil } from "lucide-react"
+import { CategoryBadge } from "@/components/gastos/CategoryBadge"
 import { Gasto } from "@/hooks/useGastosFiltrados"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { formatDisplayDate } from "@/lib/utils"
-import { getCategoriaColor } from "@/lib/constants"
 import { useState } from "react"
 
 import { ExpenseTags } from "@/components/gastos/ExpenseTags"
@@ -92,7 +92,7 @@ export function ExpenseItem({ expense, onDelete, onUpdated, showDeleteIcon = fal
     <>
       {/* Fila horizontal: en pantallas medianas cada dato va en su columna
           (alineada con la cabecera de ExpenseList); en móvil se apila. */}
-      <div className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 px-5 py-3 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors md:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_7rem_minmax(0,1fr)_6rem_4.5rem]">
+      <div className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 px-5 py-3.5 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors md:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_7rem_minmax(0,1fr)_6rem_4.5rem]">
         <div className="min-w-0">
           <p className="font-medium text-sm text-foreground truncate" title={expense.descripcion}>{expense.descripcion}</p>
           <ExpenseTags tags={expense.tags} className="mt-1" />
@@ -125,13 +125,10 @@ export function ExpenseItem({ expense, onDelete, onUpdated, showDeleteIcon = fal
             )}
         </div>
         </div>
-        <div className="col-span-2 flex items-center gap-1.5 flex-wrap md:col-span-1 md:order-2">
-          <Badge className={`border font-normal ${getCategoriaColor(expense.categoria?.nombre)}`}>
-            <Tag className="h-3 w-3 mr-1" />
-            {expense.categoria?.nombre}
-          </Badge>
+        <div className="col-span-2 flex items-center gap-1.5 flex-wrap md:col-span-1 md:order-2 md:flex-col md:items-start">
+          <CategoryBadge name={expense.categoria?.nombre} />
           {expense.is_recurrent && (
-            <Badge variant="outline" className="font-normal text-muted-foreground">
+            <Badge variant="outline" className="rounded-full font-normal text-muted-foreground">
               <Repeat className="h-3 w-3 mr-1" />
               Recurrente
             </Badge>

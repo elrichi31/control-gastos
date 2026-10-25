@@ -1,9 +1,8 @@
 'use client'
 
+import { CategoryBadge } from "@/components/gastos/CategoryBadge"
 import React from 'react'
 import { ExpenseTags } from '@/components/gastos/ExpenseTags'
-import { Badge } from '@/components/ui/badge'
-import { getCategoriaColor } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
 import { TableCell, TableRow } from "@/components/ui/table"
 import { Trash2, Receipt, CreditCard, Calendar } from 'lucide-react'
@@ -48,12 +47,7 @@ export function GastoTableRow({
         <ExpenseTags tags={gasto.tags} />
       </TableCell>
       <TableCell className="px-3 py-3 w-[140px] min-w-[140px]">
-        <Badge 
-          variant="secondary" 
-          className={`border font-normal ${getCategoriaColor(gasto.categoria?.nombre)} truncate max-w-full`}
-        >
-          {gasto.categoria?.nombre || 'Otros'}
-        </Badge>
+        <CategoryBadge name={gasto.categoria?.nombre} fallback="Otros" />
       </TableCell>
       <TableCell className="px-3 py-3 w-[150px] min-w-[150px]">
         <div className="flex items-center gap-2 min-w-0 text-muted-foreground">

@@ -89,7 +89,7 @@ export function ProjectionCard({ forecast: f }: { forecast: ExpenseForecast }) {
         <Card className="min-w-0">
           <CardHeader><CardTitle>Por categoría</CardTitle><p className="mt-1 text-sm text-muted-foreground">Cierre de cada categoría si sigue su ritmo del mes.</p></CardHeader>
           <CardContent>
-            {f.categories.length === 0 ? <p className="text-sm text-muted-foreground">Sin gastos registrados todavía.</p> : <div className="-mx-2 overflow-x-auto">
+            {f.categories.length === 0 ? <p className="text-sm text-muted-foreground">Sin gastos registrados todavía.</p> : <div className="scrollbar-hidden -mx-2 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="border-b border-border text-left text-xs text-muted-foreground"><th className="px-2 py-2 font-medium">Categoría</th><th className="px-2 py-2 text-right font-medium">A hoy</th><th className="px-2 py-2 text-right font-medium">Estimado</th>{prev && <><th className="px-2 py-2 text-right font-medium capitalize">{monthName(prev.month)}</th><th className="px-2 py-2 text-right font-medium">Var.</th></>}</tr></thead>
                 <tbody>{f.categories.slice(0, 8).map(c => <tr key={c.name} className="border-b border-border last:border-0">

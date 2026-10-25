@@ -1,5 +1,6 @@
 "use client"
 
+import { CategoryBadge } from "@/components/gastos/CategoryBadge"
 import { formatMoney } from "@/lib/utils"
 
 import { useState, useMemo } from "react"
@@ -7,7 +8,6 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { Badge } from "@/components/ui/badge"
 import {
   Table,
   TableBody,
@@ -26,7 +26,6 @@ import { useExpensesStore } from "@/hooks/useExpensesStore"
 import { detectSubscriptions, type DetectorExpense, type SubscriptionSuggestion } from "@/lib/subscription-detector"
 import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { EditRecurringExpenseModal } from "@/components/gastos-recurrentes/EditRecurringExpenseModal"
-import { getCategoriaColor } from "@/lib/constants"
 import { fetchRecurringEmailStatus } from '@/services/email-import'
 import { RecurringEmailIndicator } from './RecurringEmailIndicator'
 import { toast } from "sonner"
@@ -287,9 +286,7 @@ export function RecurringExpenseList() {
                     {describeFrecuencia(expense)}
                   </TableCell>
                   <TableCell className="py-2.5">
-                    <Badge className={`border font-normal ${getCategoriaColor(getCategoryName(expense.categoria_id))}`}>
-                      {getCategoryName(expense.categoria_id)}
-                    </Badge>
+                    <CategoryBadge name={getCategoryName(expense.categoria_id)} />
                   </TableCell>
                   <TableCell className="py-2.5 text-muted-foreground whitespace-nowrap">
                     {getPaymentMethodName(expense.metodo_pago_id)}
@@ -361,9 +358,7 @@ export function RecurringExpenseList() {
                 </div>
               </div>
               <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                <Badge className={`border font-normal ${getCategoriaColor(getCategoryName(expense.categoria_id))}`}>
-                  {getCategoryName(expense.categoria_id)}
-                </Badge>
+                <CategoryBadge name={getCategoryName(expense.categoria_id)} />
                 <span className="text-xs text-muted-foreground">
                   {getPaymentMethodName(expense.metodo_pago_id)}
                 </span>

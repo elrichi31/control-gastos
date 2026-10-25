@@ -1,10 +1,9 @@
 'use client'
 
+import { CategoryBadge } from "@/components/gastos/CategoryBadge"
 import React from 'react'
 import { ExpenseTags } from '@/components/gastos/ExpenseTags'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { getCategoriaColor } from '@/lib/constants'
 import { Trash2 } from 'lucide-react'
 import type { Gasto } from '@/types'
 
@@ -21,7 +20,7 @@ export const GastoCard: React.FC<GastoCardProps> = ({ gasto, onDeleteGasto, form
       <h4 className="text-sm font-medium text-foreground break-words">{gasto.descripcion}</h4>
       <ExpenseTags tags={gasto.tags} />
       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted-foreground">
-        <Badge className={`max-w-full truncate border font-normal ${getCategoriaColor(gasto.categoria?.nombre)}`} title={gasto.categoria?.nombre}>{gasto.categoria?.nombre || 'Sin categoría'}</Badge>
+        <CategoryBadge name={gasto.categoria?.nombre} />
         <span>{formatDate(gasto.fecha)}</span>
         <span className="max-w-full truncate" title={gasto.metodo_pago?.nombre}>{gasto.metodo_pago?.nombre || 'Sin método de pago'}</span>
       </div>

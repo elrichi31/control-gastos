@@ -1,9 +1,8 @@
 "use client"
 
+import { CategoryBadge } from "@/components/gastos/CategoryBadge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { formatMoney, formatDate } from "@/lib/utils"
-import { getCategoriaColor } from "@/lib/constants"
 
 interface TopGasto {
   id: number | string
@@ -38,9 +37,7 @@ export function TopExpenses({ gastos }: { gastos: TopGasto[] }) {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground truncate">{g.descripcion}</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <Badge className={`border font-normal ${getCategoriaColor(g.categoria)}`}>
-                    {g.categoria}
-                  </Badge>
+                  <CategoryBadge name={g.categoria} />
                   <span className="text-xs text-muted-foreground">{formatDate(g.fecha)}</span>
                 </div>
               </div>

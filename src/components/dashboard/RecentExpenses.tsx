@@ -1,11 +1,10 @@
 "use client"
 
+import { CategoryBadge } from "@/components/gastos/CategoryBadge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { formatDateWithLocale, formatMoney } from "@/lib/utils"
-import { getCategoriaColor } from "@/lib/constants"
 import { Gasto } from "@/types"
 
 interface RecentExpensesProps {
@@ -46,9 +45,7 @@ export function RecentExpenses({ expenses, totalCount }: RecentExpensesProps) {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground truncate">{gasto.descripcion}</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <Badge className={`border font-normal ${getCategoriaColor(gasto.categoria?.nombre)}`}>
-                    {gasto.categoria?.nombre}
-                  </Badge>
+                  <CategoryBadge name={gasto.categoria?.nombre} />
                   <span className="text-xs text-muted-foreground">
                     {formatDateWithLocale(gasto.fecha, "d MMM")}
                   </span>

@@ -92,6 +92,14 @@
   min-height: 0;
 }
 
+/* Contenedor que scrollea sin mostrar la barra (chips en una fila, tablas). */
+@utility scrollbar-hidden {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* v3 space-x/y: margin on every child after the first. v4 puts margin-bottom on every
    child but the last, which an inline first child (a <label>) silently ignores, so
    label/input gaps collapsed. */

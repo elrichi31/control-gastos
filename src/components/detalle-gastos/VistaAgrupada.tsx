@@ -35,7 +35,7 @@ export function VistaAgrupada({
           <span>Resultados ({gastos.length} gastos en {groupedGastos.length} grupos)</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0 lg:fill-y lg:overflow-auto">
+      <CardContent className="p-0 lg:fill-y lg:overflow-auto scrollbar-hidden">
         {groupedGastos.length === 0 ? (
           <div className="text-center py-12 px-6">
             <Receipt className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
