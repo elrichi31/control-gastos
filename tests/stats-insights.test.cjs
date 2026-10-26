@@ -81,6 +81,23 @@ test('los rangos personalizados mantienen los días locales incluidos en sus lí
     assert.equal(result.filteredGastos.length, 2)
   } finally { if (previousTZ === undefined) delete process.env.TZ; else process.env.TZ = previousTZ }
 })
+test('el filtrado de estadísticas conserva los períodos y el orden de los gastos', () => {
+  const { useDataProcessing } = require('../src/hooks/useDataProcessing.ts')
+  const gastos = [expense('2024-01-10', 10), expense('2025-01-15', 20), expense('2025-02-10', 30)]
+  for (const [overrides, expected] of [
+    [{ filterType: 'year-month' }, [gastos[1]]],
+    [{ filterType: 'year' }, [gastos[1], gastos[2]]],
+    [{ filterType: 'month', month: 'ENERO' }, [gastos[0], gastos[1]]],
+    [{ filterType: 'custom', dateFrom: '2025-01-15', dateTo: '2025-02-10' }, [gastos[1], gastos[2]]],
+    [{ filterType: 'custom', dateFrom: '', dateTo: '2025-02-10' }, gastos],
+    [{ filterType: 'all' }, gastos],
+  ]) {
+    let result
+    function Probe() { result = useDataProcessing({ gastos, currentFilters: { ...filters, ...overrides } }); return null }
+    renderToStaticMarkup(React.createElement(Probe))
+    assert.deepEqual(result.filteredGastos, expected, overrides.filterType)
+  }
+})
 test('un rango largo personalizado conserva el total anterior al agruparlo por meses', () => {
   const a = analytics([expense('2025-04-01', 20)], [expense('2024-12-20', 100)], { ...filters, filterType: 'custom', dateFrom: '2025-03-20', dateTo: '2025-06-20' })
   assert.equal(a.kpis.totalPrevio, 100)

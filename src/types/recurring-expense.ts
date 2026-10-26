@@ -6,7 +6,6 @@ export const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Ju
 /** Yearly cost of a rule: weekly x 52, monthly x 12, yearly x 1. */
 export const costoAnual = (r: { frecuencia: Frecuencia; monto: number }) =>
   Number(r.monto) * (r.frecuencia === 'semanal' ? 52 : r.frecuencia === 'mensual' ? 12 : 1)
-export type EstadoInstancia = 'pendiente' | 'generado' | 'omitido'
 
 export interface GastoRecurrente {
   id: number
@@ -25,16 +24,6 @@ export interface GastoRecurrente {
   impuesto_exterior?: StoredForeignTax | null // compra en el exterior: precio original + impuestos
   created_at?: string
   updated_at?: string
-}
-
-export interface GastoRecurrenteInstancia {
-  id: number
-  gasto_recurrente_id: number
-  gasto_id?: number | null
-  fecha_programada: string // "YYYY-MM-DD"
-  estado: EstadoInstancia
-  generado_en?: string | null
-  created_at?: string
 }
 
 export interface CreateGastoRecurrenteInput {

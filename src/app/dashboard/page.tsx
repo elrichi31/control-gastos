@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo, useState, useEffect } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useGastosFiltrados } from "@/hooks/useGastosFiltrados"
 import { format, startOfMonth, endOfMonth, isSameDay, subDays, subMonths } from "date-fns"
 import { es } from "date-fns/locale"

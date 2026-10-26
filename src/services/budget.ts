@@ -1,7 +1,5 @@
 // src/services/budget.ts
-import { PresupuestoCategoriaDetalle, CategoriaDB, MetodoPagoDB } from "@/types/budget"
-import { fetchCategories } from "./categories"
-import { fetchPaymentMethods } from "./paymentMethods"
+import type { PresupuestoCategoriaDetalle } from "@/types/budget"
 
 export async function fetchPresupuestoCategorias(id: string): Promise<PresupuestoCategoriaDetalle[]> {
   const res = await fetch(`/api/presupuesto-mensual-detalle?presupuesto_mensual_id=${id}`)
@@ -25,25 +23,6 @@ export async function copyFromPreviousMonth(presupuestoMensualId: string): Promi
   })
   if (!res.ok) throw new Error((await res.json()).error || "Error al copiar del mes anterior")
   return true
-}
-
-// Usar los servicios específicos para categorías y métodos de pago
-export async function fetchCategoriasDB(): Promise<CategoriaDB[]> {
-  try {
-    return await fetchCategories()
-  } catch (error) {
-    console.error('Error fetching categories for budget:', error)
-    return []
-  }
-}
-
-export async function fetchMetodosPago(): Promise<MetodoPagoDB[]> {
-  try {
-    return await fetchPaymentMethods()
-  } catch (error) {
-    console.error('Error fetching payment methods for budget:', error)
-    return []
-  }
 }
 
 export async function addCategory(id: string, categoryId: number) {

@@ -1,7 +1,6 @@
 'use client'
 
 import { CategoryBadge } from "@/components/gastos/CategoryBadge"
-import React from 'react'
 import { ExpenseTags } from '@/components/gastos/ExpenseTags'
 import { Button } from '@/components/ui/button'
 import { TableCell, TableRow } from "@/components/ui/table"

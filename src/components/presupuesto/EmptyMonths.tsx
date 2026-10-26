@@ -1,7 +1,6 @@
 import { Calendar, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import React from "react"
 
 interface EmptyMonthsProps {
   allMonths: { name: string; value: string; number: number; disabled?: boolean }[]

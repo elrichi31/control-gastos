@@ -1,6 +1,5 @@
 'use client'
 
-import React from 'react'
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ChevronDown, ChevronRight } from 'lucide-react'
 

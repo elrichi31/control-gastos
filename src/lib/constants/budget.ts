@@ -1,3 +1,6 @@
+import type { MovimientoPresupuesto } from "@/types/budget"
+export type { MovimientoPresupuesto, PresupuestoCategoriaDetalle, CategoriaDB, MetodoPagoDB } from "@/types/budget"
+
 // Constantes y tipos relacionados con presupuestos
 
 export interface MonthData {
@@ -20,37 +23,6 @@ export const allMonths: MonthData[] = [
   { name: "Noviembre", value: "noviembre", number: 11 },
   { name: "Diciembre", value: "diciembre", number: 12 },
 ]
-
-// Interfaces para el detalle de presupuesto
-export interface MovimientoPresupuesto {
-  id: number
-  descripcion: string
-  monto: number
-  fecha: string
-  metodo_pago_id: number
-  tags?: string[]
-}
-
-export interface PresupuestoCategoriaDetalle {
-  id: number
-  categoria_id: number
-  total_categoria: number
-  cantidad_gastos: number
-  categoria: { nombre: string }
-  movimientos: MovimientoPresupuesto[]
-}
-
-export interface CategoriaDB {
-  id: number;
-  nombre: string;
-  icono?: string;
-  color?: string;
-}
-
-export interface MetodoPagoDB {
-  id: number;
-  nombre: string;
-}
 
 export interface PresupuestoInfo {
   mes: number
