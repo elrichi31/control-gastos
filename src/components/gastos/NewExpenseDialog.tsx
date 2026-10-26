@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Receipt, Repeat2 } from "lucide-react"
+import { Receipt, ReceiptText, Repeat2 } from "lucide-react"
 import dynamic from "next/dynamic"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -22,30 +22,31 @@ export function NewExpenseDialog({ initialKind, onClose, restoreFocus }: { initi
     <DialogContent
       data-expense-entry-dialog=""
       closeButtonDisabled={busy}
-      className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden p-0"
+      className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-lg flex-col gap-0 overflow-hidden p-0"
       onPointerDownOutside={event => event.preventDefault()}
       onEscapeKeyDown={event => { if (busy) event.preventDefault() }}
       onCloseAutoFocus={event => { event.preventDefault(); restoreFocus() }}
     >
-      <DialogHeader className="shrink-0 border-b px-5 py-5 pr-12 text-left sm:px-7">
-        <DialogTitle>{tab === "normal" ? "Nuevo gasto" : "Nuevo gasto recurrente"}</DialogTitle>
-        <DialogDescription>Registra tu gasto sin salir de esta pantalla. Los campos con * son obligatorios.</DialogDescription>
+      <DialogHeader className="shrink-0 flex-row items-center gap-3 space-y-0 px-5 pb-3 pt-5 pr-14 text-left sm:px-7">
+        <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-xl bg-foreground text-background"><ReceiptText className="size-5" /></span>
+        <div className="min-w-0 space-y-1">
+          <DialogTitle>{tab === "normal" ? "Nuevo gasto" : "Nuevo gasto recurrente"}</DialogTitle>
+          <DialogDescription>{tab === "normal" ? "Monto, categoría y cómo lo pagaste." : "Un gasto que se repite cada período."}</DialogDescription>
+        </div>
       </DialogHeader>
       <Tabs value={tab} onValueChange={value => { if (!busy) setTab(value as ExpenseKind) }} className="flex min-h-0 flex-1 flex-col">
-        <div className="shrink-0 border-b px-5 py-3 sm:px-7">
-          <TabsList aria-label="Tipo de gasto" className="h-auto gap-1 p-1">
-            <TabsTrigger disabled={busy} value="normal" className="min-h-10 gap-2 px-4"><Receipt aria-hidden="true" className="size-4" />Una vez</TabsTrigger>
-            <TabsTrigger disabled={busy} value="recurrente" className="min-h-10 gap-2 px-4"><Repeat2 aria-hidden="true" className="size-4" />Recurrente</TabsTrigger>
+        <div className="shrink-0 px-5 pb-3 sm:px-7">
+          <TabsList aria-label="Tipo de gasto" className="h-auto w-full gap-1 p-1">
+            <TabsTrigger disabled={busy} value="normal" className="min-h-9 flex-1 gap-2 px-4"><Receipt aria-hidden="true" className="size-4" />Una vez</TabsTrigger>
+            <TabsTrigger disabled={busy} value="recurrente" className="min-h-9 flex-1 gap-2 px-4"><Repeat2 aria-hidden="true" className="size-4" />Recurrente</TabsTrigger>
           </TabsList>
         </div>
-        <div data-expense-scroll-area="" className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-7">
-          <TabsContent value="normal" className="mt-0">
-            <ExpenseForm fetchExpenses={refreshExpenses} history={gastos} expenses={gastos} onSuccess={onClose} onSubmittingChange={setBusy} />
-          </TabsContent>
-          <TabsContent value="recurrente" className="mx-auto mt-0 max-w-2xl">
-            <RecurringExpenseForm onSuccess={onClose} onSubmittingChange={setBusy} />
-          </TabsContent>
-        </div>
+        <TabsContent value="normal" className="mt-0 flex min-h-0 flex-1 flex-col border-t data-[state=inactive]:hidden">
+          <ExpenseForm fetchExpenses={refreshExpenses} history={gastos} expenses={gastos} onSuccess={onClose} onCancel={onClose} onSubmittingChange={setBusy} />
+        </TabsContent>
+        <TabsContent value="recurrente" className="mt-0 min-h-0 flex-1 overflow-y-auto overscroll-contain border-t px-5 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] data-[state=inactive]:hidden sm:px-7">
+          <RecurringExpenseForm onSuccess={onClose} onSubmittingChange={setBusy} />
+        </TabsContent>
       </Tabs>
     </DialogContent>
   </Dialog>
