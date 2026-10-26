@@ -257,10 +257,12 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
             <h2 ref={reviewRef} tabIndex={-1} className="sr-only">Revisa tu gasto antes de guardar</h2>
             <ExpenseDraftSummary draft={draft} expenses={expenses} />
           </div>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t bg-card px-5 py-4 sm:px-7">
-            <Button size="form" type="submit" value="another" variant="ghost" className="mr-auto text-muted-foreground" disabled={!ready || isSubmitting} title="Guarda y deja la misma categoría, pago y fecha para registrar otro rápido">Guardar y agregar otro</Button>
-            <Button size="form" type="button" variant="outline" disabled={isSubmitting} onClick={goDetails}><ArrowLeft aria-hidden="true" className="size-4" />Volver a datos</Button>
-            <Button size="form" type="submit" value="save" disabled={!ready || isSubmitting}>{isSubmitting ? <><LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />Guardando…</> : <>Guardar gasto<ArrowRight aria-hidden="true" className="size-4" /></>}</Button>
+          <div className="shrink-0 space-y-2 border-t bg-card px-5 py-4 sm:px-7">
+            <div className="grid grid-cols-2 gap-2">
+              <Button size="form" type="button" variant="outline" disabled={isSubmitting} onClick={goDetails}><ArrowLeft aria-hidden="true" className="size-4" />Volver a datos</Button>
+              <Button size="form" type="submit" value="save" disabled={!ready || isSubmitting}>{isSubmitting ? <><LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />Guardando…</> : <>Guardar gasto<ArrowRight aria-hidden="true" className="size-4" /></>}</Button>
+            </div>
+            <Button size="form" type="submit" value="another" variant="ghost" className="w-full text-muted-foreground" disabled={!ready || isSubmitting} title="Guarda y deja la misma categoría, pago y fecha para registrar otro rápido">Guardar y agregar otro</Button>
           </div>
         </section>
       </fieldset>

@@ -4,8 +4,12 @@ import { CategoryBadge } from "@/components/gastos/CategoryBadge"
 import { ExpenseTags } from '@/components/gastos/ExpenseTags'
 import { Button } from '@/components/ui/button'
 import { TableCell, TableRow } from "@/components/ui/table"
-import { Trash2, Receipt, CreditCard, Calendar } from 'lucide-react'
+import { useState } from 'react'
+import dynamic from 'next/dynamic'
+import { Trash2, Pencil, Receipt, CreditCard, Calendar } from 'lucide-react'
 import type { Expense } from '@/services/expenses'
+
+const EditExpenseDialog = dynamic(() => import('@/components/gastos/EditExpenseDialog').then(m => m.EditExpenseDialog))
 
 interface GastoTableRowProps {
   gasto: Expense
@@ -20,6 +24,7 @@ export function GastoTableRow({
   formatMoney,
   formatDate
 }: GastoTableRowProps) {
+  const [showEdit, setShowEdit] = useState(false)
   const getPaymentMethodIcon = (metodo: string) => {
     switch (metodo?.toLowerCase()) {
       case 'tarjeta de débito':
@@ -68,7 +73,16 @@ export function GastoTableRow({
           {formatMoney(gasto.monto)}
         </span>
       </TableCell>
-      <TableCell className="text-center px-3 py-3 w-[80px] min-w-[80px]">
+      <TableCell className="text-center px-3 py-3 w-[100px] min-w-[100px]">
+        <div className="flex items-center justify-center gap-1">
+        <Button
+          size="icon-sm"
+          onClick={() => setShowEdit(true)}
+          variant="ghost"
+          aria-label={`Editar gasto: ${gasto.descripcion}`}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
         <Button
           size="icon-sm"
           onClick={() => onDeleteGasto(gasto.id.toString())}
@@ -77,6 +91,8 @@ export function GastoTableRow({
         >
           <Trash2 className="h-4 w-4" />
         </Button>
+        </div>
+        {showEdit && <EditExpenseDialog expense={gasto} open={showEdit} onOpenChange={setShowEdit} onSaved={() => {}} />}
       </TableCell>
     </TableRow>
   )

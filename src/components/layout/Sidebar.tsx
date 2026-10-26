@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { clearPrivateCaches } from "@/lib/pwa/cache-policy"
-import { Home, Calculator, BarChart3, Receipt, LogOut, Repeat, Plus, Plug, Mail, PanelLeft, X, type LucideIcon } from "lucide-react"
+import { Home, Calculator, BarChart3, Receipt, LogOut, Repeat, Plug, Mail, PanelLeft, X, type LucideIcon } from "lucide-react"
 import { BethaLogo } from "@/components/brand/BethaLogo"
 import { BethaMark } from "@/components/brand/BethaMark"
 import { cn } from "@/lib/utils"
@@ -28,7 +28,6 @@ export const navSections: { title?: string; items: NavItem[] }[] = [
 	{
 		title: "Gastos",
 		items: [
-			{ name: "Nuevo gasto", href: "#nuevo-gasto", icon: Plus, action: "normal" },
 			{ name: "Desde correo", href: "/gastos-correo", icon: Mail },
 			{ name: "Recurrentes", href: "/gastos-recurrentes", icon: Repeat },
 		],

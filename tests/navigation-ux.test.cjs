@@ -53,7 +53,7 @@ test('el menú colapsado conserva nombres accesibles y la ruta activa anidada', 
   pathname = '/presupuesto/42'
   const html = renderNavigation(React.createElement(Sidebar, { ...sidebarProps, isMobile: false, isCollapsed: true }))
   assert.match(html, /href="\/presupuesto"[^>]*aria-label="Presupuesto"[^>]*aria-current="page"/)
-  assert.equal((html.match(/aria-label="(?:Resumen|Detalle de gastos|Presupuesto|Estadísticas|Nuevo gasto|Desde correo|Recurrentes|Conexiones MCP)"/g) || []).length, 8)
+  assert.equal((html.match(/aria-label="(?:Resumen|Detalle de gastos|Presupuesto|Estadísticas|Desde correo|Recurrentes|Conexiones MCP)"/g) || []).length, 7)
 })
 
 test('cerrar el menú móvil no roba el foco al modal de gasto que acaba de abrir', () => {
