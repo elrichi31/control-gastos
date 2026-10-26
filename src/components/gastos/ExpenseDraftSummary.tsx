@@ -1,10 +1,10 @@
 "use client"
 
-import { CalendarDays, CreditCard, LayoutGrid, Tag } from "lucide-react"
+import { CalendarDays, CreditCard, LayoutGrid, Pencil, Tag } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatMoney } from "@/lib/utils"
 
-export type ExpenseDraft = { total: number; categoryId: number | null; categoryName?: string; paymentName?: string; date: string; tags: string[] }
+export type ExpenseDraft = { total: number; categoryId: number | null; categoryName?: string; paymentName?: string; date: string; tags: string[]; description?: string; base?: number; taxTotal?: number }
 
 const longDate = (iso: string) => {
   const [year, month, day] = iso.split("-").map(Number)
@@ -19,7 +19,7 @@ export function ExpenseDraftSummary({ draft, expenses }: { draft: ExpenseDraft |
   const row = (Icon: typeof Tag, label: string, value: React.ReactNode) => (
     <div className="flex items-start justify-between gap-3 text-sm">
       <dt className="flex shrink-0 items-center gap-2 text-muted-foreground"><Icon aria-hidden="true" className="size-3.5" />{label}</dt>
-      <dd className="min-w-0 text-right font-medium">{value}</dd>
+      <dd className="min-w-0 break-words text-right font-medium [overflow-wrap:anywhere]">{value}</dd>
     </div>
   )
   return (
@@ -30,7 +30,9 @@ export function ExpenseDraftSummary({ draft, expenses }: { draft: ExpenseDraft |
       </CardHeader>
       <CardContent className="space-y-4 px-5 pb-5">
         <p className="text-3xl font-semibold tabular-nums">{formatMoney(total)}</p>
+        {Boolean(draft?.taxTotal) && <p className="text-sm text-muted-foreground">Precio: {formatMoney(draft?.base ?? 0)} + impuestos: {formatMoney(draft?.taxTotal ?? 0)}</p>}
         <dl className="space-y-3 border-t pt-4">
+          {draft?.description && row(Pencil, "Descripción", draft.description)}
           {row(LayoutGrid, "Categoría", draft?.categoryName ?? "—")}
           {row(CreditCard, "Pago", draft?.paymentName ?? "—")}
           {row(CalendarDays, "Fecha", draft ? longDate(draft.date) : "—")}

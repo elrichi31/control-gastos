@@ -1,18 +1,19 @@
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react"
-import { ArrowRight, CalendarDays, ChevronDown, DollarSign, LayoutGrid, LoaderCircle, Pencil, ReceiptText, CreditCard, type LucideIcon } from "lucide-react"
+import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronDown, DollarSign, LayoutGrid, LoaderCircle, Pencil, ReceiptText, CreditCard, type LucideIcon } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { HorizontalScroll } from "@/components/ui/horizontal-scroll"
 import { ExpenseTagsField } from '@/components/gastos/ExpenseTags'
 import { ForeignTaxField } from '@/components/gastos/ForeignTaxField'
 import { computeForeignTax, emptyForeignTax, storedForeignTax, validateForeignTax, withForeignTag } from '@/lib/foreign-tax'
 import { formatMoney } from '@/lib/utils'
 import { parseExpenseTags } from '@/lib/expense-tags'
 import { categoryIcon, categoryTone, paymentIcon } from '@/lib/expense-icons'
-import type { ExpenseDraft } from '@/components/gastos/ExpenseDraftSummary'
+import { ExpenseDraftSummary, type ExpenseDraft } from '@/components/gastos/ExpenseDraftSummary'
 import { createExpense } from "@/services/expenses"
 import { fetchBudgetsByYear } from "@/services/budget-general"
 import { fetchPresupuestoCategorias } from "@/services/budget"
@@ -50,6 +51,7 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
   const submitting = useRef(false)
   const formRef = useRef<HTMLFormElement>(null)
   const amountRef = useRef<HTMLInputElement>(null)
+  const reviewRef = useRef<HTMLHeadingElement>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const read = useCachedRead()
@@ -61,7 +63,7 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
   const loadOptions = () => catalogs.refetch()
   const create = useRemoteMutation(createExpense, [queryKeys.expenses, queryKeys.monthPlan, queryKeys.budgets, queryKeys.forecast])
   const [foreignTax, setForeignTax] = useState(emptyForeignTax)
-  const [pickDate, setPickDate] = useState(false)
+  const [step, setStep] = useState<"details" | "review">("details")
   useEffect(() => { if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) amountRef.current?.focus({ preventScroll: true }) }, [])
 
   const suggestion = useMemo(() => predictExpenseSelection(formData.description, history, categories, paymentMethods), [formData.description, history, categories, paymentMethods])
@@ -89,11 +91,17 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
   const breakdown = computeForeignTax(amountValue, foreignTax)
   const categoryName = categories.find(cat => String(cat.id) === selection.categoryId)?.nombre
   const paymentName = paymentMethods.find(method => String(method.id) === selection.paymentMethodId)?.nombre
-  const customDate = pickDate || (formData.date !== today() && formData.date !== daysAgo(1))
+  let summaryTags: string[] = []
+  try { summaryTags = withForeignTag(parseExpenseTags(formData.tags), foreignTax) } catch { /* validation explains invalid tags before review */ }
+  const draft: ExpenseDraft = { description: formData.description.trim(), total: breakdown.total, base: amountValue, taxTotal: breakdown.taxTotal, categoryId: selection.categoryId ? Number(selection.categoryId) : null, categoryName, paymentName, date: formData.date, tags: summaryTags }
   useEffect(() => {
     onDraftChange?.({ total: breakdown.total, categoryId: selection.categoryId ? Number(selection.categoryId) : null, categoryName, paymentName, date: formData.date, tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) })
   }, [onDraftChange, breakdown.total, selection.categoryId, categoryName, paymentName, formData.date, formData.tags])
   const ready = !optionsLoading && !optionsError && categories.length > 0 && paymentMethods.length > 0
+  const focusStep = (target: HTMLElement | null) => {
+    formRef.current?.closest<HTMLElement>('[data-expense-scroll-area]')?.scrollTo({ top: 0 })
+    target?.focus({ preventScroll: true })
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -112,13 +120,21 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
     setErrors(newErrors)
     setSubmitError(null)
     if (Object.keys(newErrors).length) {
+      setStep("details")
       const first = Object.keys(newErrors)[0]
       if (first === 'tags' || first === 'foreignTax') {
         const details = formRef.current?.querySelector<HTMLDetailsElement>('#expense-extra-details')
         if (details) details.open = true
       }
       const id = first === 'tags' ? 'expense-tags' : first === 'categoryId' ? 'category' : first === 'paymentMethodId' ? 'paymentMethod' : first === 'foreignTax' ? 'foreign-enabled' : first
-      formRef.current?.querySelector<HTMLElement>(`#${id}`)?.focus()
+      const focusError = () => formRef.current?.querySelector<HTMLElement>(`#${id}`)?.focus()
+      if (step === "review") requestAnimationFrame(focusError)
+      else focusError()
+      return
+    }
+    if (step === "details") {
+      setStep("review")
+      requestAnimationFrame(() => focusStep(reviewRef.current))
       return
     }
     const another = (event.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'another'
@@ -141,9 +157,10 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
     setFormData({ description: "", amount: "", categoryId: another ? selection.categoryId : "", date: another ? formData.date : today(), paymentMethodId: another ? selection.paymentMethodId : "", tags: "" })
     if (!another) setForeignTax(emptyForeignTax())
     setErrors({})
+    setStep("details")
     toast.success("Gasto guardado")
     void warnBudgetCrossing(read, saved, expenses)
-    if (another) requestAnimationFrame(() => amountRef.current?.focus())
+    if (another) requestAnimationFrame(() => focusStep(amountRef.current))
     else onSuccess?.()
   }
 
@@ -154,6 +171,20 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
       {!optionsLoading && !optionsError && !ready && <p role="alert" className="text-sm text-muted-foreground">Necesitas al menos una categoría y un método de pago para registrar gastos.</p>}
       {submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}
       <fieldset disabled={isSubmitting} className="min-w-0 space-y-6">
+        <nav aria-label="Pasos del registro">
+          <ol className="grid grid-cols-2 gap-3">
+            <li aria-current={step === "details" ? "step" : undefined}>
+              <button type="button" disabled={isSubmitting} onClick={() => { setStep("details"); requestAnimationFrame(() => focusStep(amountRef.current)) }} className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-border px-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring">
+                <span aria-hidden="true" className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">{step === "review" ? <Check className="size-3.5" /> : "1"}</span>Datos
+              </button>
+            </li>
+            <li aria-current={step === "review" ? "step" : undefined} className={`flex min-h-11 items-center gap-2 rounded-lg border px-3 text-sm font-medium ${step === "review" ? "border-primary text-foreground" : "border-border text-muted-foreground"}`}>
+              <span aria-hidden="true" className={`grid size-6 shrink-0 place-items-center rounded-full ${step === "review" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>2</span>Resumen
+            </li>
+          </ol>
+          <p className="sr-only" role="status">Paso {step === "details" ? "1" : "2"} de 2: {step === "details" ? "Datos" : "Resumen"}</p>
+        </nav>
+        <div hidden={step !== "details"} className="space-y-6">
         <div className="flex items-center gap-3">
           <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-xl bg-foreground text-background"><ReceiptText className="size-5" /></span>
           <div className="min-w-0">
@@ -162,31 +193,32 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
           </div>
         </div>
 
+        <div className="grid grid-cols-2 items-start gap-3 sm:gap-5" aria-label="Monto y fecha">
         <div className="space-y-2 min-w-0">
           <FieldLabel icon={DollarSign} htmlFor="amount">{foreignTax.enabled ? 'Precio sin impuestos' : 'Monto'} <span className="text-destructive">*</span></FieldLabel>
           <div className="relative">
             <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-            <Input controlSize="form" ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} onWheel={e => e.currentTarget.blur()} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : 'amount-hint'} className="pl-7 pr-14 font-semibold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-            <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">USD</span>
+            <Input controlSize="form" ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} onWheel={e => e.currentTarget.blur()} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : 'amount-hint'} className="pl-7 pr-2 sm:pr-14 font-semibold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+            <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 text-xs font-medium text-muted-foreground sm:block">USD</span>
           </div>
-          <div className="scrollbar-hidden -mx-1 flex flex-nowrap items-center gap-2 overflow-x-auto px-1 py-1">
+          <HorizontalScroll aria-label="Montos rápidos" className="-mx-1 flex flex-nowrap items-center gap-2 px-1 py-1">
             {QUICK_AMOUNTS.map(step => <button key={step} type="button" className={pill(false)} onClick={() => change('amount', String(Math.round(((Number.isFinite(amountValue) ? amountValue : 0) + step) * 100) / 100))}>+ {step}</button>)}
             {formData.amount && <button type="button" className="min-h-11 shrink-0 rounded-full px-3 text-[13px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring" onClick={() => change('amount', '')}>Borrar</button>}
-          </div>
+          </HorizontalScroll>
           {errors.amount ? fieldError('amount') : <p id="amount-hint" className="text-xs text-muted-foreground">{foreignTax.enabled ? 'Los impuestos se suman al importe que registres.' : 'El importe total de tu compra.'}</p>}
         </div>
 
         <div role="group" aria-labelledby="date-label" className="space-y-2 min-w-0">
           <FieldLabel icon={CalendarDays} id="date-label">Fecha <span className="text-destructive">*</span></FieldLabel>
-          <div className="flex flex-wrap items-center gap-2">
+          <Input controlSize="form" id="date" type="date" aria-label="Fecha del gasto" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className="w-full min-w-0 px-2 text-[13px] dark:[color-scheme:dark]" />
+          <div className="flex flex-wrap items-center gap-2 py-1">
             {([['Hoy', 0], ['Ayer', 1]] as const).map(([label, days]) => {
               const value = daysAgo(days)
-              return <button key={label} type="button" aria-pressed={!pickDate && formData.date === value} className={pill(!pickDate && formData.date === value)} onClick={() => { setPickDate(false); change('date', value) }}>{label} <span className="font-normal text-muted-foreground">{shortDate(value)}</span></button>
+              return <button key={label} type="button" title={shortDate(value)} aria-pressed={formData.date === value} className={`${pill(formData.date === value)} px-3`} onClick={() => change('date', value)}>{label}</button>
             })}
-            <button type="button" aria-pressed={customDate} className={pill(customDate)} onClick={() => setPickDate(true)}>Otra fecha</button>
-            {customDate && <Input controlSize="form" id="date" type="date" aria-label="Fecha del gasto" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className="w-auto min-w-0 rounded-full dark:[color-scheme:dark]" />}
           </div>
           {fieldError('date')}
+        </div>
         </div>
 
         <div className="space-y-2 min-w-0">
@@ -221,19 +253,20 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
             <ForeignTaxField base={amountValue} value={foreignTax} onChange={changeForeignTax} error={errors.foreignTax} />
           </div>
         </details>
+        <div className="flex justify-end border-t pt-5">
+          <Button size="form" type="submit" disabled={!ready || isSubmitting}>Continuar al resumen<ArrowRight aria-hidden="true" className="size-4" /></Button>
+        </div>
+        </div>
 
-        <div className="space-y-4 border-t border-border pt-5">
-          <p aria-live="polite" className="text-sm text-muted-foreground xl:hidden">
-            Vas a guardar <span className="font-semibold text-foreground tabular-nums">{formatMoney(breakdown.total)}</span>
-            {breakdown.taxTotal > 0 && <> (incluye {formatMoney(breakdown.taxTotal)} de impuestos)</>}
-            {categoryName && <> en <span className="font-medium text-foreground">{categoryName}</span></>}
-            {paymentName && <> con <span className="font-medium text-foreground">{paymentName}</span></>}.
-          </p>
+        <section hidden={step !== "review"} aria-label="Resumen del gasto" className="space-y-4">
+          <h2 ref={reviewRef} tabIndex={-1} className="sr-only">Revisa tu gasto antes de guardar</h2>
+          <ExpenseDraftSummary draft={draft} expenses={expenses} />
           <div className="grid gap-2 sm:flex sm:justify-end sm:gap-3">
+            <Button size="form" type="button" variant="outline" disabled={isSubmitting} onClick={() => { setStep("details"); requestAnimationFrame(() => focusStep(amountRef.current)) }}><ArrowLeft aria-hidden="true" className="size-4" />Volver a datos</Button>
             <Button size="form" type="submit" value="save" disabled={!ready || isSubmitting}>{isSubmitting ? <><LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />Guardando…</> : <>Guardar gasto<ArrowRight aria-hidden="true" className="size-4" /></>}</Button>
             <Button size="form" type="submit" value="another" variant="ghost" className="order-2 text-muted-foreground sm:order-first" disabled={!ready || isSubmitting} title="Guarda y deja la misma categoría, pago y fecha para registrar otro rápido">Guardar y agregar otro</Button>
           </div>
-        </div>
+        </section>
       </fieldset>
     </form>
   )
@@ -257,7 +290,7 @@ function ChipGroup({ id, labelledBy, value, onChange, options, invalid, describe
   describedBy?: string
 }) {
   return (
-    <div id={id} role="radiogroup" tabIndex={-1} aria-labelledby={labelledBy} aria-invalid={invalid} aria-describedby={describedBy}
+    <HorizontalScroll id={id} role="radiogroup" tabIndex={-1} aria-labelledby={labelledBy} aria-invalid={invalid} aria-describedby={describedBy}
       onKeyDown={event => {
         if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End'].includes(event.key) || options.length === 0) return
         event.preventDefault()
@@ -267,7 +300,7 @@ function ChipGroup({ id, labelledBy, value, onChange, options, invalid, describe
         onChange(options[next].value)
         event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]')[next]?.focus()
       }}
-      className={`scrollbar-hidden -mx-1 flex flex-nowrap gap-2 overflow-x-auto rounded-lg px-1 py-1 outline-none ${invalid ? 'ring-1 ring-destructive ring-offset-4 ring-offset-card' : ''}`}>
+      className={`-mx-1 flex flex-nowrap gap-2 rounded-lg px-1 py-1 outline-none ${invalid ? 'ring-1 ring-destructive ring-offset-4 ring-offset-card' : ''}`}>
       {options.map(option => {
         const active = option.value === value
         return (
@@ -277,6 +310,6 @@ function ChipGroup({ id, labelledBy, value, onChange, options, invalid, describe
           </button>
         )
       })}
-    </div>
+    </HorizontalScroll>
   )
 }

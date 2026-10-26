@@ -21,6 +21,8 @@ const { ExpenseTagsField } = require('../src/components/gastos/ExpenseTags.tsx')
 // are mocked; this is not live browser or Supabase integration evidence.
 async function harness(run) {
   const original = Object.fromEntries(['useState', 'useEffect', 'useMemo', 'useRef', 'useCallback'].map(k => [k, React[k]]))
+  const previousRAF = global.requestAnimationFrame
+  global.requestAnimationFrame = fn => fn()
   let slots = [], refs = [], index = 0, refIndex = 0
   React.useState = initial => { const key = index++; if (!(key in slots)) slots[key] = typeof initial === 'function' ? initial() : initial; return [slots[key], value => { slots[key] = typeof value === 'function' ? value(slots[key]) : value }] }
   React.useEffect = () => {}
@@ -28,19 +30,64 @@ async function harness(run) {
   React.useCallback = fn => fn
   React.useRef = initial => { const key = refIndex++; return refs[key] ||= { current: initial } }
   const render = fn => { index = 0; refIndex = 0; return fn() }
-  try { await run({ slots, refs, render }) } finally { Object.assign(React, original) }
+  try { await run({ slots, refs, render }) } finally { Object.assign(React, original); if (previousRAF === undefined) delete global.requestAnimationFrame; else global.requestAnimationFrame = previousRAF }
 }
 const event = { preventDefault() {}, nativeEvent: {} }
+async function submitReviewed(render, form, submitEvent) {
+  let tree = render(form)
+  const review = () => elements(tree).find(node => node.type === 'section' && node.props['aria-label'] === 'Resumen del gasto')
+  if (review().props.hidden) { await tree.props.onSubmit(submitEvent); tree = render(form) }
+  if (!review().props.hidden) await tree.props.onSubmit(submitEvent)
+}
+test('continue opens the review without saving; going back preserves all entered data', async () => {
+  await harness(async ({ slots, render }) => {
+    const form = () => ExpenseForm({ fetchExpenses() {} })
+    render(form)
+    const entered = { description: 'Almuerzo para revisar', amount: '12.50', categoryId: '1', paymentMethodId: '1', date: '2026-10-01', tags: ' Familia, familia ' }
+    slots[0] = entered
+    saved = undefined
+    await render(form).props.onSubmit(event)
+    assert.equal(saved, undefined, 'Continuar nunca crea el gasto')
+    const tree = render(form)
+    const review = elements(tree).find(node => node.type === 'section' && node.props['aria-label'] === 'Resumen del gasto')
+    assert.equal(review.props.hidden, false)
+    const { renderToStaticMarkup } = require('react-dom/server')
+    const html = renderToStaticMarkup(review)
+    assert.match(html, /Almuerzo para revisar/)
+    assert.match(html, /\$12\.50/)
+    assert.match(html, /Comida/)
+    assert.match(html, /Efectivo/)
+    assert.match(html, /familia/)
+    const back = elements(review).find(node => node.props?.type === 'button' && React.Children.toArray(node.props.children).includes('Volver a datos'))
+    back.props.onClick()
+    assert.deepEqual(slots[0], entered)
+    const detailsTree = render(form)
+    assert.equal(elements(detailsTree).find(node => node.type === 'section' && node.props['aria-label'] === 'Resumen del gasto').props.hidden, true)
+  })
+})
+test('invalid data stays in the first step and cannot be saved or reviewed', async () => {
+  await harness(async ({ slots, render }) => {
+    const form = () => ExpenseForm({ fetchExpenses() {} })
+    render(form)
+    saved = undefined
+    slots[0].amount = '-5'
+    await render(form).props.onSubmit(event)
+    const tree = render(form)
+    assert.equal(saved, undefined)
+    assert.match(slots[2].amount, /mayor a 0/)
+    assert.equal(elements(tree).find(node => node.type === 'section' && node.props['aria-label'] === 'Resumen del gasto').props.hidden, true)
+  })
+})
 test('real capture handler sends normalized tags, permits omission and clears tags after success', async () => {
   await harness(async ({ slots, render }) => {
     const form = () => ExpenseForm({ fetchExpenses() {} })
     render(form)
     slots[0] = { description: 'Almuerzo', amount: '12', categoryId: '1', paymentMethodId: '1', date: '2026-10-01', tags: ' Viaje, VIAJE, familia ' }
 
-    await render(form).props.onSubmit(event)
+    await submitReviewed(render, form, event)
     assert.deepEqual(saved.tags, ['viaje', 'familia']); assert.equal(slots[0].tags, '')
     slots[0] = { ...slots[0], description: 'Otro', amount: '1', categoryId: '1', paymentMethodId: '1', tags: '' }
-    await render(form).props.onSubmit(event)
+    await submitReviewed(render, form, event)
     assert.deepEqual(saved.tags, [])
   })
 })
@@ -49,11 +96,11 @@ test('real capture handler blocks invalid tags and retains tags when saving fail
     const form = () => ExpenseForm({ fetchExpenses() {} }); render(form)
     slots[0] = { description: 'Almuerzo', amount: '12', categoryId: '1', paymentMethodId: '1', date: '2026-10-01', tags: 'x'.repeat(31) }
     saved = undefined
-    await render(form).props.onSubmit(event)
+    await submitReviewed(render, form, event)
     assert.equal(saved, undefined); assert.match(slots[2].tags, /30/)
     slots[0].tags = 'familia'; failSave = true
     const log = console.error; console.error = () => {}
-    try { await render(form).props.onSubmit(event); assert.equal(slots[0].tags, 'familia'); assert.match(slots[3], /No se pudo guardar/) } finally { failSave = false; console.error = log }
+    try { await submitReviewed(render, form, event); assert.equal(slots[0].tags, 'familia'); assert.match(slots[3], /No se pudo guardar/) } finally { failSave = false; console.error = log }
   })
 })
 test('modal capture closes only after a normal save and reports the saving lifecycle', async () => {
@@ -63,7 +110,7 @@ test('modal capture closes only after a normal save and reports the saving lifec
     const form = () => ExpenseForm({ fetchExpenses() {}, onSuccess() { closed++ }, onSubmittingChange(value) { busy.push(value) } })
     render(form)
     slots[0] = { description: 'Almuerzo', amount: '12', categoryId: '1', paymentMethodId: '1', date: '2026-10-01', tags: '' }
-    await render(form).props.onSubmit(event)
+    await submitReviewed(render, form, event)
     assert.equal(closed, 1)
     assert.deepEqual(busy, [true, false])
   })
@@ -76,7 +123,7 @@ test('modal capture keeps the form open for another expense and retains its date
     slots[0] = { description: 'Almuerzo', amount: '12', categoryId: '1', paymentMethodId: '1', date: '2026-10-01', tags: '' }
     const previousRAF = global.requestAnimationFrame
     global.requestAnimationFrame = fn => fn()
-    try { await render(form).props.onSubmit({ preventDefault() {}, nativeEvent: { submitter: { getAttribute: () => 'another' } } }) }
+    try { await submitReviewed(render, form, { preventDefault() {}, nativeEvent: { submitter: { getAttribute: () => 'another' } } }) }
     finally { if (previousRAF === undefined) delete global.requestAnimationFrame; else global.requestAnimationFrame = previousRAF }
     assert.equal(closed, 0)
     assert.deepEqual(slots[0], { description: '', amount: '', categoryId: '1', paymentMethodId: '1', date: '2026-10-01', tags: '' })
@@ -92,7 +139,7 @@ test('modal capture stays open with entered data after a failed save and release
     slots[0] = entered
     const log = console.error
     console.error = () => {}; failSave = true
-    try { await render(form).props.onSubmit(event) }
+    try { await submitReviewed(render, form, event) }
     finally { failSave = false; console.error = log }
     assert.equal(closed, 0)
     assert.deepEqual(slots[0], entered)
@@ -133,7 +180,7 @@ test('invalid optional tags expand their details and receive focus before saving
     const details = { open: false }; let focused = false
     refs[1].current = { querySelector: selector => selector === '#expense-extra-details' ? details : selector === '#expense-tags' ? { focus() { focused = true } } : null }
     saved = undefined
-    await render(form).props.onSubmit(event)
+    await submitReviewed(render, form, event)
     assert.equal(details.open, true)
     assert.equal(focused, true)
     assert.equal(saved, undefined)
