@@ -22,7 +22,7 @@ import { toast } from "sonner"
 import { ForeignTaxField } from "@/components/gastos/ForeignTaxField"
 import { computeForeignTax, emptyForeignTax, storedForeignTax, validateForeignTax } from "@/lib/foreign-tax"
 
-export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
+export function RecurringExpenseForm({ onSuccess, onSubmittingChange }: { onSuccess?: () => void; onSubmittingChange?: (busy: boolean) => void }) {
   // Calcular el primer día del mes actual
   const getPrimerDiaMesActual = () => {
     const now = new Date()
@@ -109,12 +109,14 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return
 
     if (!validateForm()) {
       return
     }
 
     setIsSubmitting(true)
+    onSubmittingChange?.(true)
 
     try {
       await create.mutateAsync({
@@ -142,6 +144,7 @@ export function RecurringExpenseForm({ onSuccess }: { onSuccess?: () => void }) 
       toast.error(error instanceof Error ? error.message : "Ocurrió un error al crear el gasto recurrente")
     } finally {
       setIsSubmitting(false)
+      onSubmittingChange?.(false)
     }
   }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import Link from 'next/link'
+import { NewExpenseButton } from '@/components/gastos/ExpenseDialogProvider'
 import { useSession } from 'next-auth/react'
 import { Plus } from 'lucide-react'
 import { toast } from "sonner"
@@ -88,7 +88,7 @@ export default function DetalleGastosPage() {
         title="Detalle de gastos"
         description="Análisis detallado y filtrado de todos tus gastos."
         actions={<>
-          <Button asChild size="sm"><Link href="/form"><Plus aria-hidden="true" className="h-4 w-4 mr-2" />Agregar gasto</Link></Button>
+          <NewExpenseButton size="sm"><Plus aria-hidden="true" className="h-4 w-4 mr-2" />Agregar gasto</NewExpenseButton>
           <ExportarDatos gastos={filteredGastos} gastosOriginal={gastos} />
         </>}
       />

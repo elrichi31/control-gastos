@@ -2,10 +2,8 @@
 
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
-import Link from "next/link"
+import { NewExpenseButton } from "@/components/gastos/ExpenseDialogProvider"
 import { Menu, Plus } from "lucide-react"
-import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 import { navSections, initials } from "@/components/layout/Sidebar"
 
 export function TopBar({ onMenuClick, isMobile, isMenuOpen = false }: { onMenuClick: () => void; isMobile: boolean; isMenuOpen?: boolean }) {
@@ -32,12 +30,10 @@ export function TopBar({ onMenuClick, isMobile, isMenuOpen = false }: { onMenuCl
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
-        {pathname !== "/form" && (
-          <Link href="/form" className={cn(buttonVariants({ size: "sm", variant: "secondary" }), "h-11 shrink-0 gap-1.5 px-3 lg:h-9")}>
-            <Plus className="size-4" aria-hidden="true" />
-            Nuevo gasto
-          </Link>
-        )}
+        <NewExpenseButton id="new-expense-trigger" size="sm" variant="secondary" className="h-11 shrink-0 gap-1.5 px-3 lg:h-9">
+          <Plus className="size-4" aria-hidden="true" />
+          Nuevo gasto
+        </NewExpenseButton>
         {session?.user && (
           <div className="hidden items-center gap-2 rounded-full border border-border bg-card py-1 pl-1 pr-3 sm:flex">
             <span className="grid size-6 place-items-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary">

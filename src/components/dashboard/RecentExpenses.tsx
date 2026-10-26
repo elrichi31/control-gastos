@@ -2,7 +2,7 @@
 
 import { CategoryBadge } from "@/components/gastos/CategoryBadge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { NewExpenseButton } from "@/components/gastos/ExpenseDialogProvider"
 import Link from "next/link"
 import { formatDateWithLocale, formatMoney } from "@/lib/utils"
 import { Gasto } from "@/types"
@@ -30,11 +30,9 @@ export function RecentExpenses({ expenses, totalCount }: RecentExpensesProps) {
         {expenses.length === 0 ? (
           <div className="text-center px-5 py-10">
             <p className="text-sm text-muted-foreground">Todavía no hay gastos registrados.</p>
-            <Link href="/form">
-              <Button variant="outline" size="sm" className="mt-4">
+              <NewExpenseButton variant="outline" size="sm" className="mt-4">
                 Agregar tu primer gasto
-              </Button>
-            </Link>
+              </NewExpenseButton>
           </div>
         ) : (
           expenses.map(gasto => (

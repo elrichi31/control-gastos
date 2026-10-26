@@ -44,7 +44,7 @@ async function warnBudgetCrossing(read: CachedRead, saved: { categoryId: number;
   } catch { /* el aviso es opcional */ }
 }
 
-export function ExpenseForm({ history = [], expenses = [], onDraftChange }: { fetchExpenses: () => void | Promise<void>; history?: readonly SuggestionHistory[]; expenses?: readonly { categoria_id: number; monto: number; fecha: string }[]; onDraftChange?: (draft: ExpenseDraft) => void }) {
+export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSuccess, onSubmittingChange }: { fetchExpenses: () => void | Promise<void>; history?: readonly SuggestionHistory[]; expenses?: readonly { categoria_id: number; monto: number; fecha: string }[]; onDraftChange?: (draft: ExpenseDraft) => void; onSuccess?: () => void; onSubmittingChange?: (busy: boolean) => void }) {
   const [formData, setFormData] = useState({ description: "", amount: "", categoryId: "", date: today(), paymentMethodId: "", tags: "" })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const submitting = useRef(false)
@@ -124,6 +124,7 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange }: { fe
     const another = (event.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'another'
     submitting.current = true
     setIsSubmitting(true)
+    onSubmittingChange?.(true)
     const saved = { categoryId: parseInt(selection.categoryId), date: formData.date, total: computeForeignTax(amount, foreignTax).total }
     try {
       // Con "Compra en el exterior" se guarda el total que cobró el banco, impuestos incluidos.
@@ -135,6 +136,7 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange }: { fe
     } finally {
       submitting.current = false
       setIsSubmitting(false)
+      onSubmittingChange?.(false)
     }
     setFormData({ description: "", amount: "", categoryId: another ? selection.categoryId : "", date: another ? formData.date : today(), paymentMethodId: another ? selection.paymentMethodId : "", tags: "" })
     if (!another) setForeignTax(emptyForeignTax())
@@ -142,10 +144,11 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange }: { fe
     toast.success("Gasto guardado")
     void warnBudgetCrossing(read, saved, expenses)
     if (another) requestAnimationFrame(() => amountRef.current?.focus())
+    else onSuccess?.()
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} noValidate aria-busy={isSubmitting} className="space-y-4">
+    <form ref={formRef} onSubmit={handleSubmit} noValidate aria-busy={isSubmitting} className="min-w-0 space-y-4">
       {optionsLoading && <p role="status" className="text-xs text-muted-foreground">Cargando categorías y métodos de pago…</p>}
       {optionsError && <div role="alert" className="space-y-2"><p className="text-sm text-destructive">{optionsError}</p><Button type="button" variant="outline" size="sm" disabled={isSubmitting} onClick={() => void loadOptions()}>Reintentar</Button></div>}
       {!optionsLoading && !optionsError && !ready && <p role="alert" className="text-sm text-muted-foreground">Necesitas al menos una categoría y un método de pago para registrar gastos.</p>}

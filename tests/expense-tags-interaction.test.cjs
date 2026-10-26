@@ -56,6 +56,50 @@ test('real capture handler blocks invalid tags and retains tags when saving fail
     try { await render(form).props.onSubmit(event); assert.equal(slots[0].tags, 'familia'); assert.match(slots[3], /No se pudo guardar/) } finally { failSave = false; console.error = log }
   })
 })
+test('modal capture closes only after a normal save and reports the saving lifecycle', async () => {
+  await harness(async ({ slots, render }) => {
+    let closed = 0
+    const busy = []
+    const form = () => ExpenseForm({ fetchExpenses() {}, onSuccess() { closed++ }, onSubmittingChange(value) { busy.push(value) } })
+    render(form)
+    slots[0] = { description: 'Almuerzo', amount: '12', categoryId: '1', paymentMethodId: '1', date: '2026-10-01', tags: '' }
+    await render(form).props.onSubmit(event)
+    assert.equal(closed, 1)
+    assert.deepEqual(busy, [true, false])
+  })
+})
+test('modal capture keeps the form open for another expense and retains its date, category and payment', async () => {
+  await harness(async ({ slots, render }) => {
+    let closed = 0
+    const form = () => ExpenseForm({ fetchExpenses() {}, onSuccess() { closed++ } })
+    render(form)
+    slots[0] = { description: 'Almuerzo', amount: '12', categoryId: '1', paymentMethodId: '1', date: '2026-10-01', tags: '' }
+    const previousRAF = global.requestAnimationFrame
+    global.requestAnimationFrame = fn => fn()
+    try { await render(form).props.onSubmit({ preventDefault() {}, nativeEvent: { submitter: { getAttribute: () => 'another' } } }) }
+    finally { if (previousRAF === undefined) delete global.requestAnimationFrame; else global.requestAnimationFrame = previousRAF }
+    assert.equal(closed, 0)
+    assert.deepEqual(slots[0], { description: '', amount: '', categoryId: '1', paymentMethodId: '1', date: '2026-10-01', tags: '' })
+  })
+})
+test('modal capture stays open with entered data after a failed save and releases the close guard', async () => {
+  await harness(async ({ slots, render }) => {
+    let closed = 0
+    const busy = []
+    const form = () => ExpenseForm({ fetchExpenses() {}, onSuccess() { closed++ }, onSubmittingChange(value) { busy.push(value) } })
+    render(form)
+    const entered = { description: 'Almuerzo', amount: '12', categoryId: '1', paymentMethodId: '1', date: '2026-10-01', tags: 'familia' }
+    slots[0] = entered
+    const log = console.error
+    console.error = () => {}; failSave = true
+    try { await render(form).props.onSubmit(event) }
+    finally { failSave = false; console.error = log }
+    assert.equal(closed, 0)
+    assert.deepEqual(slots[0], entered)
+    assert.deepEqual(busy, [true, false])
+    assert.match(slots[3], /Tus datos siguen aquí/)
+  })
+})
 test('real budget handlers restore, edit, clear and persist optional tags', async () => {
   await harness(async ({ slots, render }) => {
     const hook = () => useBudgetDetailsData('1')

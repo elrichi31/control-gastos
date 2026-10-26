@@ -6,7 +6,7 @@ import { PageTitle } from "@/components/layout/PageTitle"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { X, Plus } from "lucide-react"
-import Link from "next/link"
+import { NewExpenseButton } from "@/components/gastos/ExpenseDialogProvider"
 import { useState, useEffect } from "react"
 
 export default function GastosRecurrentesPage() {
@@ -31,7 +31,7 @@ export default function GastosRecurrentesPage() {
       
       <div className="space-y-4 lg:fill-y">
         <PageHeader title="Gastos recurrentes" description="Gestiona tus gastos que se repiten automáticamente."
-          actions={<Button size="sm" asChild><Link href="/form?tipo=recurrente"><Plus className="w-4 h-4 mr-1.5" />Nuevo recurrente</Link></Button>} />
+          actions={<NewExpenseButton kind="recurrente" size="sm"><Plus className="w-4 h-4 mr-1.5" />Nuevo recurrente</NewExpenseButton>} />
 
         <RecurringExpenseList />
 

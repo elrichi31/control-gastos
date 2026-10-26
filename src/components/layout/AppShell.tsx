@@ -1,6 +1,9 @@
 "use client"
 
 import type React from "react"
+import { Suspense } from "react"
+import { ExpenseDialogProvider } from "@/components/gastos/ExpenseDialogProvider"
+import { ExpenseDialogHost } from "@/components/gastos/ExpenseDialogHost"
 import { usePathname } from "next/navigation"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { TopBar } from "@/components/layout/TopBar"
@@ -37,6 +40,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="min-h-screen">{children}</main>
     ) : (
       // Layout principal con sidebar
+      <ExpenseDialogProvider>
       <div className="flex min-h-screen">
         <Sidebar
           isOpen={isOpen}
@@ -51,6 +55,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <main className="bg-background min-h-[calc(100dvh-3.5rem)]">{children}</main>
         </div>
       </div>
+      <Suspense fallback={null}><ExpenseDialogHost /></Suspense>
+      </ExpenseDialogProvider>
     )}
 
     <Toaster position="top-center" richColors />

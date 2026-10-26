@@ -11,6 +11,8 @@ export function MobileDrawer({ isOpen, onClose, children }: { isOpen: boolean; o
 						id="mobile-navigation"
 						onCloseAutoFocus={(event) => {
 							event.preventDefault()
+							// A dialog opened from this menu owns focus until it closes.
+							if (document.querySelector('[data-expense-entry-dialog]')) return
 							document.getElementById("mobile-menu-trigger")?.focus()
 						}}
 					>

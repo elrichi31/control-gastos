@@ -1,6 +1,6 @@
 "use client"
 
-import Link from 'next/link'
+import { NewExpenseButton } from '@/components/gastos/ExpenseDialogProvider'
 import { Receipt } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -38,7 +38,7 @@ export function ListaGastosAgrupados({
       <Receipt aria-hidden="true" className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
       <h2 className="text-base font-semibold">{hasExpenses ? 'No hay gastos con estos filtros' : 'Aún no tienes gastos'}</h2>
       <p className="mt-2 text-sm text-muted-foreground">{hasExpenses ? 'Prueba otro período o consulta todo tu historial.' : 'Registra el primero para empezar a ver tu actividad.'}</p>
-      {hasExpenses ? <Button type="button" variant="outline" size="sm" className="mt-4" onClick={onResetFilters}>Ver todos los gastos</Button> : <Button asChild size="sm" className="mt-4"><Link href="/form">Agregar gasto</Link></Button>}
+      {hasExpenses ? <Button type="button" variant="outline" size="sm" className="mt-4" onClick={onResetFilters}>Ver todos los gastos</Button> : <NewExpenseButton size="sm" className="mt-4">Agregar gasto</NewExpenseButton>}
     </CardContent></Card>
   )
 

@@ -8,12 +8,13 @@ import { Home, Calculator, BarChart3, Receipt, LogOut, Repeat, Plus, Plug, Mail,
 import { BethaLogo } from "@/components/brand/BethaLogo"
 import { BethaMark } from "@/components/brand/BethaMark"
 import { cn } from "@/lib/utils"
+import { NewExpenseButton, type ExpenseKind } from "@/components/gastos/ExpenseDialogProvider"
 import { ModeToggle } from "@/components/layout/mode-toggle"
 import dynamic from "next/dynamic"
 const MobileDrawer = dynamic(() => import("./MobileDrawer").then(m => m.MobileDrawer), { ssr: false })
 const CronStatus = dynamic(() => import("@/components/layout/CronStatus").then(m => m.CronStatus), { ssr: false })
 
-type NavItem = { name: string; href: string; icon: LucideIcon }
+type NavItem = { name: string; href: string; icon: LucideIcon; action?: ExpenseKind }
 
 export const navSections: { title?: string; items: NavItem[] }[] = [
 	{
@@ -27,7 +28,7 @@ export const navSections: { title?: string; items: NavItem[] }[] = [
 	{
 		title: "Gastos",
 		items: [
-			{ name: "Nuevo gasto", href: "/form", icon: Plus },
+			{ name: "Nuevo gasto", href: "#nuevo-gasto", icon: Plus, action: "normal" },
 			{ name: "Desde correo", href: "/gastos-correo", icon: Mail },
 			{ name: "Recurrentes", href: "/gastos-recurrentes", icon: Repeat },
 		],
@@ -84,8 +85,17 @@ export function Sidebar({ isOpen, onClose, isMobile, isCollapsed, onToggleCollap
 						{section.title && !collapsed && (
 							<p className="px-2.5 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-sidebar-muted/80">{section.title}</p>
 						)}
-						{section.items.map(({ name, href, icon: Icon }) => {
+						{section.items.map(({ name, href, icon: Icon, action }) => {
 							const isActive = pathname === href || pathname?.startsWith(href + "/")
+							if (action) return <NewExpenseButton
+								key={href}
+								kind={action}
+								onClick={isMobile ? onClose : undefined}
+								title={collapsed ? name : undefined}
+								aria-label={name}
+								variant="ghost"
+								className={cn("mb-0.5 w-full justify-start gap-2.5 rounded-lg border border-transparent px-2.5 text-[13px] font-normal text-sidebar-muted hover:bg-sidebar-accent/60 hover:text-foreground", isMobile ? "h-11" : "h-8", collapsed && "justify-center px-0")}
+							><Icon className="size-4 shrink-0" />{!collapsed && <span className="truncate">{name}</span>}</NewExpenseButton>
 							return (
 								<Link
 									key={href}

@@ -10,7 +10,6 @@ interface PageTitleProps {
 const getPageTitle = (pathname: string): string => {
   const baseTitles: Record<string, string> = {
     "/": "Dashboard - BethaSpend",
-    "/form": "Registrar Gasto - BethaSpend", 
     "/estadisticas": "Estadísticas - BethaSpend",
     "/presupuesto": "Presupuestos - BethaSpend",
     "/datos": "Datos - BethaSpend"

@@ -14,7 +14,8 @@ const {ListaGastosAgrupados}=require('../src/components/detalle-gastos/ListaGast
 const {GastoCard}=require('../src/components/detalle-gastos/GastoCard.tsx')
 const defaults={search:'',category:'',paymentMethod:'',dateRange:'current-month',year:'',dateFrom:'',dateTo:'',minAmount:'',maxAmount:'',sortBy:'date',sortOrder:'desc',groupBy:'none'}
 const noop=()=>{}
-const render=(c,p)=>renderToStaticMarkup(React.createElement(c,p))
+const {ExpenseDialogProvider}=require('../src/components/gastos/ExpenseDialogProvider.tsx')
+const render=(c,p)=>renderToStaticMarkup(React.createElement(ExpenseDialogProvider,null,React.createElement(c,p)))
 test('capture starts with amount and exposes decimal keyboard, accessible errors and repeat-save action',()=>{
  const html=render(ExpenseForm,{fetchExpenses:noop})
  assert.ok(html.indexOf('id="amount"')<html.indexOf('id="description"'))
@@ -37,7 +38,7 @@ test('active category and search expose separately removable filter controls',()
 })
 test('empty account offers creation instead of suggesting filters',()=>{
  const html=render(ListaGastosAgrupados,{gastos:[],hasExpenses:false,onResetFilters:noop,activeFiltersCount:0,groupBy:'none',formatDate:x=>x,formatMoney:x=>x,onDeleteGasto:noop})
- assert.match(html,/Aún no tienes gastos/);assert.match(html,/href="\/form"/)
+ assert.match(html,/Aún no tienes gastos/);assert.match(html,/aria-haspopup="dialog"/);assert.doesNotMatch(html,/href="\/form"/)
 })
 test('a month without matches offers all expenses even when no extra filters are active',()=>{
  const html=render(ListaGastosAgrupados,{gastos:[],hasExpenses:true,onResetFilters:noop,activeFiltersCount:0,groupBy:'month',formatDate:x=>x,formatMoney:x=>x,onDeleteGasto:noop})

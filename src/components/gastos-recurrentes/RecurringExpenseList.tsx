@@ -4,7 +4,7 @@ import { CategoryBadge } from "@/components/gastos/CategoryBadge"
 import { formatMoney } from "@/lib/utils"
 
 import { useState, useMemo } from "react"
-import Link from "next/link"
+import { NewExpenseButton } from "@/components/gastos/ExpenseDialogProvider"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -230,12 +230,10 @@ export function RecurringExpenseList() {
           <p className="text-sm text-muted-foreground text-center max-w-sm mb-5">
             Los gastos recurrentes se registran solos cada semana o cada mes.
           </p>
-          <Link href="/form?tipo=recurrente">
-            <Button size="sm">
+            <NewExpenseButton kind="recurrente" size="sm">
               <Plus className="w-4 h-4 mr-1.5" />
               Crear gasto recurrente
-            </Button>
-          </Link>
+            </NewExpenseButton>
         </CardContent>
       </Card>
       </>
