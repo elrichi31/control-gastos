@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Check, ChevronDown, LoaderCircle, type LucideIco
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { HorizontalScroll } from "@/components/ui/horizontal-scroll"
 import { Button } from "@/components/ui/button"
 import { ExpenseTagsField } from '@/components/gastos/ExpenseTags'
 import { ForeignTaxField } from '@/components/gastos/ForeignTaxField'
@@ -22,10 +23,7 @@ import { useRemoteMutation, useCachedRead, type CachedRead } from "@/hooks/useRe
 import { queryKeys } from "@/lib/query/client"
 import { predictExpenseSelection, resolveExpenseSelection, type SuggestionHistory } from "@/lib/expense-suggestions"
 
-const daysAgo = (days: number) => new Date(Date.now() - new Date().getTimezoneOffset() * 60000 - days * 86400000).toISOString().split("T")[0]
-const today = () => daysAgo(0)
-const shortDate = (iso: string) => { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("es", { day: "numeric", month: "short" }).replace(/\./g, "") }
-const QUICK_AMOUNTS = [1, 5, 10, 20]
+const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0]
 const pill = (active: boolean) => `inline-flex shrink-0 whitespace-nowrap min-h-10 items-center gap-1.5 rounded-full border px-3.5 text-[13px] transition-[color,background-color,border-color,scale] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-ring ${active ? 'border-foreground bg-card font-medium text-foreground' : 'border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground'}`
 
 /** Avisa si el gasto recién guardado cruza el 80% o el 100% del presupuesto de su categoría. Es solo una ayuda: nunca falla visiblemente. */
@@ -63,7 +61,6 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
   const create = useRemoteMutation(createExpense, [queryKeys.expenses, queryKeys.monthPlan, queryKeys.budgets, queryKeys.forecast])
   const [foreignTax, setForeignTax] = useState(emptyForeignTax)
   const [step, setStep] = useState<"details" | "review">("details")
-  const [customDate, setCustomDate] = useState(false)
   useEffect(() => { if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) amountRef.current?.focus({ preventScroll: true }) }, [])
 
   const suggestion = useMemo(() => predictExpenseSelection(formData.description, history, categories, paymentMethods), [formData.description, history, categories, paymentMethods])
@@ -158,7 +155,6 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
     if (!another) setForeignTax(emptyForeignTax())
     setErrors({})
     setStep("details")
-    setCustomDate(false)
     toast.success("Gasto guardado")
     void warnBudgetCrossing(read, saved, expenses)
     if (another) requestAnimationFrame(() => focusStep(amountRef.current))
@@ -166,7 +162,6 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
   }
 
   const goDetails = () => { setStep("details"); requestAnimationFrame(() => focusStep(amountRef.current)) }
-  const customDateActive = customDate || (formData.date !== today() && formData.date !== daysAgo(1))
   const stepClass = (active: boolean) => active ? "flex min-h-0 flex-1 flex-col" : "hidden"
 
   return (
@@ -195,32 +190,21 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
 
         <div hidden={step !== "details"} className={stepClass(step === "details")}>
           <div data-expense-scroll-area="" className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-5 py-5 sm:px-7">
-            <div className="min-w-0 space-y-2">
-              <FieldLabel htmlFor="amount">{foreignTax.enabled ? 'Precio sin impuestos' : 'Monto'}</FieldLabel>
-              <div className="relative">
-                <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                <Input controlSize="form" ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} onWheel={e => e.currentTarget.blur()} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : 'amount-hint'} className="pl-7 pr-14 font-semibold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-                <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">USD</span>
+            <div className="grid grid-cols-2 items-start gap-3 sm:gap-5">
+              <div className="min-w-0 space-y-2">
+                <FieldLabel htmlFor="amount">{foreignTax.enabled ? 'Precio sin impuestos' : 'Monto'}</FieldLabel>
+                <div className="relative">
+                  <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input controlSize="form" ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} onWheel={e => e.currentTarget.blur()} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : 'amount-hint'} className="pl-7 pr-2 font-semibold tabular-nums sm:pr-14 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+                  <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 text-xs font-medium text-muted-foreground sm:block">USD</span>
+                </div>
+                {errors.amount ? fieldError('amount') : <p id="amount-hint" className="text-xs text-muted-foreground">{foreignTax.enabled ? 'Los impuestos se suman al importe que registres.' : 'El importe total de tu compra.'}</p>}
               </div>
-              <div role="group" aria-label="Montos rápidos" className="flex flex-wrap items-center gap-2">
-                {QUICK_AMOUNTS.map(amount => <button key={amount} type="button" className={pill(false)} onClick={() => change('amount', String(Math.round(((Number.isFinite(amountValue) ? amountValue : 0) + amount) * 100) / 100))}>+ ${amount}</button>)}
-                {formData.amount && <button type="button" className="min-h-10 rounded-full px-3 text-[13px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring" onClick={() => change('amount', '')}>Borrar</button>}
+              <div className="min-w-0 space-y-2">
+                <FieldLabel htmlFor="date">Fecha</FieldLabel>
+                <Input controlSize="form" id="date" type="date" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className="w-full min-w-0 px-2 text-[13px] dark:[color-scheme:dark]" />
+                {fieldError('date')}
               </div>
-              {errors.amount ? fieldError('amount') : <p id="amount-hint" className="text-xs text-muted-foreground">{foreignTax.enabled ? 'Los impuestos se suman al importe que registres.' : 'El importe total de tu compra.'}</p>}
-            </div>
-
-            <div role="group" aria-labelledby="date-label" className="min-w-0 space-y-2">
-              <FieldLabel id="date-label">Fecha</FieldLabel>
-              <div className="flex flex-wrap items-center gap-2">
-                {([['Hoy', 0], ['Ayer', 1]] as const).map(([label, days]) => {
-                  const value = daysAgo(days)
-                  const active = !customDateActive && formData.date === value
-                  return <button key={label} type="button" aria-pressed={active} className={pill(active)} onClick={() => { setCustomDate(false); change('date', value) }}>{label}<span className="font-normal text-muted-foreground">{shortDate(value)}</span></button>
-                })}
-                <button type="button" aria-pressed={customDateActive} className={pill(customDateActive)} onClick={() => setCustomDate(true)}>Otra fecha</button>
-              </div>
-              {customDateActive && <Input controlSize="form" id="date" type="date" aria-label="Fecha del gasto" value={formData.date} onChange={e => change('date', e.target.value)} aria-invalid={Boolean(errors.date)} aria-describedby={errors.date ? 'date-error' : undefined} className="dark:[color-scheme:dark]" />}
-              {fieldError('date')}
             </div>
 
             <div className="min-w-0 space-y-2">
@@ -245,7 +229,7 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
               {fieldError('paymentMethodId')}
             </div>
 
-            <details id="expense-extra-details" open className="group space-y-4">
+            <details id="expense-extra-details" className="group space-y-4">
               <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
                 <span>Etiquetas y compra en el exterior <span className="ml-1 font-normal text-muted-foreground">· opcional</span></span>
                 <ChevronDown aria-hidden="true" className="size-4 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none" />
@@ -301,7 +285,7 @@ function ChipGroup({ id, labelledBy, value, onChange, options, invalid, describe
   describedBy?: string
 }) {
   return (
-    <div id={id} role="radiogroup" tabIndex={-1} aria-labelledby={labelledBy} aria-invalid={invalid} aria-describedby={describedBy}
+    <HorizontalScroll id={id} role="radiogroup" tabIndex={-1} aria-labelledby={labelledBy} aria-invalid={invalid} aria-describedby={describedBy}
       onKeyDown={event => {
         if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End'].includes(event.key) || options.length === 0) return
         event.preventDefault()
@@ -311,7 +295,7 @@ function ChipGroup({ id, labelledBy, value, onChange, options, invalid, describe
         onChange(options[next].value)
         event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]')[next]?.focus()
       }}
-      className={`flex flex-wrap gap-2 rounded-lg outline-none ${invalid ? 'ring-1 ring-destructive ring-offset-4 ring-offset-card' : ''}`}>
+      className={`-mx-1 flex flex-nowrap gap-2 rounded-lg px-1 py-1 outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${invalid ? 'ring-1 ring-destructive ring-offset-4 ring-offset-card' : ''}`}>
       {options.map(option => {
         const active = option.value === value
         return (
@@ -321,6 +305,6 @@ function ChipGroup({ id, labelledBy, value, onChange, options, invalid, describe
           </button>
         )
       })}
-    </div>
+    </HorizontalScroll>
   )
 }
