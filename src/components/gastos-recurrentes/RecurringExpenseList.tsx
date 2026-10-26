@@ -141,16 +141,29 @@ export function RecurringExpenseList() {
     return paymentMethods.find(p => p.id === id)?.nombre || "Sin método"
   }
 
-  /** "Mensual · día 13 · próximo 13 nov" / "Semanal · lunes · pausado" */
-  const describeFrecuencia = (expense: GastoRecurrente) => {
+  /** "Mensual · día 13" / "Semanal · lunes" */
+  const frecuenciaBase = (expense: GastoRecurrente) => {
     let text = expense.frecuencia.charAt(0).toUpperCase() + expense.frecuencia.slice(1)
     if (expense.frecuencia === "semanal" && expense.dia_semana) text += ` · ${DIAS_SEMANA[expense.dia_semana].toLowerCase()}`
     if (expense.frecuencia === "mensual" && expense.dia_mes) text += expense.dia_mes >= 31 ? " · último día" : ` · día ${expense.dia_mes}`
     if (expense.frecuencia === "anual" && expense.dia_mes && expense.mes_anual) text += ` · ${expense.dia_mes} de ${MESES[expense.mes_anual - 1].toLowerCase()}`
-    if (!expense.activo) return `${text} · pausado`
-    if (!(expense.id in nextDates)) return text
+    return text
+  }
+
+  /** "13 nov" / "Pausado" / "Finalizado"; null mientras se calcula. */
+  const proximoCobro = (expense: GastoRecurrente) => {
+    if (!expense.activo) return "Pausado"
+    if (!(expense.id in nextDates)) return null
     const next = nextDates[expense.id]
-    return next ? `${text} · próximo ${format(parseISO(next), "d MMM", { locale: es })}` : `${text} · finalizado`
+    return next ? format(parseISO(next), "d MMM", { locale: es }) : "Finalizado"
+  }
+
+  /** "Mensual · día 13 · próximo 13 nov" / "Semanal · lunes · pausado" */
+  const describeFrecuencia = (expense: GastoRecurrente) => {
+    const text = frecuenciaBase(expense)
+    const next = proximoCobro(expense)
+    if (!next) return text
+    return !expense.activo ? `${text} · pausado` : nextDates[expense.id] ? `${text} · próximo ${next}` : `${text} · finalizado`
   }
 
   /** "antes $20.00 · nov 2026" for the latest amount change of a rule. */
@@ -248,9 +261,27 @@ export function RecurringExpenseList() {
   const rank = (e: GastoRecurrente) => (e.activo && nextDates[e.id]) || "9999"
   const sortedExpenses = [...expenses].sort((a, b) => rank(a).localeCompare(rank(b)))
 
+  const activeCount = expenses.filter(e => e.activo).length
+  const upcoming = expenses.filter(e => e.activo && nextDates[e.id]).sort((a, b) => nextDates[a.id]!.localeCompare(nextDates[b.id]!))[0]
+  const tiles: { label: string; value: string; hint: string }[] = [
+    { label: "Al mes", value: formatMoney(totalMensual), hint: "aprox., solo activos" },
+    { label: "Al año", value: formatMoney(totalAnual), hint: "solo activos" },
+    { label: "Activos", value: String(activeCount), hint: `de ${expenses.length} en total` },
+    { label: "Próximo cobro", value: upcoming ? format(parseISO(nextDates[upcoming.id]!), "d MMM", { locale: es }) : "—", hint: upcoming ? upcoming.descripcion : "sin cobros próximos" },
+  ]
+
   return (
     <>
       {suggestionsCard}
+      <dl aria-label="Resumen de recurrentes" className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {tiles.map(tile => (
+          <div key={tile.label} className="min-w-0 rounded-xl border bg-card px-4 py-3">
+            <dt className="text-xs font-medium text-muted-foreground">{tile.label}</dt>
+            <dd className="mt-1 truncate text-xl font-semibold tabular-nums">{tile.value}</dd>
+            <p className="truncate text-xs text-muted-foreground">{tile.hint}</p>
+          </div>
+        ))}
+      </dl>
       <Card className="overflow-hidden lg:fill-y">
         {emailError && <div role="alert" className="flex flex-wrap items-center gap-2 border-b px-4 py-2 text-xs text-muted-foreground"><span className="min-w-0 flex-1">Estado por correo no disponible: {emailError}</span><Button variant="ghost" size="sm" onClick={() => void loadEmailStatuses()}>Reintentar</Button></div>}
         {/* Tabla para desktop */}
@@ -260,6 +291,7 @@ export function RecurringExpenseList() {
               <TableRow className="hover:bg-transparent">
                 <TableHead className="h-10 pl-5 text-xs font-medium">Descripción</TableHead>
                 <TableHead className="h-10 text-xs font-medium">Frecuencia</TableHead>
+                <TableHead className="h-10 text-xs font-medium">Próximo cobro</TableHead>
                 <TableHead className="h-10 text-xs font-medium">Categoría</TableHead>
                 <TableHead className="h-10 text-xs font-medium">Método</TableHead>
                 <TableHead className="h-10 text-right text-xs font-medium">Monto</TableHead>
@@ -281,7 +313,10 @@ export function RecurringExpenseList() {
                     {emailStatuses?.[expense.id] && <RecurringEmailIndicator status={emailStatuses[expense.id]} />}
                   </TableCell>
                   <TableCell className="py-2.5 text-muted-foreground whitespace-nowrap">
-                    {describeFrecuencia(expense)}
+                    {frecuenciaBase(expense)}
+                  </TableCell>
+                  <TableCell className="py-2.5 whitespace-nowrap tabular-nums">
+                    <span className={expense.activo && nextDates[expense.id] ? "text-foreground" : "text-muted-foreground"}>{proximoCobro(expense) ?? "—"}</span>
                   </TableCell>
                   <TableCell className="py-2.5">
                     <CategoryBadge name={getCategoryName(expense.categoria_id)} />
@@ -405,13 +440,6 @@ export function RecurringExpenseList() {
           ))}
         </div>
       </Card>
-
-      <p className="text-xs text-muted-foreground mt-3">
-        {expenses.length} {expenses.length === 1 ? "gasto recurrente" : "gastos recurrentes"}
-        {totalMensual > 0 && (
-          <> · <span className="tabular-nums">{formatMoney(totalMensual)}</span> al mes (aprox.) · <span className="tabular-nums">{formatMoney(totalAnual)}</span> al año en los activos</>
-        )}
-      </p>
 
       <EditRecurringExpenseModal
         expense={editExpense}
