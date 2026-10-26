@@ -27,7 +27,7 @@ type Pendiente = { id: number; tipo: 'gasto' | 'ingreso'; origen: string; fecha:
 type Tab = 'nuevos' | 'duplicados' | 'recibidos'
 type PageMeta = { counts: Record<Tab, number>; total: number; page: number; pages: number }
 const tabOf = (p: Pendiente, otros: Set<number>): Tab => p.tipo === 'ingreso' ? 'recibidos' : p.coincidencias.length && !otros.has(p.id) ? 'duplicados' : 'nuevos'
-const selectClass = 'h-11 w-full min-w-0 rounded-lg border border-input bg-card px-2.5 text-base shadow-xs dark:[color-scheme:dark] focus-visible:outline-2 focus-visible:outline-ring sm:h-8 sm:text-[13px]'
+const selectClass = 'h-10 w-full min-w-0 rounded-lg border border-input bg-card px-2.5 text-base shadow-xs dark:[color-scheme:dark] focus-visible:outline-2 focus-visible:outline-ring sm:text-[13px]'
 const half = (n: number) => Math.round(n * 50) / 100
 
 export default function EmailExpensesPage() {
@@ -183,10 +183,10 @@ export default function EmailExpensesPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <TabsList aria-label="Clasificación de movimientos" className="grid h-auto w-full grid-cols-3 sm:w-auto">
             {([['nuevos', 'Nuevos'], ['duplicados', 'Duplicados'], ['recibidos', 'Recibidos']] as const).map(([value, label]) => (
-              <TabsTrigger key={value} value={value} data-review-tab className="min-h-11 min-w-0 gap-1.5 px-2 text-xs sm:min-h-0 sm:px-3 sm:text-[13px]"><span>{label}</span><span className="rounded bg-muted px-1.5 text-[11px] tabular-nums text-muted-foreground">{tabCount(value)}</span></TabsTrigger>
+              <TabsTrigger key={value} value={value} data-review-tab className="min-h-10 min-w-0 gap-1.5 px-2 text-xs sm:px-3 sm:text-[13px]"><span>{label}</span><span className="rounded bg-muted px-1.5 text-[11px] tabular-nums text-muted-foreground">{tabCount(value)}</span></TabsTrigger>
             ))}
           </TabsList>
-          <div className="relative w-full sm:max-w-60"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /><Input aria-label="Buscar movimientos" placeholder="Buscar movimiento…" value={search} onChange={event => setSearch(event.target.value)} className="h-11 pl-9 text-base sm:h-9 sm:text-[13px]" /></div>
+          <div className="relative w-full sm:max-w-60"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /><Input aria-label="Buscar movimientos" placeholder="Buscar movimiento…" value={search} onChange={event => setSearch(event.target.value)} className="pl-9 text-base sm:text-[13px]" /></div>
         </div>
         <div className="flex min-h-12 flex-wrap items-center justify-between gap-2 py-3">
           <p className="text-[13px] text-muted-foreground">{description[tab]}</p>
@@ -196,8 +196,8 @@ export default function EmailExpensesPage() {
           {value === tab && <>
             {tab === 'nuevos' && rows.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border bg-card px-4 py-2">
               <label className="mr-auto flex min-h-11 cursor-pointer items-center gap-2.5 text-[13px] sm:min-h-9"><input type="checkbox" className="h-4 w-4 accent-primary" aria-label="Seleccionar todos los nuevos visibles" checked={allSelected} disabled={syncing} onChange={() => setSelected(prev => { const next = new Set(prev); visibleNew.forEach(p => allSelected ? next.delete(p.id) : next.add(p.id)); return next })} />{chosen.length ? `${chosen.length} seleccionados · ${formatMoney(total)}` : 'Seleccionar visibles'}</label>
-              <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || !chosen.length || chosen.some(p => !canAccept(p))} onClick={() => aceptar(chosen)}>Aceptar selección</Button>
-              <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" disabled={syncing || !chosen.length} onClick={() => chosen.forEach(descartar)}>Descartar selección</Button>
+              <Button size="sm" disabled={syncing || !chosen.length || chosen.some(p => !canAccept(p))} onClick={() => aceptar(chosen)}>Aceptar selección</Button>
+              <Button size="sm" variant="outline" disabled={syncing || !chosen.length} onClick={() => chosen.forEach(descartar)}>Descartar selección</Button>
             </div>}
             {!rows.length && loading ? <div className="flex min-h-48 items-center justify-center gap-2 text-sm text-muted-foreground" role="status"><Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />Cargando…</div> : !rows.length ? <Empty title={search ? 'Sin coincidencias' : inFlight ? 'Guardando tus decisiones' : gruposEmpty(tab)} text={search ? 'Prueba con otra descripción, fecha o banco.' : inFlight ? 'Puedes cambiar de clasificación mientras terminan de guardarse.' : 'Los movimientos de esta clasificación aparecerán aquí.'} /> : (
               <div key={`${tab}-${page}`} className={`${styles.wrap} transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}><table className={styles.table} data-classification={tab}>
@@ -215,7 +215,7 @@ export default function EmailExpensesPage() {
                       <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"><span className="tabular-nums">{p.fecha}</span><span className="rounded-md border bg-muted/50 px-1.5 text-[11px] leading-4">{p.origen}</span></p>
                       {tab === 'nuevos' && <div className="mt-2">
                         <label htmlFor={`guardar-como-${p.id}`} className="text-xs font-medium text-muted-foreground">Nombre del gasto</label>
-                        <Input id={`guardar-como-${p.id}`} aria-label={`Nombre del gasto para ${p.descripcion_original ?? p.descripcion}`} aria-describedby={`guardar-como-ayuda-${p.id}`} aria-invalid={!validDescription(p)} placeholder="Ej. Almuerzo, taxi, regalo…" maxLength={200} value={saveAs(p)} disabled={syncing} onChange={e => setDescriptionDrafts(prev => ({ ...prev, [p.id]: e.target.value }))} className="mt-1 h-11 w-full min-w-0 text-base sm:h-8 sm:text-[13px]" />
+                        <Input id={`guardar-como-${p.id}`} aria-label={`Nombre del gasto para ${p.descripcion_original ?? p.descripcion}`} aria-describedby={`guardar-como-ayuda-${p.id}`} aria-invalid={!validDescription(p)} placeholder="Ej. Almuerzo, taxi, regalo…" maxLength={200} value={saveAs(p)} disabled={syncing} onChange={e => setDescriptionDrafts(prev => ({ ...prev, [p.id]: e.target.value }))} className="mt-1 w-full min-w-0 text-base sm:text-[13px]" />
                         <div id={`guardar-como-ayuda-${p.id}`} className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                           {!validDescription(p) ? <span className="text-destructive">Escribe un nombre de entre 1 y 200 caracteres.</span> : p.destinatario && (p.alias && saveAs(p).trim() === p.alias
                             ? <><span className="inline-flex items-center gap-1"><Check className="h-3 w-3" aria-hidden="true" />Recordado para este destinatario</span><button type="button" className="underline underline-offset-2 hover:text-foreground disabled:opacity-50" disabled={syncing || inFlight > 0 || aliasSaving !== null} onClick={() => saveAlias(p, '')}>Olvidar</button></>
@@ -245,12 +245,12 @@ export default function EmailExpensesPage() {
                     <td data-label="Acciones" className={styles.actions}>
                       <div className={`flex items-center gap-1.5 ${tab === 'nuevos' ? '' : 'flex-wrap'}`}>
                         {tab === 'nuevos' ? <>
-                          <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || !canAccept(p)} aria-label={`Aceptar ${p.descripcion}`} onClick={() => aceptar([p])}><Check aria-hidden="true" />Aceptar</Button>
-                          <Button size="sm" variant="ghost" className="min-h-11 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:min-h-0 sm:w-8 sm:px-0" disabled={syncing} aria-label={`Descartar ${p.descripcion}`} title="Descartar" onClick={() => descartar(p)}><X aria-hidden="true" /><span className="sm:sr-only">Descartar</span></Button>
+                          <Button size="sm" disabled={syncing || !canAccept(p)} aria-label={`Aceptar ${p.descripcion}`} onClick={() => aceptar([p])}><Check aria-hidden="true" />Aceptar</Button>
+                          <Button size="sm" variant="ghost" className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:min-h-0 sm:w-8 sm:px-0" disabled={syncing} aria-label={`Descartar ${p.descripcion}`} title="Descartar" onClick={() => descartar(p)}><X aria-hidden="true" /><span className="sm:sr-only">Descartar</span></Button>
                         </> : <>
-                          {elegido && (recurring ? <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing} aria-label={`Confirmar cobro de ${elegido.gasto.descripcion}`} onClick={() => enqueue(p, { recurrente: { id: p.id, recurrente_id: recurring.id, fecha: recurring.fecha, esperado: recurring.esperado, actualizar_precio: recurring.diferencia !== 0 && !!updatePrice[priceKey] } }, 'vinculados', `Cobro confirmado${updatePrice[priceKey] ? ' y precio actualizado' : ''} · ${elegido.gasto.descripcion}`)}>Confirmar cobro</Button> : <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || (tab === 'recibidos' && elegido.gasto.monto <= p.monto)} onClick={() => enqueue(p, { vincular: [{ id: p.id, gasto_id: elegido.gasto.id }] }, 'vinculados', `${tab === 'duplicados' ? 'Vinculado sin duplicar' : 'Devolución descontada'} · ${p.descripcion}`)}>{tab === 'duplicados' ? 'Es el mismo' : 'Descontar'}</Button>)}
-                          {tab === 'duplicados' ? <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" disabled={syncing} onClick={() => { setNoEsDuplicado(prev => new Set(prev).add(p.id)); goTo('nuevos') }}>Es otro gasto</Button> : null}
-                          <Button size="sm" variant="ghost" className="min-h-11 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:min-h-0" disabled={syncing} onClick={() => descartar(p)}>Descartar</Button>
+                          {elegido && (recurring ? <Button size="sm" disabled={syncing} aria-label={`Confirmar cobro de ${elegido.gasto.descripcion}`} onClick={() => enqueue(p, { recurrente: { id: p.id, recurrente_id: recurring.id, fecha: recurring.fecha, esperado: recurring.esperado, actualizar_precio: recurring.diferencia !== 0 && !!updatePrice[priceKey] } }, 'vinculados', `Cobro confirmado${updatePrice[priceKey] ? ' y precio actualizado' : ''} · ${elegido.gasto.descripcion}`)}>Confirmar cobro</Button> : <Button size="sm" className="min-h-11 sm:min-h-0" disabled={syncing || (tab === 'recibidos' && elegido.gasto.monto <= p.monto)} onClick={() => enqueue(p, { vincular: [{ id: p.id, gasto_id: elegido.gasto.id }] }, 'vinculados', `${tab === 'duplicados' ? 'Vinculado sin duplicar' : 'Devolución descontada'} · ${p.descripcion}`)}>{tab === 'duplicados' ? 'Es el mismo' : 'Descontar'}</Button>)}
+                          {tab === 'duplicados' ? <Button size="sm" variant="outline" disabled={syncing} onClick={() => { setNoEsDuplicado(prev => new Set(prev).add(p.id)); goTo('nuevos') }}>Es otro gasto</Button> : null}
+                          <Button size="sm" variant="ghost" className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:min-h-0" disabled={syncing} onClick={() => descartar(p)}>Descartar</Button>
                         </>}
                       </div>
                     </td>

@@ -14,7 +14,7 @@ export function ExpenseTagsField({ value, onChange, error }: { value: string; on
   return (
     <div className="space-y-2 min-w-0">
       <Label htmlFor="expense-tags">Etiquetas <span className="text-muted-foreground font-normal">(opcional)</span></Label>
-      <Input id="expense-tags" value={value} onChange={event => onChange(event.target.value)} placeholder="Ej. viaje, familia" aria-invalid={Boolean(validationError)} aria-describedby={validationError ? 'expense-tags-error' : 'expense-tags-hint'} className="h-11 text-base sm:text-sm" />
+      <Input id="expense-tags" value={value} onChange={event => onChange(event.target.value)} placeholder="Ej. viaje, familia" aria-invalid={Boolean(validationError)} aria-describedby={validationError ? 'expense-tags-error' : 'expense-tags-hint'} className="text-base sm:text-sm" />
       <p id="expense-tags-hint" className="text-xs text-foreground">Separadas por comas. Hasta 10 etiquetas de 30 caracteres.</p>
       {validationError && <p id="expense-tags-error" role="alert" className="text-sm text-destructive">{validationError}</p>}
       {tags.length > 0 && <div className="flex flex-wrap gap-1.5">

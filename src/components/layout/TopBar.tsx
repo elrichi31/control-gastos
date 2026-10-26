@@ -14,7 +14,7 @@ export function TopBar({ onMenuClick, isMobile, isMenuOpen = false }: { onMenuCl
   const current = section?.items.find(i => isCurrent(i.href))
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur sm:px-6">
+    <header className="sticky top-0 z-30 flex h-[calc(3.5rem+env(safe-area-inset-top))] items-center pt-[env(safe-area-inset-top)] gap-3 border-b border-border bg-background/85 px-4 backdrop-blur sm:px-6">
       {isMobile && (
         <button id="mobile-menu-trigger" onClick={onMenuClick} aria-label="Abrir menú" aria-expanded={isMenuOpen} aria-controls={isMenuOpen ? "mobile-navigation" : undefined} className="-ml-1 grid size-11 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <Menu className="size-4" />
@@ -30,7 +30,7 @@ export function TopBar({ onMenuClick, isMobile, isMenuOpen = false }: { onMenuCl
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
-        <NewExpenseButton id="new-expense-trigger" size="sm" variant="secondary" className="h-11 shrink-0 gap-1.5 px-3 lg:h-9">
+        <NewExpenseButton id="new-expense-trigger" variant="secondary" className="shrink-0 gap-1.5">
           <Plus className="size-4" aria-hidden="true" />
           Nuevo gasto
         </NewExpenseButton>

@@ -79,7 +79,7 @@ export function FiltrosGastos({
           Más filtros
         </Button>
         {activeFiltersCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={onClearFilters} className="h-8 text-muted-foreground">
+          <Button variant="ghost" size="sm" onClick={onClearFilters} className="text-muted-foreground">
             <X />
             Limpiar ({activeFiltersCount})
           </Button>

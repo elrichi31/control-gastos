@@ -115,7 +115,7 @@ export function ForeignTaxInline({ id, base, value, onChange, disabled }: {
             </label>
             {customOn && (
               <span className="relative inline-flex w-20">
-                <Input aria-label="Porcentaje personalizado" type="number" inputMode="decimal" min="0.01" max="100" step="0.01" placeholder="0" disabled={disabled} value={value.customRate} onChange={event => onChange({ ...value, customRate: event.target.value })} className="h-11 sm:h-7 pr-6 text-base sm:text-xs tabular-nums" />
+                <Input aria-label="Porcentaje personalizado" type="number" inputMode="decimal" min="0.01" max="100" step="0.01" placeholder="0" disabled={disabled} value={value.customRate} onChange={event => onChange({ ...value, customRate: event.target.value })} className="pr-6 text-base sm:text-sm tabular-nums" />
                 <span aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
               </span>
             )}
