@@ -88,7 +88,7 @@ export default function DetalleGastosPage() {
         title="Detalle de gastos"
         description="Análisis detallado y filtrado de todos tus gastos."
         actions={<>
-          <NewExpenseButton size="sm"><Plus aria-hidden="true" className="h-4 w-4 mr-2" />Agregar gasto</NewExpenseButton>
+          <NewExpenseButton size="sm" className="max-sm:hidden"><Plus aria-hidden="true" className="h-4 w-4 mr-2" />Agregar gasto</NewExpenseButton>
           <ExportarDatos gastos={filteredGastos} gastosOriginal={gastos} />
         </>}
       />

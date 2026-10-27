@@ -16,7 +16,7 @@ export function DashboardHeader({ currentDate }: DashboardHeaderProps) {
       title="Resumen"
       description={<span className="first-letter:uppercase inline-block">{format(currentDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}</span>}
       actions={
-        <NewExpenseButton size="sm"><Plus className="w-4 h-4 mr-1.5" />Agregar gasto</NewExpenseButton>
+        <NewExpenseButton size="sm" className="max-sm:hidden"><Plus className="w-4 h-4 mr-1.5" />Agregar gasto</NewExpenseButton>
       }
     />
   )
