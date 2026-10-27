@@ -44,6 +44,11 @@ test('Diners: establecimiento y valor; la fecha sale del correo en hora de Ecuad
   assert.deepEqual([r.fecha, r.descripcion, r.monto, r.metodo], ['2026-09-18', 'ESTACION DE SERVICIO', 32.72, 'credito'])
 })
 
+test('Pichincha tarjeta de crédito: establecimiento y valor en celdas contiguas', () => {
+  const r = parse('servicios@tarjetasbancopichincha.com', 'Notificación de Consumos', html('Has realizado un consumo', 'Valor', '$ 1,60', 'Establecimiento', 'CYRANO CUMBAYA', 'Tarjeta usada', '608'))
+  assert.deepEqual([r.monto, r.descripcion, r.metodo, r.origen], [1.6, 'CYRANO CUMBAYA', 'credito', 'Pichincha'])
+})
+
 test('Produbanco: monto desde el asunto y establecimiento en línea aparte', () => {
   const r = parse('bancaenlinea@produbanco.com', 'Consumo Tarjeta de Crédito por USD 1,250.00', html('Estimado/a', 'CLIENTE PRUEBA', 'Valor: USD', '1,250.00', 'Establecimiento:', 'SUPERMAXI SAN GABRIE'))
   assert.equal(r.monto, 1250)

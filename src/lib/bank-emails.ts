@@ -8,6 +8,7 @@ export const BANK_SENDERS = [
   'servicios@dinersclub.com.ec',
   'bancaenlinea@produbanco.com',
   'banco@pichincha.com',
+  'servicios@tarjetasbancopichincha.com',
   'notificaciones@deunaapp.com',
 ]
 
@@ -22,6 +23,7 @@ export function classifyEmail(from: string, subject: string): Source | null {
     if (/^transferencia (enviada|ingresada)/i.test(subject)) return { origen: 'Produbanco', metodo: 'transferencia', transfer: true }
     if (/^transferencia recibida/i.test(subject)) return { origen: 'Produbanco', metodo: 'transferencia', transfer: true, ingreso: true }
   }
+  if (f === 'servicios@tarjetasbancopichincha.com' && /consumos/i.test(subject)) return { origen: 'Pichincha', metodo: 'credito', transfer: false }
   // Pichincha usa el mismo asunto para todo: el cuerpo decide (ver parseBankEmail).
   if (f === 'banco@pichincha.com' && /notificaci|transferencia/i.test(subject)) return { origen: 'Pichincha', metodo: 'transferencia', transfer: true }
   if (f === 'notificaciones@deunaapp.com') {
