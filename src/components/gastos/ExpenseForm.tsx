@@ -166,8 +166,8 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} noValidate aria-busy={isSubmitting} className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <fieldset disabled={isSubmitting} className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <nav aria-label="Pasos del registro" className="shrink-0 border-b bg-muted/40 px-5 py-3 sm:px-7">
+      <fieldset disabled={isSubmitting} className="contents">
+        <nav aria-label="Pasos del registro" className="shrink-0 border-b bg-muted/40 px-5 py-1.5 sm:px-7 sm:py-3">
           <ol className="flex items-center gap-3">
             <li aria-current={step === "details" ? "step" : undefined}>
               <button type="button" disabled={isSubmitting} onClick={goDetails} className="flex min-h-9 items-center gap-2 rounded-md text-[13px] font-medium focus-visible:outline-2 focus-visible:outline-ring">
@@ -189,7 +189,7 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
         </div>}
 
         <div hidden={step !== "details"} className={stepClass(step === "details")}>
-          <div data-expense-scroll-area="" className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-5 py-5 sm:px-7">
+          <div data-expense-scroll-area="" className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4 sm:space-y-5 sm:py-5 sm:px-7">
             <div className="grid grid-cols-2 items-start gap-3 sm:gap-5">
               <div className="min-w-0 space-y-2">
                 <FieldLabel htmlFor="amount">{foreignTax.enabled ? 'Precio sin impuestos' : 'Monto'}</FieldLabel>
@@ -198,7 +198,7 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
                   <Input controlSize="form" ref={amountRef} id="amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => change('amount', e.target.value)} onWheel={e => e.currentTarget.blur()} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'amount-error' : 'amount-hint'} className="pl-7 pr-2 font-semibold tabular-nums sm:pr-14 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
                   <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 text-xs font-medium text-muted-foreground sm:block">USD</span>
                 </div>
-                {errors.amount ? fieldError('amount') : <p id="amount-hint" className="text-xs text-muted-foreground">{foreignTax.enabled ? 'Los impuestos se suman al importe que registres.' : 'El importe total de tu compra.'}</p>}
+                {errors.amount ? fieldError('amount') : <p id="amount-hint" className="hidden text-xs text-muted-foreground sm:block">{foreignTax.enabled ? 'Los impuestos se suman al importe que registres.' : 'El importe total de tu compra.'}</p>}
               </div>
               <div className="min-w-0 space-y-2">
                 <FieldLabel htmlFor="date">Fecha</FieldLabel>
@@ -240,13 +240,13 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
               </div>
             </details>
           </div>
-          <div className="flex shrink-0 items-center justify-between gap-3 border-t bg-card px-5 py-4 sm:px-7">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-t bg-card px-5 py-3 sm:px-7 sm:py-4">
             <div>
               <p className="text-xs text-muted-foreground">Total</p>
               <p className="text-xl font-semibold leading-tight tabular-nums">{formatMoney(breakdown.total)}</p>
             </div>
             <div className="flex items-center gap-2">
-              {onCancel && <Button size="form" type="button" variant="outline" disabled={isSubmitting} onClick={onCancel}>Cancelar</Button>}
+              {onCancel && <Button size="form" type="button" variant="outline" className="hidden sm:inline-flex" disabled={isSubmitting} onClick={onCancel}>Cancelar</Button>}
               <Button size="form" type="submit" disabled={!ready || isSubmitting}>Continuar<ArrowRight aria-hidden="true" className="size-4" /></Button>
             </div>
           </div>
@@ -257,7 +257,7 @@ export function ExpenseForm({ history = [], expenses = [], onDraftChange, onSucc
             <h2 ref={reviewRef} tabIndex={-1} className="sr-only">Revisa tu gasto antes de guardar</h2>
             <ExpenseDraftSummary draft={draft} expenses={expenses} />
           </div>
-          <div className="shrink-0 space-y-2 border-t bg-card px-5 py-4 sm:px-7">
+          <div className="shrink-0 space-y-2 border-t bg-card px-5 py-3 sm:px-7 sm:py-4">
             <div className="grid grid-cols-2 gap-2">
               <Button size="form" type="button" variant="outline" disabled={isSubmitting} onClick={goDetails}><ArrowLeft aria-hidden="true" className="size-4" />Volver a datos</Button>
               <Button size="form" type="submit" value="save" disabled={!ready || isSubmitting}>{isSubmitting ? <><LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />Guardando…</> : <>Guardar gasto<ArrowRight aria-hidden="true" className="size-4" /></>}</Button>

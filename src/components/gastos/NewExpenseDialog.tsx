@@ -27,18 +27,18 @@ export function NewExpenseDialog({ initialKind, onClose, restoreFocus }: { initi
       onEscapeKeyDown={event => { if (busy) event.preventDefault() }}
       onCloseAutoFocus={event => { event.preventDefault(); restoreFocus() }}
     >
-      <DialogHeader className="shrink-0 flex-row items-center gap-3 space-y-0 px-5 pb-3 pt-5 pr-14 text-left sm:px-7">
+      <DialogHeader className="shrink-0 flex-row items-center gap-3 space-y-0 px-5 pb-3 pt-4 pr-14 text-left sm:px-7 sm:pt-5">
         <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-xl bg-foreground text-background"><ReceiptText className="size-5" /></span>
         <div className="min-w-0 space-y-1">
           <DialogTitle>{tab === "normal" ? "Nuevo gasto" : "Nuevo gasto recurrente"}</DialogTitle>
-          <DialogDescription>{tab === "normal" ? "Monto, categoría y cómo lo pagaste." : "Un gasto que se repite cada período."}</DialogDescription>
+          <DialogDescription className="hidden sm:block">{tab === "normal" ? "Monto, categoría y cómo lo pagaste." : "Un gasto que se repite cada período."}</DialogDescription>
         </div>
       </DialogHeader>
       <Tabs value={tab} onValueChange={value => { if (!busy) setTab(value as ExpenseKind) }} className="flex min-h-0 flex-1 flex-col">
         <div className="shrink-0 px-5 pb-3 sm:px-7">
           <TabsList aria-label="Tipo de gasto" className="h-auto w-full gap-1 p-1">
-            <TabsTrigger disabled={busy} value="normal" className="min-h-9 flex-1 gap-2 px-4"><Receipt aria-hidden="true" className="size-4" />Una vez</TabsTrigger>
-            <TabsTrigger disabled={busy} value="recurrente" className="min-h-9 flex-1 gap-2 px-4"><Repeat2 aria-hidden="true" className="size-4" />Recurrente</TabsTrigger>
+            <TabsTrigger disabled={busy} value="normal" className="min-h-9 flex-1 gap-2 px-3"><Receipt aria-hidden="true" className="size-4" />Una vez</TabsTrigger>
+            <TabsTrigger disabled={busy} value="recurrente" className="min-h-9 flex-1 gap-2 px-3"><Repeat2 aria-hidden="true" className="size-4" />Recurrente</TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="normal" className="mt-0 flex min-h-0 flex-1 flex-col border-t data-[state=inactive]:hidden">
