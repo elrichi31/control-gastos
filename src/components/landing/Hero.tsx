@@ -28,34 +28,6 @@ const TILES: { Icon: LucideIcon; label: string }[] = [
   { Icon: HeartPulse, label: 'Salud' }, { Icon: GraduationCap, label: 'Educación' }, { Icon: Shirt, label: 'Compras' }, { Icon: Tags, label: 'Etiquetas' },
 ]
 
-// Deterministic PRNG so the server and client render the same burst.
-function buildBurst() {
-  let seed = 7
-  const rnd = () => {
-    seed = (seed + 0x6d2b79f5) | 0
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-  const round = (value: number) => Math.round(value * 10) / 10
-  const rays = Array.from({ length: 190 }, (_, i) => {
-    const angle = (i / 190) * Math.PI * 2 + (rnd() - 0.5) * 0.03
-    const inner = 132 + rnd() * 26
-    const outer = Math.min(inner + 18 + rnd() ** 2.2 * 210, 372)
-    return {
-      x1: round(Math.cos(angle) * inner), y1: round(Math.sin(angle) * inner), x2: round(Math.cos(angle) * outer), y2: round(Math.sin(angle) * outer),
-      opacity: round(0.22 + rnd() * 0.5), dot: round(0.9 + rnd() * 2.1), accent: rnd() > 0.93,
-    }
-  })
-  const specks = Array.from({ length: 70 }, () => {
-    const angle = rnd() * Math.PI * 2
-    const radius = 150 + rnd() * 220
-    return { x: round(Math.cos(angle) * radius), y: round(Math.sin(angle) * radius), r: round(0.8 + rnd()), opacity: round(0.2 + rnd() * 0.4) }
-  })
-  return { rays, specks }
-}
-const BURST = buildBurst()
-
 const clamp = (value: number) => Math.min(1, Math.max(0, value))
 const smooth = (value: number) => value * value * (3 - 2 * value)
 
@@ -112,19 +84,6 @@ export function Hero() {
             </div>
 
             <div ref={center} className={styles.heroCenter} role="img" aria-label="Ilustración de ejemplo: seis gastos entran a un presupuesto mensual de $600">
-              <div className={styles.heroBurst} aria-hidden="true">
-                <div className={styles.heroBurstScroll}>
-                  <div className={`${styles.heroSpin} ${styles.animated}`}>
-                    <svg viewBox="-380 -380 760 760" focusable="false">
-                      {BURST.rays.map((ray, i) => <g key={i} opacity={ray.opacity}>
-                        <line className={styles.rayLine} x1={ray.x1} y1={ray.y1} x2={ray.x2} y2={ray.y2} />
-                        <circle className={ray.accent ? styles.rayAccent : styles.rayDot} cx={ray.x2} cy={ray.y2} r={ray.dot} />
-                      </g>)}
-                      {BURST.specks.map((speck, i) => <circle key={`s${i}`} className={styles.rayDot} cx={speck.x} cy={speck.y} r={speck.r} opacity={speck.opacity} />)}
-                    </svg>
-                  </div>
-                </div>
-              </div>
               {CHIPS.map(({ name, amount, Icon, angle, stack, delay, tone }) => {
                 const rad = (angle * Math.PI) / 180
                 const style = { '--d': delay, '--dx': Math.cos(rad).toFixed(3), '--dy': Math.sin(rad).toFixed(3), '--mx': stack[0], '--my': stack[1] } as CSSProperties
