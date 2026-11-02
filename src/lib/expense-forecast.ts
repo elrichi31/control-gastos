@@ -94,17 +94,26 @@ export function buildExpenseForecast({ today, expenses, rules }: ForecastInput) 
   const floor = money(recorded + plan.committed)
   // Observed deviations, not a 90/95% probabilistic interval.
   const range = validated && chosen ? { low: money(Math.max(floor, projected! - Math.max(0, ...chosen.errors))), high: money(Math.max(projected!, projected! - Math.min(0, ...chosen.errors))) } : null
-  let accumulated = 0, expected = 0
+  let accumulated = 0, expected = 0, retroExpected = 0
   const points = Array.from({ length: days }, (_, i) => {
     const date = dateAt(month, i + 1), booked = sum(current.filter(e => e.fecha.slice(0, 10) === date))
     accumulated += booked
-    if (i + 1 < day) expected = accumulated
-    else {
+    let forecast: number | null = null
+    if (i + 1 < day) {
+      expected = accumulated
+      // Retroactive: lo que habría proyectado el método elegido ese día, sin usar lo registrado después.
+      if (chosen) {
+        const fixedBooked = sum(current.filter(e => e.fecha.slice(0, 10) === date && !variable(e)))
+        retroExpected += fixedBooked + model.rates[chosen.method]!(date)
+        forecast = money(retroExpected)
+      }
+    } else {
       const planned = plan.upcoming.filter(e => e.date === date).reduce((s, e) => s + e.amount, 0)
       const extraVariable = chosen ? Math.max(0, model.rates[chosen.method]!(date) - sum(variables.filter(e => e.fecha.slice(0, 10) === date))) : 0
       expected += booked + planned + extraVariable
+      if (chosen) forecast = money(expected)
     }
-    return { day: i + 1, date, actual: i + 1 <= day ? money(accumulated) : null, forecast: chosen && i + 1 >= day ? money(expected) : null }
+    return { day: i + 1, date, actual: i + 1 <= day ? money(accumulated) : null, forecast }
   })
   // Mes anterior: solo referencia visual, nunca entra en el modelo.
   const [cy, cm] = month.split('-').map(Number)
