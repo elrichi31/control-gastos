@@ -90,8 +90,8 @@ export function ExpenseItem({ expense, onDelete, onUpdated, showDeleteIcon = fal
 
   return (
     <>
-      {/* Fila horizontal: en pantallas medianas cada dato va en su columna
-          (alineada con la cabecera de ExpenseList); en móvil se apila. */}
+      {/* Fila horizontal: en pantallas medianas cada dato va en su columna;
+          en móvil se apila. */}
       <div className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 px-5 py-3.5 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors md:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_7rem_minmax(0,1fr)_6rem_4.5rem]">
         <div className="min-w-0">
           <p className="font-medium text-sm text-foreground truncate" title={expense.descripcion}>{expense.descripcion}</p>
