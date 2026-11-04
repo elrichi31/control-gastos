@@ -50,6 +50,7 @@ export default function DetalleGastosPage() {
     } catch (error) {
       console.error('Error deleting expense:', error)
       toast.error('No se pudo eliminar el gasto. Intenta nuevamente.')
+      throw error
     }
   }
 

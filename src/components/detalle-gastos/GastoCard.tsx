@@ -5,14 +5,15 @@ import React, { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { ExpenseTags } from '@/components/gastos/ExpenseTags'
 import { Button } from '@/components/ui/button'
-import { Pencil, Trash2 } from 'lucide-react'
+import { DeleteExpenseButton } from '@/components/gastos/DeleteExpenseButton'
+import { Pencil } from 'lucide-react'
 import type { Gasto } from '@/types'
 
 const EditExpenseDialog = dynamic(() => import('@/components/gastos/EditExpenseDialog').then(m => m.EditExpenseDialog))
 
 interface GastoCardProps {
   gasto: Gasto
-  onDeleteGasto: (gastoId: string) => void
+  onDeleteGasto: (gastoId: string) => Promise<void> | void
   formatMoney: (amount: number) => string
   formatDate: (date: string) => string
 }
@@ -34,7 +35,7 @@ export const GastoCard: React.FC<GastoCardProps> = ({ gasto, onDeleteGasto, form
       <span className="text-sm font-medium text-foreground tabular-nums whitespace-nowrap">{formatMoney(gasto.monto)}</span>
       <div className="flex items-center gap-1">
       <Button size="icon-sm" variant="ghost" onClick={() => setShowEdit(true)} aria-label={`Editar gasto: ${gasto.descripcion}`}><Pencil aria-hidden="true" className="h-4 w-4" /></Button>
-      <Button size="icon-sm" variant="ghost-destructive" onClick={() => onDeleteGasto(gasto.id.toString())} aria-label={`Eliminar gasto: ${gasto.descripcion}`}><Trash2 aria-hidden="true" className="h-4 w-4" /></Button>
+      <DeleteExpenseButton descripcion={gasto.descripcion} onConfirm={() => onDeleteGasto(gasto.id.toString())} />
       </div>
     </div>
     {showEdit && <EditExpenseDialog expense={gasto} open={showEdit} onOpenChange={setShowEdit} onSaved={() => {}} />}

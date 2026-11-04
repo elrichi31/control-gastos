@@ -3,17 +3,18 @@
 import { CategoryBadge } from "@/components/gastos/CategoryBadge"
 import { ExpenseTags } from '@/components/gastos/ExpenseTags'
 import { Button } from '@/components/ui/button'
+import { DeleteExpenseButton } from '@/components/gastos/DeleteExpenseButton'
 import { TableCell, TableRow } from "@/components/ui/table"
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
-import { Trash2, Pencil, Receipt, CreditCard, Calendar } from 'lucide-react'
+import { Pencil, Receipt, CreditCard, Calendar } from 'lucide-react'
 import type { Expense } from '@/services/expenses'
 
 const EditExpenseDialog = dynamic(() => import('@/components/gastos/EditExpenseDialog').then(m => m.EditExpenseDialog))
 
 interface GastoTableRowProps {
   gasto: Expense
-  onDeleteGasto: (id: string) => void
+  onDeleteGasto: (id: string) => Promise<void> | void
   formatMoney: (amount: number) => string
   formatDate: (dateString: string) => string
 }
@@ -83,14 +84,7 @@ export function GastoTableRow({
         >
           <Pencil className="h-4 w-4" />
         </Button>
-        <Button
-          size="icon-sm"
-          onClick={() => onDeleteGasto(gasto.id.toString())}
-          variant="ghost-destructive"
-          aria-label={`Eliminar gasto: ${gasto.descripcion}`}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <DeleteExpenseButton descripcion={gasto.descripcion} onConfirm={() => onDeleteGasto(gasto.id.toString())} />
         </div>
         {showEdit && <EditExpenseDialog expense={gasto} open={showEdit} onOpenChange={setShowEdit} onSaved={() => {}} />}
       </TableCell>

@@ -2,11 +2,6 @@
 
 export const DEFAULT_METODO_PAGO = { id: 1, nombre: "Efectivo" }
 
-export const MESES_NOMBRES = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-] as const
-
 export const MESES_NOMBRES_LOWERCASE = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio", 
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
