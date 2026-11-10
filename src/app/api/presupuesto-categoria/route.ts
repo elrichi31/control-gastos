@@ -15,14 +15,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Falta el parámetro presupuesto_mensual_id' }, { status: 400 })
   }
 
-  const ownershipError = await requireOwnedBudget(supabase, userId, presupuestoMensualId)
+  const [ownershipError, { data, error }] = await Promise.all([
+    requireOwnedBudget(supabase, userId, presupuestoMensualId),
+    supabase
+      .from('presupuesto_categoria')
+      .select('id, categoria_id, total_categoria, cantidad_gastos, categoria(nombre)')
+      .eq('presupuesto_mensual_id', presupuestoMensualId)
+      .eq('user_id', userId),
+  ])
   if (ownershipError) return ownershipError
-
-  const { data, error } = await supabase
-    .from('presupuesto_categoria')
-    .select('id, categoria_id, total_categoria, cantidad_gastos, categoria(nombre)')
-    .eq('presupuesto_mensual_id', presupuestoMensualId)
-    .eq('user_id', userId)
 
   if (error) return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
   return NextResponse.json(data)

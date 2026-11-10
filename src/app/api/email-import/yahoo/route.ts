@@ -59,17 +59,21 @@ export async function GET(request: Request) {
     return NextResponse.json({ enabled: true, total: count ?? 0 })
   }
   const query = parseReviewQuery(url)
-  const { data, error } = await supabase.from('correo_consumo')
-    .select('id, tipo, origen, fecha, descripcion, monto, categoria_id, metodo_pago_id')
-    .eq('user_id', userId).eq('estado', 'pendiente')
-    .order('fecha', { ascending: false })
-  if (error) return dbFailure('list', error.code)
-  const [aliasResult, history, categories] = await Promise.all([
+  // Todo lo que no depende de las fechas de los pendientes se lee a la vez (antes eran 3 rondas seguidas).
+  const [list, aliasResult, history, categories, vinculados, recurrentes] = await Promise.all([
+    supabase.from('correo_consumo')
+      .select('id, tipo, origen, fecha, descripcion, monto, categoria_id, metodo_pago_id')
+      .eq('user_id', userId).eq('estado', 'pendiente')
+      .order('fecha', { ascending: false }),
     supabase.from('correo_alias').select('destinatario, alias').eq('user_id', userId),
     supabase.from('gasto').select('descripcion, categoria_id').eq('user_id', userId)
       .order('id', { ascending: false }).limit(500),
     supabase.from('categoria').select('id'),
+    supabase.from('correo_consumo').select('gasto_id').eq('user_id', userId).eq('tipo', 'gasto').not('gasto_id', 'is', null),
+    supabase.from('gasto_recurrente').select('*').eq('user_id', userId),
   ])
+  const { data, error } = list
+  if (error) return dbFailure('list', error.code)
   const { data: aliases } = aliasResult
   const readError = aliasResult.error || history.error || categories.error
   if (readError) return dbFailure('review history', readError.code)
@@ -82,12 +86,8 @@ export async function GET(request: Request) {
   if (!pendientes.length) return NextResponse.json({ enabled: true, pendientes: [], counts: { nuevos: 0, duplicados: 0, recibidos: 0 }, total: 0, page: 1, pages: 1 })
 
   const fechas = pendientes.map(p => p.fecha).sort()
-  const [gastos, vinculados, recurrentes] = await Promise.all([
-    supabase.from('gasto').select('id, descripcion, monto, fecha, tags, gasto_recurrente_id, categoria (nombre)')
-      .eq('user_id', userId).gte('fecha', shiftDate(fechas[0], -21)).lte('fecha', shiftDate(fechas[fechas.length - 1], 3)),
-    supabase.from('correo_consumo').select('gasto_id').eq('user_id', userId).eq('tipo', 'gasto').not('gasto_id', 'is', null),
-    supabase.from('gasto_recurrente').select('*').eq('user_id', userId),
-  ])
+  const gastos = await supabase.from('gasto').select('id, descripcion, monto, fecha, tags, gasto_recurrente_id, categoria (nombre)')
+    .eq('user_id', userId).gte('fecha', shiftDate(fechas[0], -21)).lte('fecha', shiftDate(fechas[fechas.length - 1], 3))
   if (gastos.error || vinculados.error || recurrentes.error) return dbFailure('matches', (gastos.error || vinculados.error || recurrentes.error)?.code)
   const yaVinculados = new Set((vinculados.data ?? []).map(row => row.gasto_id))
   const todos = (gastos.data ?? []).map(g => ({

@@ -20,33 +20,21 @@ export async function GET(request: Request) {
     const nextYear = parseInt(mes) === 12 ? parseInt(anio) + 1 : parseInt(anio);
     const endDate = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`;
 
-    // Contar gastos del mes específico
-    const { count, error } = await supabase
+    // Conteo y montos del mes en una sola consulta.
+    const { data: gastosData, count, error } = await supabase
       .from('gasto')
-      .select('*', { count: 'exact', head: true })
+      .select('monto', { count: 'exact' })
       .eq('user_id', userId)
       .gte('fecha', startDate)
       .lt('fecha', endDate);
 
     if (error) {
-      console.error('Error al contar gastos:', error);
+      console.error('Error al obtener gastos del mes:', error);
       return NextResponse.json({ error: 'Error al contar los gastos' }, { status: 500 });
     }
 
-    // También obtener el monto total del mes
-    const { data: gastosData, error: gastosError } = await supabase
-      .from('gasto')
-      .select('monto')
-      .eq('user_id', userId)
-      .gte('fecha', startDate)
-      .lt('fecha', endDate);
-
-    if (gastosError) {
-      console.error('Error al obtener montos:', gastosError);
-      return NextResponse.json({ error: 'Error al obtener los montos' }, { status: 500 });
-    }
-
-    const montoTotal = gastosData?.reduce((sum, gasto) => sum + gasto.monto, 0) || 0;
+    // Number(): los numeric pueden llegar como texto y "+" los concatenaría.
+    const montoTotal = gastosData?.reduce((sum, gasto) => sum + Number(gasto.monto), 0) || 0;
 
     return NextResponse.json({
       anio: parseInt(anio),

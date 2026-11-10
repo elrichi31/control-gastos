@@ -14,13 +14,24 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // 1. Obtener información del presupuesto actual
-    const { data: presupuestoActual, error: errorActual } = await supabase
-      .from('presupuesto_mensual')
-      .select('anio, mes')
-      .eq('id', presupuesto_mensual_id)
-      .eq('user_id', userId)
-      .single()
+    // 1 y 4 no dependen entre sí: presupuesto actual y si ya tiene categorías, a la vez.
+    const [
+      { data: presupuestoActual, error: errorActual },
+      { data: categoriasExistentes, error: errorExistentes },
+    ] = await Promise.all([
+      supabase
+        .from('presupuesto_mensual')
+        .select('anio, mes')
+        .eq('id', presupuesto_mensual_id)
+        .eq('user_id', userId)
+        .single(),
+      supabase
+        .from('presupuesto_categoria')
+        .select('id')
+        .eq('presupuesto_mensual_id', presupuesto_mensual_id)
+        .eq('user_id', userId)
+        .limit(1),
+    ])
 
     if (errorActual || !presupuestoActual) {
       return NextResponse.json({ error: 'Presupuesto actual no encontrado' }, { status: 404 })
@@ -47,14 +58,6 @@ export async function POST(req: NextRequest) {
     if (errorAnterior || !presupuestoAnterior) {
       return NextResponse.json({ error: 'No se encontró un presupuesto del mes anterior para copiar' }, { status: 404 })
     }
-
-    // 4. Verificar si el presupuesto actual ya tiene categorías
-    const { data: categoriasExistentes, error: errorExistentes } = await supabase
-      .from('presupuesto_categoria')
-      .select('id')
-      .eq('presupuesto_mensual_id', presupuesto_mensual_id)
-      .eq('user_id', userId)
-      .limit(1)
 
     if (errorExistentes) {
       console.error('Error al copiar el presupuesto del mes anterior:', errorExistentes)

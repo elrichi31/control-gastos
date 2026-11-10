@@ -15,23 +15,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Falta el parámetro presupuesto_mensual_id' }, { status: 400 })
   }
 
-  const ownershipError = await requireOwnedBudget(supabase, userId, presupuestoMensualId)
+  // La verificación de dueño y las categorías (ya filtradas por user_id) van en paralelo.
+  const [ownershipError, { data: categorias, error: errorCategorias }] = await Promise.all([
+    requireOwnedBudget(supabase, userId, presupuestoMensualId),
+    supabase
+      .from('presupuesto_categoria')
+      .select('id, categoria_id, total_categoria, cantidad_gastos, categoria(nombre)')
+      .eq('presupuesto_mensual_id', presupuestoMensualId)
+      .eq('user_id', userId),
+  ])
   if (ownershipError) return ownershipError
-
-  // Traer todas las categorías del presupuesto mensual con nombre
-  const { data: categorias, error: errorCategorias } = await supabase
-    .from('presupuesto_categoria')
-    .select('id, categoria_id, total_categoria, cantidad_gastos, categoria(nombre)')
-    .eq('presupuesto_mensual_id', presupuestoMensualId)
-    .eq('user_id', userId)
 
   if (errorCategorias) return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
 
   // Una sola consulta para los movimientos de todas las categorías.
-  const { data: movimientos, error: errorMov } = await supabase
+  const { data: movimientos, error: errorMov } = !categorias?.length ? { data: [], error: null } : await supabase
     .from('movimiento_presupuesto')
     .select('id, descripcion, monto, fecha, metodo_pago_id, tags, presupuesto_categoria_id')
-    .in('presupuesto_categoria_id', (categorias || []).map(cat => cat.id))
+    .in('presupuesto_categoria_id', categorias.map(cat => cat.id))
     .eq('user_id', userId)
     .order('fecha', { ascending: false })
   if (errorMov) return NextResponse.json({ error: 'No se pudo completar la operación' }, { status: 500 })
