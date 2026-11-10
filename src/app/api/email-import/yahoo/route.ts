@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { getAuthenticatedSupabaseClient } from '@/lib/auth'
 import { scoreSameExpense } from '@/lib/jev'
 import { AUTO_EXPENSE_TAG, MAX_EXPENSE_TAGS, SHARED_EXPENSE_TAG } from '@/lib/expense-tags'
@@ -126,13 +127,35 @@ export async function GET(request: Request) {
   return NextResponse.json({ enabled: true, pendientes: page.rows, counts: page.counts, total: page.total, page: page.page, pages: page.pages })
 }
 
-/** Lee el correo y guarda los movimientos nuevos como pendientes. No crea gastos. */
+// Sincronización rápida: desde unos días antes del último movimiento guardado (máximo 14 días atrás,
+// como el cron). Los Message-ID ya vistos se saltan, así que el margen no duplica nada.
+const RECENT_DAYS = 14
+const OVERLAP_DAYS = 3
+
+/** Fecha desde la que leer en una sincronización rápida, o el código del error de base. */
+async function recentSince(supabase: SupabaseClient, userId: string): Promise<Date | { code?: string }> {
+  const { data, error } = await supabase.from('correo_consumo').select('fecha')
+    .eq('user_id', userId).order('fecha', { ascending: false }).limit(1).maybeSingle()
+  if (error) return { code: error.code }
+  // Sin nada importado todavía, la primera vez lee todo.
+  if (!data?.fecha) return IMPORT_SINCE
+  const recent = Math.min(Date.now() - RECENT_DAYS * 86_400_000, Date.parse(data.fecha) - OVERLAP_DAYS * 86_400_000)
+  return new Date(Math.max(recent, IMPORT_SINCE.getTime()))
+}
+
+/** Lee el correo y guarda los movimientos nuevos como pendientes. No crea gastos.
+ *  Por defecto solo lo reciente; con { completo: true } revisa todo desde IMPORT_SINCE
+ *  (por ejemplo, después de sumar un banco nuevo). */
 export async function POST(request: Request) {
   const auth = await authorize(request)
   if ('error' in auth) return auth.error
-  const result = await syncYahoo(auth.supabase, auth.userId, IMPORT_SINCE)
+  const body = request.body ? await request.json().catch(() => null) : null
+  const completo = body?.completo === true
+  const since = completo ? IMPORT_SINCE : await recentSince(auth.supabase, auth.userId)
+  if (!(since instanceof Date)) return dbFailure('last import', since.code)
+  const result = await syncYahoo(auth.supabase, auth.userId, since)
   if (!result.ok) return result.db ? dbFailure(result.error, result.code) : NextResponse.json({ error: result.error }, { status: result.status })
-  return NextResponse.json({ nuevos: result.nuevos })
+  return NextResponse.json({ nuevos: result.nuevos, completo, desde: since.toISOString().slice(0, 10) })
 }
 
 /** Alias personal para el destinatario de un correo propio; vacío elimina la regla. */

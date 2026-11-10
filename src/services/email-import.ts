@@ -70,8 +70,11 @@ export async function acceptEmailImports(aceptar: { id: number }[], signal: Abor
   return new Map(aceptar.filter(item => !saved.has(item.id)).map(item => [item.id, 'El movimiento ya cambió. Actualizaremos la lista; no se confirmó una nueva operación.']))
 }
 
-export async function syncEmailImport(): Promise<{ nuevos?: number }> {
-  const response = await fetch(API, { method: 'POST' })
+/** Por defecto solo correos recientes; `completo` revisa todo el historial (más lento). */
+export async function syncEmailImport(completo = false): Promise<{ nuevos?: number; completo?: boolean; desde?: string }> {
+  const response = await fetch(API, completo
+    ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ completo: true }) }
+    : { method: 'POST' })
   const body = await response.json().catch(() => null)
   if (!response.ok) throw new Error(body?.error || 'No se pudo sincronizar.')
   return body

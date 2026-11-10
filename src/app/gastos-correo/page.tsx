@@ -169,13 +169,15 @@ export default function EmailExpensesPage() {
     if (added.length) setSelected(prev => { const next = new Set(prev); added.forEach(id => next.delete(id)); return next })
   }
   const descartar = (p: Pendiente) => enqueue(p, { descartar: [p.id] }, 'descartados', `Descartado · ${p.descripcion}`)
-  async function sync() {
+  // Sincronizar lee solo lo reciente; "Revisar todo" vuelve a leer desde enero (más lento).
+  async function sync(completo = false) {
     if (syncing || queue.current!.pendingCount() || aliasSaving !== null) return
     setMessage('')
-    const id = toast.loading('Buscando movimientos nuevos…')
+    const id = toast.loading(completo ? 'Revisando todo el correo desde enero…' : 'Buscando movimientos nuevos…')
     try {
-      const body = await syncMutation.mutateAsync(undefined)
-      toast.success(body.nuevos ? `${body.nuevos} movimientos nuevos.` : 'No hay movimientos nuevos.', { id })
+      const body = await syncMutation.mutateAsync(completo)
+      const desde = !completo && body.desde ? ` (desde ${body.desde})` : ''
+      toast.success(body.nuevos ? `${body.nuevos} movimientos nuevos${desde}.` : `No hay movimientos nuevos${desde}.`, { id })
       await load()
     } catch (cause) { toast.error((cause as Error).message || 'No se pudo conectar.', { id }) }
 
@@ -187,7 +189,10 @@ export default function EmailExpensesPage() {
     <PageShell fill>
       <PageTitle customTitle="Correo - BethaSpend" />
       <PageHeader title="Correo" description="Revisa tus movimientos antes de registrarlos."
-        actions={<Button variant="outline" disabled={enabled !== true || syncing || inFlight > 0 || aliasSaving !== null} onClick={sync}><RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />{syncing ? 'Sincronizando…' : 'Sincronizar'}</Button>} />
+        actions={<div className="flex flex-wrap items-center gap-2">
+          <Button variant="ghost" size="sm" className="text-muted-foreground" title="Vuelve a leer todo el correo desde enero, por ejemplo después de agregar un banco nuevo. Tarda más." disabled={enabled !== true || syncing || inFlight > 0 || aliasSaving !== null} onClick={() => sync(true)}>Revisar todo</Button>
+          <Button variant="outline" disabled={enabled !== true || syncing || inFlight > 0 || aliasSaving !== null} onClick={() => sync()}><RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />{syncing ? 'Sincronizando…' : 'Sincronizar'}</Button>
+        </div>} />
       {loadError && <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-destructive/30 p-3" role="alert"><p className="min-w-0 flex-1 text-sm">{loadError}</p><Button variant="outline" size="sm" disabled={inFlight > 0 || syncing} onClick={() => void load()}>Reintentar</Button></div>}
       {message && <p className="mb-4 text-sm" role="status">{message}</p>}
       {enabled === false ? <Empty title="Correo no habilitado" text="La importación desde Yahoo no está habilitada para esta cuenta." /> : enabled === null ? (
