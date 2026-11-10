@@ -60,6 +60,16 @@ export async function updateEmailImport(payload: object, countKey: 'aceptados' |
   if (body?.[countKey] !== 1) throw new Error('El movimiento ya cambió. Actualizaremos la lista; no se confirmó una nueva operación.')
 }
 
+/** Acepta varios movimientos en una sola petición. Devuelve id → error de los que no se guardaron. */
+export async function acceptEmailImports(aceptar: { id: number }[], signal: AbortSignal): Promise<Map<number, string>> {
+  const response = await fetch(API, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aceptar }), signal })
+  const body = await response.json().catch(() => null)
+  if (!response.ok) throw new Error(body?.error || 'No se pudo confirmar el guardado. Revisa antes de reintentar.')
+  if (!Array.isArray(body?.aceptados_ids)) throw new Error('No se pudo confirmar el guardado. Actualiza antes de reintentar.')
+  const saved = new Set(body.aceptados_ids)
+  return new Map(aceptar.filter(item => !saved.has(item.id)).map(item => [item.id, 'El movimiento ya cambió. Actualizaremos la lista; no se confirmó una nueva operación.']))
+}
+
 export async function syncEmailImport(): Promise<{ nuevos?: number }> {
   const response = await fetch(API, { method: 'POST' })
   const body = await response.json().catch(() => null)

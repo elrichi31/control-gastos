@@ -92,3 +92,18 @@ test('session reconciliation runs after all page subscribers have unmounted', as
   queue.enqueue({id:54,label:'Guardando',execute:()=>gate.promise}); unsubscribe()
   gate.resolve(); await queue.whenIdle(); assert.equal(reconciled,1)
 })
+
+test('enqueueGroup sends a selection in one request and reports per-row failures', async () => {
+  const calls = [], feedback = []
+  const queue = createEmailReviewQueue({ onFeedback: job => feedback.push([job.id, job.status]) })
+  assert.equal(queue.enqueue({ id: 2, label: 'Ya en cola', execute: async () => { calls.push([2]) } }), true)
+  const added = queue.enqueueGroup([{ id: 1, label: 'A' }, { id: 2, label: 'B' }, { id: 3, label: 'C' }, { id: 3, label: 'C otra vez' }],
+    ids => async () => { calls.push(ids); return new Map([[3, 'El movimiento ya cambió']]) })
+  assert.deepEqual(added, [1, 3])
+  await queue.whenIdle()
+  assert.deepEqual(calls, [[2], [1, 3]])
+  const status = Object.fromEntries(queue.snapshot().map(job => [job.id, job.status]))
+  assert.deepEqual(status, { 1: 'success', 2: 'success', 3: 'error' })
+  assert.equal(queue.snapshot().find(job => job.id === 3).error, 'El movimiento ya cambió')
+  assert.deepEqual(queue.enqueueGroup([{ id: 1, label: 'A' }], () => async () => {}), [])
+})

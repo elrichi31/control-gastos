@@ -18,7 +18,7 @@ import { queryKeys } from '@/lib/query/client'
 import { useQueryClient } from '@tanstack/react-query'
 import { invalidateExpenseData } from '@/lib/query/client'
 import { formatMoney } from '@/lib/utils'
-import { fetchEmailImportPage, saveEmailAlias, syncEmailImport, updateEmailImport } from '@/services/email-import'
+import { acceptEmailImports, fetchEmailImportPage, saveEmailAlias, syncEmailImport, updateEmailImport } from '@/services/email-import'
 import type { Candidate } from '@/lib/email-matches'
 import styles from './review.module.css'
 
@@ -152,8 +152,21 @@ export default function EmailExpensesPage() {
       setSelected(prev => { const next = new Set(prev); next.delete(p.id); return next })
     }
   }
+  const acceptItem = (p: Pendiente) => ({ id: p.id, categoria_id: category(p), ...(descriptionDrafts[p.id] !== undefined ? { descripcion: saveAs(p).trim() } : {}), ...(mitadPor[p.id] ? { monto: half(p.monto) } : {}), ...(exterior(p).enabled ? { impuestos: { selected: exterior(p).selected, customRate: exterior(p).customRate } } : {}) })
   function aceptar(list: Pendiente[]) {
-    list.filter(canAccept).forEach(p => enqueue(p, { aceptar: [{ id: p.id, categoria_id: category(p), ...(descriptionDrafts[p.id] !== undefined ? { descripcion: saveAs(p).trim() } : {}), ...(mitadPor[p.id] ? { monto: half(p.monto) } : {}), ...(exterior(p).enabled ? { impuestos: { selected: exterior(p).selected, customRate: exterior(p).customRate } } : {}) }] }, 'aceptados', `Gasto registrado · ${saveAs(p).trim()}`))
+    const ready = list.filter(canAccept)
+    if (syncing || !ready.length) return
+    if (ready.length === 1) return enqueue(ready[0], { aceptar: [acceptItem(ready[0])] }, 'aceptados', `Gasto registrado · ${saveAs(ready[0]).trim()}`)
+    // Una sola petición para toda la selección en vez de una por movimiento.
+    const items = new Map(ready.map(p => [p.id, acceptItem(p)]))
+    const added = queue.current!.enqueueGroup(ready.map(p => ({ id: p.id, label: `Gasto registrado · ${saveAs(p).trim()}` })), ids => async (sessionSignal) => {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 120000)
+      try {
+        return await acceptEmailImports(ids.map(id => items.get(id)!), sessionSignal ? AbortSignal.any([controller.signal, sessionSignal]) : controller.signal)
+      } finally { clearTimeout(timeout) }
+    })
+    if (added.length) setSelected(prev => { const next = new Set(prev); added.forEach(id => next.delete(id)); return next })
   }
   const descartar = (p: Pendiente) => enqueue(p, { descartar: [p.id] }, 'descartados', `Descartado · ${p.descripcion}`)
   async function sync() {

@@ -221,18 +221,24 @@ export async function PATCH(request: Request) {
   const descartar = ids(body?.descartar)
   if (!aceptarPor.size && !vincular.length && !descartar.length) return NextResponse.json({ error: 'No hay movimientos seleccionados' }, { status: 400 })
 
-  let aceptados = 0
+  let aceptados: number[] = []
   if (aceptarPor.size) {
-    // Leer antes de reclamar: un fallo de configuración no debe consumir el pendiente.
-    const { data: aliases, error: aliasError } = await supabase.from('correo_alias')
-      .select('destinatario, alias').eq('user_id', userId)
-    if (aliasError) return dbFailure('aliases', aliasError.code)
     // Marcar primero (solo los que siguen pendientes) evita crear el mismo gasto dos veces.
-    const { data: claimed, error } = await supabase.from('correo_consumo')
-      .update({ estado: 'aceptado' })
-      .eq('user_id', userId).eq('estado', 'pendiente').eq('tipo', 'gasto').in('id', [...aceptarPor.keys()])
-      .select('id, origen, fecha, descripcion, monto, categoria_id, metodo_pago_id')
+    // Los alias se leen en paralelo para ahorrar un viaje a la base; si fallan, se devuelve el pendiente.
+    const [aliasResult, claimResult] = await Promise.all([
+      supabase.from('correo_alias').select('destinatario, alias').eq('user_id', userId),
+      supabase.from('correo_consumo')
+        .update({ estado: 'aceptado' })
+        .eq('user_id', userId).eq('estado', 'pendiente').eq('tipo', 'gasto').in('id', [...aceptarPor.keys()])
+        .select('id, origen, fecha, descripcion, monto, categoria_id, metodo_pago_id'),
+    ])
+    const { data: aliases, error: aliasError } = aliasResult
+    const { data: claimed, error } = claimResult
     if (error) return dbFailure('claim', error.code)
+    if (aliasError) {
+      if (claimed?.length) await supabase.from('correo_consumo').update({ estado: 'pendiente' }).eq('user_id', userId).in('id', claimed.map(row => row.id))
+      return dbFailure('aliases', aliasError.code)
+    }
     if (claimed?.length) {
       const gastos = claimed.map(row => {
         const choice = aceptarPor.get(row.id)!
@@ -259,7 +265,7 @@ export async function PATCH(request: Request) {
         await supabase.from('correo_consumo').update({ estado: 'pendiente' }).eq('user_id', userId).in('id', claimed.map(row => row.id))
         return dbFailure('create expenses', insertError.code)
       }
-      aceptados = claimed.length
+      aceptados = claimed.map(row => row.id)
     }
   }
 
@@ -298,5 +304,5 @@ export async function PATCH(request: Request) {
     if (error) return dbFailure('discard', error.code)
     descartados = data?.length ?? 0
   }
-  return NextResponse.json({ aceptados, vinculados, descartados })
+  return NextResponse.json({ aceptados: aceptados.length, aceptados_ids: aceptados, vinculados, descartados })
 }

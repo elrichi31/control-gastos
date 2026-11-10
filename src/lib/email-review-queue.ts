@@ -1,18 +1,22 @@
 export type ReviewJob = { id: number; label: string; status: 'queued' | 'saving' | 'success' | 'error'; error?: string }
-type Task = { id: number; label: string; execute: (signal?: AbortSignal) => Promise<void> }
+type Item = { id: number; label: string }
+/** execute puede devolver id → error para los elementos de un lote que no se guardaron. */
+type Execute = (signal?: AbortSignal) => Promise<void | Map<number, string>>
+type Task = Item & { execute: Execute }
+type Group = { items: Item[]; execute: Execute }
 type Events = { onChange?: (jobs: ReviewJob[]) => void; onFeedback?: (job: ReviewJob) => void; onIdle?: () => void }
 
 /** Session-only, serial writes. No automatic retries of financial mutations. */
 export function createEmailReviewQueue(events: Events = {}) {
   const jobs = new Map<number, ReviewJob>()
-  const waiting: Task[] = []
+  const waiting: Group[] = []
   const idleResolvers: (() => void)[] = []
   let running = false
   let disposed = false
   let active: AbortController | null = null
   const snapshot = () => Array.from(jobs.values(), job => ({ ...job }))
   const pendingCount = () => snapshot().filter(job => job.status === 'queued' || job.status === 'saving').length
-  function update(task: Task, status: ReviewJob['status'], error?: string) {
+  function update(task: Item, status: ReviewJob['status'], error?: string) {
     const job: ReviewJob = { id: task.id, label: task.label, status, ...(error ? { error } : {}) }
     jobs.set(task.id, job)
     if (!disposed) {
@@ -24,28 +28,41 @@ export function createEmailReviewQueue(events: Events = {}) {
     if (running) return
     running = true
     while (waiting.length && !disposed) {
-      const task = waiting.shift()!
-      update(task, 'saving')
+      const group = waiting.shift()!
+      group.items.forEach(item => update(item, 'saving'))
       active = new AbortController()
-      try { await task.execute(active.signal); update(task, 'success') }
-      catch (cause) { update(task, 'error', cause instanceof Error ? cause.message : 'No se pudo guardar. Revisa el movimiento antes de reintentar.') }
+      try {
+        const failed = await group.execute(active.signal)
+        group.items.forEach(item => failed?.has(item.id) ? update(item, 'error', failed.get(item.id)) : update(item, 'success'))
+      } catch (cause) {
+        const message = cause instanceof Error ? cause.message : 'No se pudo guardar. Revisa el movimiento antes de reintentar.'
+        group.items.forEach(item => update(item, 'error', message))
+      }
     }
     running = false
     events.onIdle?.()
     idleResolvers.splice(0).forEach(resolve => resolve())
   }
+  /** Varios movimientos en una sola petición. `build` recibe solo los ids que entraron a la cola
+   *  (sin dobles clics) y arma el envío. Devuelve esos ids. */
+  function enqueueGroup(items: Item[], build: (ids: number[]) => Execute): number[] {
+    if (disposed) return []
+    const fresh = items.filter((item, i) => {
+      const existing = jobs.get(item.id)
+      return (!existing || existing.status === 'error') && items.findIndex(other => other.id === item.id) === i
+    })
+    if (!fresh.length) return []
+    const ids = fresh.map(item => item.id)
+    waiting.push({ items: fresh, execute: build(ids) })
+    fresh.forEach(item => update(item, 'queued'))
+    void drain()
+    return ids
+  }
   return {
     snapshot, pendingCount,
-    dispose() { disposed = true; active?.abort(); for (const task of waiting.splice(0)) update(task, 'error', 'Sesión cerrada; operación no enviada.') },
-    enqueue(task: Task) {
-      if (disposed) return false
-      const existing = jobs.get(task.id)
-      if (existing && existing.status !== 'error') return false
-      waiting.push(task)
-      update(task, 'queued')
-      void drain()
-      return true
-    },
+    dispose() { disposed = true; active?.abort(); for (const group of waiting.splice(0)) group.items.forEach(item => update(item, 'error', 'Sesión cerrada; operación no enviada.')) },
+    enqueue: (task: Task) => enqueueGroup([task], () => task.execute).length > 0,
+    enqueueGroup,
     whenIdle: () => running || waiting.length ? new Promise<void>(resolve => idleResolvers.push(resolve)) : Promise.resolve(),
   }
 }

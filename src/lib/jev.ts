@@ -78,9 +78,41 @@ export type MatchVerdict = { veredicto: 'encaja' | 'desconocido' | 'no_encaja'; 
  * null por par si Jev no está disponible; quien llama decide sin él.
  */
 export async function scoreSameExpense(pairs: ExpensePair[]): Promise<(MatchVerdict | null)[]> {
+  const keys = pairs.map(pairKey)
+  const scores: (MatchVerdict | null)[] = keys.map(cachedVerdict)
+  // Solo se pregunta a Jev por los pares que no están en caché (y una vez por par repetido).
+  const missing = [...new Set(keys.filter((_, i) => !scores[i]))]
+  const fresh = await askSameExpense(missing.map(key => pairs[keys.indexOf(key)]))
+  missing.forEach((key, i) => { if (fresh[i]) rememberVerdict(key, fresh[i]) })
+  return keys.map((key, i) => scores[i] ?? fresh[missing.indexOf(key)] ?? null)
+}
+
+// La respuesta depende solo de las descripciones, así que se reutiliza entre recargas de la
+// revisión (cada guardado vuelve a pedir la página) en vez de esperar otra vez a la API externa.
+const VERDICT_TTL_MS = 6 * 60 * 60 * 1000
+const VERDICT_MAX = 2000
+const verdictCache = new Map<string, { verdict: MatchVerdict; expires: number }>()
+const pairKey = (p: ExpensePair) => JSON.stringify([p.correo.descripcion, p.gasto.descripcion, p.gasto.categoria ?? null])
+function cachedVerdict(key: string): MatchVerdict | null {
+  const hit = verdictCache.get(key)
+  if (!hit) return null
+  if (hit.expires < Date.now()) { verdictCache.delete(key); return null }
+  return hit.verdict
+}
+function rememberVerdict(key: string, verdict: MatchVerdict) {
+  verdictCache.delete(key)
+  if (verdictCache.size >= VERDICT_MAX) verdictCache.delete(verdictCache.keys().next().value!)
+  verdictCache.set(key, { verdict, expires: Date.now() + VERDICT_TTL_MS })
+}
+
+async function askSameExpense(pairs: ExpensePair[]): Promise<(MatchVerdict | null)[]> {
   const scores: (MatchVerdict | null)[] = pairs.map(() => null)
-  for (let start = 0; start < pairs.length; start += BATCH) {
-    const chunk = pairs.slice(start, start + BATCH)
+  if (!pairs.length) return scores
+  const chunks: ExpensePair[][] = []
+  for (let start = 0; start < pairs.length; start += BATCH) chunks.push(pairs.slice(start, start + BATCH))
+  // Los lotes van en paralelo: antes cada uno esperaba al anterior.
+  await Promise.all(chunks.map(async (chunk, n) => {
+    const start = n * BATCH
     const answers = await callJev({ pares: Object.fromEntries(chunk.map((p, i) => [`p${i}`, p])) }, Object.fromEntries(chunk.map((_, i) => [`p${i}`, {
       type: 'choice',
       instructions: `Comparando \`pares.p${i}.correo\` (notificación bancaria) con \`pares.p${i}.gasto\` (registrado a mano, mismo monto y fecha): ¿el comercio del correo encaja con lo que describe el gasto?`,
@@ -90,7 +122,7 @@ export async function scoreSameExpense(pairs: ExpensePair[]): Promise<(MatchVerd
         no_encaja: 'Rubros distintos (p. ej. gasolinera y "almuerzo")',
       },
     }])))
-    if (!answers) break
+    if (!answers) return
     chunk.forEach((_, i) => {
       const answer = answers[`p${i}`] as Answer & { probabilities?: Record<string, number> }
       const p = answer?.probabilities
@@ -100,6 +132,6 @@ export async function scoreSameExpense(pairs: ExpensePair[]): Promise<(MatchVerd
         probabilidad: (p.encaja ?? 0) + (p.desconocido ?? 0) / 2,
       }
     })
-  }
+  }))
   return scores
 }

@@ -159,7 +159,7 @@ test('aceptar con mitad registra tu parte con tags auto + compartido; repetir no
   const tables = { correo_consumo: [pending(1), pending(2, { monto: 7.5 })], gasto: [] }
   db = fakeDb(tables)
   const res = await patch({ aceptar: [{ id: 1, categoria_id: 3, monto: 10 }, { id: 2, categoria_id: 4 }] })
-  assert.deepEqual(await res.json(), { aceptados: 2, vinculados: 0, descartados: 0 })
+  assert.deepEqual(await res.json(), { aceptados: 2, aceptados_ids: [1, 2], vinculados: 0, descartados: 0 })
   const [mitad, entero] = tables.gasto
   assert.deepEqual([mitad.monto, mitad.tags, mitad.categoria_id, mitad.user_id], [10, ['auto', 'compartido'], 3, owner])
   assert.deepEqual([entero.monto, entero.tags], [7.5, ['auto']])
@@ -284,7 +284,7 @@ test('vincular un duplicado no crea gasto; un ingreso se descuenta del gasto ele
   const tables = { correo_consumo: [pending(1, { monto: 3.25 }), pending(2, { tipo: 'ingreso', monto: 10, categoria_id: null })], gasto: [{ id: 50, user_id: owner, monto: 20, tags: ['cena'] }, { id: 51, user_id: owner, monto: 3.25, tags: [] }] }
   db = fakeDb(tables)
   const res = await patch({ vincular: [{ id: 1, gasto_id: 51 }, { id: 2, gasto_id: 50 }] })
-  assert.deepEqual(await res.json(), { aceptados: 0, vinculados: 2, descartados: 0 })
+  assert.deepEqual(await res.json(), { aceptados: 0, aceptados_ids: [], vinculados: 2, descartados: 0 })
   assert.equal(tables.gasto.length, 2)
   assert.deepEqual([tables.gasto[0].monto, tables.gasto[0].tags], [10, ['cena', 'compartido']])
   assert.deepEqual(tables.correo_consumo.map(r => [r.estado, r.gasto_id]), [['vinculado', 51], ['vinculado', 50]])
@@ -295,7 +295,7 @@ test('un ingreso igual o mayor al gasto se rechaza y queda pendiente; gastos aje
   db = fakeDb(tables)
   assert.equal((await patch({ vincular: [{ id: 1, gasto_id: 50 }] })).status, 400)
   assert.deepEqual([tables.correo_consumo[0].estado, tables.correo_consumo[0].gasto_id, tables.gasto[0].monto], ['pendiente', null, 20])
-  assert.deepEqual(await (await patch({ vincular: [{ id: 1, gasto_id: 60 }] })).json(), { aceptados: 0, vinculados: 0, descartados: 0 })
+  assert.deepEqual(await (await patch({ vincular: [{ id: 1, gasto_id: 60 }] })).json(), { aceptados: 0, aceptados_ids: [], vinculados: 0, descartados: 0 })
   assert.equal(tables.gasto[1].monto, 99)
 })
 
