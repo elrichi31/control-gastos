@@ -70,3 +70,19 @@ test('history for totals and export traverses more than the default 1000-row cap
     await assert.rejects(fetchExpenses(),/historial cambió/)
   } finally { global.fetch = original }
 })
+test('after the first page, the rest of the history is requested in parallel', async () => {
+  const original = global.fetch, rows = Array.from({ length: 2100 }, (_, id) => ({ id: id + 1, monto: 1 }))
+  let inFlight = 0, peak = 0
+  try {
+    global.fetch = async (url) => {
+      const params = new URL(url, 'https://fixture.invalid').searchParams, page = Number(params.get('page')), limit = Number(params.get('limit'))
+      inFlight++; peak = Math.max(peak, inFlight)
+      await new Promise(resolve => setTimeout(resolve, 5))
+      inFlight--
+      return Response.json({ items: rows.slice((page - 1) * limit, page * limit), total: rows.length, page, limit })
+    }
+    const all = await fetchExpenses()
+    assert.deepEqual(all.map(row => row.id), rows.map(row => row.id))
+    assert.equal(peak, 4)
+  } finally { global.fetch = original }
+})

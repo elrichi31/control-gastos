@@ -7,11 +7,13 @@ export function useRemoteQuery<T>(queryKey: QueryKey, queryFn: (signal: AbortSig
   return useQuery({ queryKey, queryFn: ({ signal }) => queryFn(signal), ...options, enabled: status === 'authenticated' && options.enabled !== false })
 }
 
-/** Financial writes never retry automatically. Inactive views are marked stale. */
+/** Financial writes never retry automatically. Inactive views are marked stale.
+ *  The mutation resolves as soon as the server confirms the write: affected views reload in the
+ *  background instead of holding the form (e.g. a new expense waiting for the whole history). */
 export function useRemoteMutation<T, V>(mutationFn: (variables: V) => Promise<T>, keys: readonly QueryKey[]) {
   const client = useQueryClient()
-  return useMutation({ mutationFn, retry: false, onSuccess: async () => {
-    await Promise.all(keys.map(queryKey => client.invalidateQueries({ queryKey })))
+  return useMutation({ mutationFn, retry: false, onSuccess: () => {
+    for (const queryKey of keys) void client.invalidateQueries({ queryKey })
   } })
 }
 

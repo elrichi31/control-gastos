@@ -31,24 +31,34 @@ export async function fetchExpensesPage(options: { page?: number; limit?: number
   return body
 }
 
+const PAGE_LIMIT = 500
+const PARALLEL_PAGES = 4
+
+/** Todo el historial. La primera página da el total; el resto se pide en paralelo (de a 4)
+ *  en vez de una tras otra. Si el historial cambia durante la carga, falla en vez de mezclar. */
 export async function fetchExpenses(signal?: AbortSignal, range: { from?: string; to?: string } = {}): Promise<Expense[]> {
-  const expenses: Expense[] = []
-  let page = 1
-  let expectedTotal: number | undefined
-  const seen = new Set<number>()
-  while (true) {
-    const result = await fetchExpensesPage({ ...range, page, limit: 500 }, signal)
-    if (expectedTotal !== undefined && expectedTotal !== result.total) throw new Error('El historial cambió durante la carga. Reintenta.')
-    expectedTotal = result.total
-    for (const expense of result.items) {
-      if (seen.has(expense.id)) throw new Error('El historial cambió durante la carga. Reintenta.')
-      seen.add(expense.id)
+  const changed = () => new Error('El historial cambió durante la carga. Reintenta.')
+  const first = await fetchExpensesPage({ ...range, page: 1, limit: PAGE_LIMIT }, signal)
+  const total = first.total
+  const pages: Expense[][] = [first.items]
+  const pageCount = Math.ceil(total / PAGE_LIMIT)
+  if (pageCount > 1 && first.items.length < PAGE_LIMIT) throw changed()
+  for (let start = 2; start <= pageCount; start += PARALLEL_PAGES) {
+    const batch = Array.from({ length: Math.min(PARALLEL_PAGES, pageCount - start + 1) }, (_, i) => start + i)
+    const results = await Promise.all(batch.map(page => fetchExpensesPage({ ...range, page, limit: PAGE_LIMIT }, signal)))
+    for (const result of results) {
+      if (result.total !== total) throw changed()
+      pages.push(result.items)
     }
-    expenses.push(...result.items)
-    if (expenses.length >= result.total) return expenses
-    if (result.items.length === 0) throw new Error('El historial cambió durante la carga. Reintenta.')
-    page++
   }
+  const expenses = pages.flat()
+  const seen = new Set<number>()
+  for (const expense of expenses) {
+    if (seen.has(expense.id)) throw changed()
+    seen.add(expense.id)
+  }
+  if (expenses.length !== total) throw changed()
+  return expenses
 }
 
 /**
