@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import { createClient } from "@supabase/supabase-js"
 import { allowedGoogleAccount, googleAdmissionConfigured, AUTH_SESSION_MAX_SECONDS } from "./session-policy"
+import { clientIp, LOGIN_LIMIT, rateLimited } from "./rate-limit"
 import { authSessionActive, registerAuthSession, googleAccountActive } from "./session-registry"
 
 const supabase = createClient(
@@ -34,8 +35,12 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
+          return null
+        }
+        if (rateLimited(`login:ip:${clientIp(req?.headers ?? {})}`, LOGIN_LIMIT.limit * 3, LOGIN_LIMIT.windowMs)
+          || rateLimited(`login:acct:${credentials.email.trim().toLowerCase()}`, LOGIN_LIMIT.limit, LOGIN_LIMIT.windowMs)) {
           return null
         }
 

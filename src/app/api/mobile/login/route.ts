@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { createMobileSessionToken } from '@/lib/auth/mobile-session'
 import { registerAuthSession } from '@/lib/auth/session-registry'
+import { clientIp, LOGIN_LIMIT, rateLimited } from '@/lib/auth/rate-limit'
 
 function createMobileAuthClient() {
   return createClient(
@@ -18,15 +19,22 @@ function createMobileAuthClient() {
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = clientIp(request.headers)
+    if (rateLimited(`login:ip:${ip}`, LOGIN_LIMIT.limit * 3, LOGIN_LIMIT.windowMs)) {
+      return NextResponse.json({ error: 'Demasiados intentos. Inténtalo más tarde.' }, { status: 429, headers: { 'Retry-After': '900' } })
+    }
     const { email, password } = await request.json()
 
-    if (!email || !password) {
+    if (typeof email !== 'string' || typeof password !== 'string' || !email || !password || email.length > 254 || password.length > 128) {
       return NextResponse.json(
         { error: 'Email y password son obligatorios' },
         { status: 400 }
       )
     }
 
+    if (rateLimited(`login:acct:${email.trim().toLowerCase()}`, LOGIN_LIMIT.limit, LOGIN_LIMIT.windowMs)) {
+      return NextResponse.json({ error: 'Demasiados intentos. Inténtalo más tarde.' }, { status: 429, headers: { 'Retry-After': '900' } })
+    }
     const supabase = createMobileAuthClient()
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -35,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     if (error || !data.session || !data.user) {
       return NextResponse.json(
-        { error: error?.message || 'Credenciales inválidas' },
+        { error: 'Credenciales inválidas' },
         { status: 401 }
       )
     }

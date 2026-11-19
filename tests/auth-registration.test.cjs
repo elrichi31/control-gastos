@@ -7,7 +7,8 @@ Module._load=function(id,...args){if(id==='@supabase/supabase-js')return{createC
 const {POST}=require('../src/app/api/auth/register/route.ts');Module._load=originalLoad
 const {NextRequest}=require('next/server'),originalFetch=global.fetch
 const body={firstName:' Ada ',lastName:' Lovelace ',email:'new@example.invalid',password:'synthetic-password'}
-function request(value=body){return new NextRequest('https://untrusted.invalid/api/auth/register',{method:'POST',headers:{'content-type':'application/json'},body:typeof value==='string'?value:JSON.stringify(value)})}
+let ip=0
+function request(value=body,address=`10.0.0.${++ip}`){return new NextRequest('https://untrusted.invalid/api/auth/register',{method:'POST',headers:{'content-type':'application/json','x-forwarded-for':address},body:typeof value==='string'?value:JSON.stringify(value)})}
 test.beforeEach(()=>{calls=[];settings={disable_signup:false,mailer_autoconfirm:false};fails=false;signupError=null;instantSession=null;global.fetch=async()=>{if(fails)throw Error('provider down');return Response.json(settings)}})
 test.after(()=>{global.fetch=originalFetch})
 test('public signup creates account and requests email confirmation without exposing tokens',async()=>{const r=await POST(request());assert.equal(r.status,200);const data=await r.json();assert.equal(data.needsEmailConfirmation,true);assert.equal(calls.length,1);assert.equal(calls[0].options.data.full_name,'Ada Lovelace');assert.equal(calls[0].options.emailRedirectTo,'https://app.invalid/auth/login');assert.equal(data.access_token,undefined);assert.equal(r.headers.get('cache-control'),'no-store')})
@@ -17,3 +18,5 @@ test('signup still rejects disabled registration or unknown provider settings',a
 test('provider settings failure does not create an account',async()=>{fails=true;assert.equal((await POST(request())).status,503);assert.equal(calls.length,0)})
 test('provider signup error is handled without leaking its internal details',async()=>{signupError={message:'private diagnostic'};const r=await POST(request());assert.equal(r.status,400);assert.doesNotMatch(JSON.stringify(await r.json()),/private diagnostic/)})
 test('unexpected immediate provider session never becomes app login or false email-confirmation success',async()=>{instantSession={access_token:'synthetic-token'};const r=await POST(request());assert.equal(r.status,503);assert.doesNotMatch(JSON.stringify(await r.json()),/synthetic-token/)})
+
+test('signup is rate limited per client address',async()=>{const results=[];for(let i=0;i<7;i++)results.push((await POST(request(body,'203.0.113.9'))).status);assert.deepEqual(results.slice(0,5),[200,200,200,200,200]);assert.deepEqual(results.slice(5),[429,429]);assert.equal(calls.length,5)})

@@ -1,0 +1,5 @@
+require('./helpers/register-ts.cjs')
+const {test}=require('node:test'),assert=require('node:assert/strict')
+const {rateLimited,clientIp}=require('../src/lib/auth/rate-limit.ts')
+test('blocks after the limit and resets after the window',()=>{const t=1000;for(let i=0;i<3;i++)assert.equal(rateLimited('k',3,100,t),false);assert.equal(rateLimited('k',3,100,t+1),true);assert.equal(rateLimited('k',3,100,t+101),false);assert.equal(rateLimited('other',3,100,t),false)})
+test('uses the first forwarded address',()=>{assert.equal(clientIp(new Headers({'x-forwarded-for':'1.2.3.4, 5.6.7.8'})),'1.2.3.4');assert.equal(clientIp({}),'unknown')})

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { z } from 'zod'
+import { clientIp, REGISTER_LIMIT, rateLimited } from '@/lib/auth/rate-limit'
 
 const schema = z.object({
   firstName: z.string().trim().min(1).max(80),
@@ -12,6 +13,9 @@ const json = (body: unknown, status = 200) => NextResponse.json(body, { status, 
 const unavailable = () => json({ error: 'El registro no está disponible. Revisa que el registro esté habilitado en Supabase.' }, 503)
 
 export async function POST(request: NextRequest) {
+  if (rateLimited(`register:${clientIp(request.headers)}`, REGISTER_LIMIT.limit, REGISTER_LIMIT.windowMs)) {
+    return NextResponse.json({ error: 'Demasiados intentos. Inténtalo más tarde.' }, { status: 429, headers: { 'Cache-Control': 'no-store', 'Retry-After': '3600' } })
+  }
   let input: unknown
   try { input = await request.json() } catch { return json({ error: 'Solicitud inválida' }, 400) }
   const parsed = schema.safeParse(input)
