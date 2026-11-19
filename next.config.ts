@@ -1,6 +1,20 @@
 import type { NextConfig } from "next";
 import withSerwistInit from "@serwist/next";
 
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+].join("; ");
+
 const nextConfig: NextConfig = {
   output: "standalone",
   async headers() {
@@ -14,9 +28,10 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           // Only this host: do not opt other subdomains into HTTPS or preload.
           { key: "Strict-Transport-Security", value: "max-age=2592000" },
-          // Enforce safe directives now; audit script/connect restrictions before enforcement.
-          { key: "Content-Security-Policy", value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'" },
-          { key: "Content-Security-Policy-Report-Only", value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https: wss:; worker-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'" },
+          // Next inlines its bootstrap scripts, so script-src keeps 'unsafe-inline' (a nonce would force
+          // every page to render dynamically). The browser only talks to this origin: Supabase and
+          // other providers are reached from the server. `next dev` needs eval for React refresh.
+          { key: "Content-Security-Policy", value: contentSecurityPolicy },
         ],
       },
       {
